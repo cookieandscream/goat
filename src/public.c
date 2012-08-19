@@ -30,6 +30,10 @@ int goat_is_connected(goat_handle handle) {
     return -1;
 }
 
+int goat_get_connected_hostname(goat_handle handle, char **retval) {
+    return -1;
+}
+
 int goat_send_message(
         goat_handle handle,
         const char *restrict prefix,

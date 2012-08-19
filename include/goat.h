@@ -1,8 +1,6 @@
 #ifndef GOAT_H
 #define GOAT_H
 
-include <stdint.h>
-
 typedef int goat_handle;
 typedef void (*goat_callback)(goat_handle, /**/);
 typedef enum {
@@ -18,6 +16,7 @@ int goat_destroy(goat_handle);
 int goat_connect(goat_handle, const char *, int);
 int goat_disconnect(goat_handle);
 int goat_is_connected(goat_handle);
+int goat_get_connected_hostname(goat_handle, char **);
 
 int goat_send_message(goat_handle, const char *restrict, const char *restrict, const char **restrict);
 
