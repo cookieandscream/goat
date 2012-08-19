@@ -27,20 +27,32 @@ void *_goat_core (void *arg) {
         pthread_mutex_lock(&core_connection_list.mutex);
         for (unsigned i = 0; i < core_connection_list.connection_pool_size; i++) {
             if (core_connection_list.connection_pool[i] != NULL) {
-                FD_SET(core_connection_list.connection_pool[i]->socket, &readfds);
-                FD_SET(core_connection_list.connection_pool[i]->socket, &writefds);
-                if (core_connection_list.connection_pool[i]->socket > nfds) {
-                    nfds = core_connection_list.connection_pool[i]->socket;
+                goat_connection *conn = core_connection_list.connection_pool[i];
+
+                FD_SET(conn->socket, &readfds);
+                if (conn->has_pending_write_data) {
+                    FD_SET(conn->socket, &writefds);
                 }
+                nfds = (conn->socket > nfds ? conn->socket : nfds);
             }
         }
         pthread_mutex_unlock(&core_connection_list.mutex);
 
-        if (select(nfds + 1, &readfds, NULL, NULL, NULL) > 0) {
-            // there are descriptors ready to read, go and process them
-        }
+        if (select(nfds + 1, &readfds, &writefds, NULL, NULL) > 0) {
+            for (unsigned i = 0; i < core_connection_list.connection_pool_size; i++) {
+                if (core_connection_list.connection_pool[i] != NULL) {
+                    goat_connection *conn = core_connection_list.connection_pool[i];
 
-        // TODO if we have pending outgoing messages, try to send them
+                    if (FD_ISSET(conn->socket, &readfds)) {
+                        // TODO have readable data: read!
+                    }
+
+                    if (conn->has_pending_write_data && FD_ISSET(conn->socket, &writefds)) {
+                        // TODO have writeable data, and the socket is ready for write: write!
+                    }
+                }
+            }
+        }
 
         pthread_mutex_lock(&core_state.mutex);
     }
