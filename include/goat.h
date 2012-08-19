@@ -19,7 +19,7 @@ int goat_connect(goat_handle, const char *, int);
 int goat_disconnect(goat_handle);
 int goat_is_connected(goat_handle);
 
-int goat_send_message(goat_handle, const char *, const char *, const char **);
+int goat_send_message(goat_handle, const char *restrict, const char *restrict, const char **restrict);
 
 int goat_install_callback(goat_event, goat_callback);
 int goat_uninstall_callback(goat_event, goat_callback);

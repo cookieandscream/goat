@@ -32,9 +32,9 @@ int goat_is_connected(goat_handle handle) {
 
 int goat_send_message(
         goat_handle handle,
-        const char *prefix,
-        const char *command,
-        const char **params
+        const char *restrict prefix,
+        const char *restrict command,
+        const char **restrict params
 ) {
     return -1;
 }
