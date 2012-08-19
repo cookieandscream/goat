@@ -2,9 +2,10 @@
 #define GOAT_H
 
 typedef int goat_handle;
-typedef void (*goat_callback)(goat_handle, /**/);
+typedef void (*goat_callback)(goat_handle);
 typedef enum {
     // TODO define some events
+    _dummy,
 } goat_event;
 
 int goat_initialise(void);

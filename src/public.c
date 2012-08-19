@@ -1,4 +1,5 @@
-#include <time.t>
+#include <fcntl.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "goat.h"
@@ -10,7 +11,7 @@ pthread_t core_thread;
 int goat_initialise(void) {
     int fd[2];
 
-    if (0 != pipe(&fd)) return -1;
+    if (0 != pipe(fd)) return -1;
 
     core_thread_notify_fd = fd[1];
     fcntl(core_thread_notify_fd, F_SETNOSIGPIPE, 1);
@@ -34,7 +35,7 @@ int goat_shutdown(void) {
     }
     core_state.running = 0;
     pthread_mutex_unlock(&core_state.mutex);
-    pthread_join(core_thread);
+    pthread_join(core_thread, NULL);
 
     return 0;
 }

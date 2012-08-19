@@ -1,7 +1,7 @@
 
 #include <sys/select.h>
 
-#include <pthread>
+#include <pthread.h>
 
 #include "core.h"
 
@@ -27,10 +27,10 @@ void *_goat_core (void *arg) {
         pthread_mutex_lock(&core_connection_list.mutex);
         for (unsigned i = 0; i < core_connection_list.connection_pool_size; i++) {
             if (core_connection_list.connection_pool[i] != NULL) {
-                FD_SET(core_connection_list.connection_pool[i].socket, &readfds);
-                FD_SET(core_connection_list.connection_pool[i].socket, &writefds);
-                if (core_connection_list.connection_pool[i].socket > nfds) {
-                    nfds = core_connection_list.connection_pool[i].socket;
+                FD_SET(core_connection_list.connection_pool[i]->socket, &readfds);
+                FD_SET(core_connection_list.connection_pool[i]->socket, &writefds);
+                if (core_connection_list.connection_pool[i]->socket > nfds) {
+                    nfds = core_connection_list.connection_pool[i]->socket;
                 }
             }
         }

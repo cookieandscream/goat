@@ -3,6 +3,8 @@
 
 #include <pthread.h>
 
+#include "goat.h"
+
 typedef struct {
     pthread_mutex_t mutex;
     int running;
