@@ -6,8 +6,7 @@ AC_INIT([goat], [0.0], [https://github.com/flrl/goat])
 
 AC_CONFIG_SRCDIR([src/public.c])
 AC_CONFIG_AUX_DIR([build-aux])
-
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
 AC_PROG_CC_C99
@@ -25,6 +24,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([select])
 
+AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 LT_INIT
 
 AC_CONFIG_HEADERS([config.h])
