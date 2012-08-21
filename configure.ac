@@ -24,7 +24,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([select])
 
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign silent-rules -Wall -Werror])
 LT_INIT
 
 AC_CONFIG_HEADERS([config.h])
