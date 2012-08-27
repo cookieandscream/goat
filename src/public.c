@@ -8,7 +8,6 @@
 int core_thread_notify_fd;
 pthread_t core_thread;
 
-__attribute__((visibility("default")))
 int goat_initialise(void) {
     int fd[2];
 
@@ -25,7 +24,6 @@ int goat_initialise(void) {
     return 0;
 }
 
-__attribute__((visibility("default")))
 int goat_shutdown(void) {
     const char s[] = "shutdown\n"; // actual value is of no consequence
 
@@ -42,37 +40,30 @@ int goat_shutdown(void) {
     return 0;
 }
 
-__attribute__((visibility("default")))
 goat_handle goat_alloc(void) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_destroy(goat_handle handle) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_connect(goat_handle handle, const char *hostname, int port) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_disconnect(goat_handle handle) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_is_connected(goat_handle handle) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_get_connected_hostname(goat_handle handle, char **retval) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_send_message(
         goat_handle handle,
         const char *restrict prefix,
@@ -82,12 +73,10 @@ int goat_send_message(
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_install_callback(goat_event event, goat_callback callback) {
     return -1;
 }
 
-__attribute__((visibility("default")))
 int goat_uninstall_callback(goat_event event, goat_callback callback) {
     return -1;
 }
