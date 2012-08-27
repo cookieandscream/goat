@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([goat], [0.0], [https://github.com/flrl/goat])
 
-AC_CONFIG_SRCDIR([src/public.c])
+AC_CONFIG_SRCDIR([src/goat.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
