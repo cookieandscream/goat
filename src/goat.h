@@ -2,7 +2,7 @@
 #define GOAT_H
 
 typedef int goat_handle;
-typedef void (*goat_callback)(goat_handle);
+typedef void (*goat_callback)(goat_handle, const char *restrict, const char *restrict, const char **restrict);
 typedef enum {
     // TODO define some events
     _dummy,
