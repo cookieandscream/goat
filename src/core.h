@@ -5,17 +5,12 @@
 
 #include "goat.h"
 
+#include "connection.h"
+
 typedef struct {
     pthread_mutex_t mutex;
     int running;
 } goat_core_state;
-
-typedef struct {
-    pthread_mutex_t mutex;
-    const goat_handle handle;
-    const int socket;
-    int has_pending_write_data;  // TODO
-} goat_connection;
 
 typedef struct {
     pthread_mutex_t mutex;

@@ -29,8 +29,10 @@ void *_goat_core (void *arg) {
             if (core_connection_list.connection_pool[i] != NULL) {
                 goat_connection *conn = core_connection_list.connection_pool[i];
 
-                FD_SET(conn->socket, &readfds);
-                if (conn->has_pending_write_data) {
+                if (conn_wants_read(conn)) {
+                    FD_SET(conn->socket, &readfds);
+                }
+                if (conn_wants_write(conn)) {
                     FD_SET(conn->socket, &writefds);
                 }
                 nfds = (conn->socket > nfds ? conn->socket : nfds);
@@ -43,13 +45,9 @@ void *_goat_core (void *arg) {
                 if (core_connection_list.connection_pool[i] != NULL) {
                     goat_connection *conn = core_connection_list.connection_pool[i];
 
-                    if (FD_ISSET(conn->socket, &readfds)) {
-                        // TODO have readable data: read!
-                    }
-
-                    if (conn->has_pending_write_data && FD_ISSET(conn->socket, &writefds)) {
-                        // TODO have writeable data, and the socket is ready for write: write!
-                    }
+                    int read_ready = FD_ISSET(conn->socket, &readfds);
+                    int write_ready = FD_ISSET(conn->socket, &writefds);
+                    conn_pump_socket(conn, read_ready, write_ready);
                 }
             }
         }
