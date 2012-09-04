@@ -31,7 +31,33 @@ int conn_wants_write(const goat_connection *conn) {
     }
 }
 
-int conn_pump_socket(goat_connection *conn, int read_ready, int write_ready) {
+int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
-    return -1; // FIXME
+    int result = -1;
+
+    if (0 == pthread_mutex_lock(&conn->mutex)) {
+        switch (conn->state) {
+            case GOAT_CONN_CONNECTING:
+                if (socket_writeable) {
+                    conn->state = GOAT_CONN_CONNECTED;
+                }
+                result = 0;
+                break;
+            case GOAT_CONN_CONNECTED:
+                if (socket_readable) {
+                    // read data into the read buffer
+                }
+                if (socket_writeable) {
+                    // burn through write buffer
+                }
+                result = 0;
+                break;
+            case GOAT_CONN_DISCONNECTING:
+            case GOAT_CONN_ERROR:
+                result = -1; // FIXME
+        }
+        pthread_mutex_unlock(&conn->mutex);
+    }
+
+    return result;
 }

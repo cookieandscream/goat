@@ -1,6 +1,9 @@
 #ifndef GOAT_CONNECTION_H
 #define GOAT_CONNECTION_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <pthread.h>
 
 #include "goat.h"
@@ -17,6 +20,8 @@ typedef struct {
     const goat_handle handle;
     pthread_mutex_t mutex;
     int socket;
+    struct sockaddr *address;
+    socklen_t address_len;
     goat_connection_state state;
     int ssl;
     int write_queue;
@@ -25,6 +30,9 @@ typedef struct {
 
 int conn_init(goat_connection *);
 int conn_destroy(goat_connection *);
+
+int conn_connect(goat_connection *); // FIXME
+int conn_disconnect(goat_connection *); // FIXME
 
 int conn_wants_read(const goat_connection *);
 int conn_wants_write(const goat_connection *);
