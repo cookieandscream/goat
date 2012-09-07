@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 
 #include <pthread.h>
 
@@ -17,6 +18,14 @@ typedef enum {
     GOAT_CONN_DISCONNECTING,
 } goat_connection_state;
 
+typedef struct str_queue_entry_s {
+    STAILQ_ENTRY(str_queue_entry_s) entries;
+    size_t len;
+    char str[0];
+} str_queue_entry;
+
+typedef STAILQ_HEAD(str_queue_head_s, str_queue_entry_s) str_queue_head;
+
 typedef struct {
     const goat_handle handle;
     pthread_mutex_t mutex;
@@ -25,8 +34,8 @@ typedef struct {
     socklen_t address_len;
     goat_connection_state state;
     int ssl;
-    int write_queue;
-    int read_queue;
+    str_queue_head write_queue;
+    str_queue_head read_queue;
 } goat_connection;
 
 int conn_init(goat_connection *);

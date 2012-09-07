@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "connection.h"
@@ -21,6 +22,8 @@ const static state_function do_state[] = {
 
 int conn_init(goat_connection *conn) {
     assert(conn != NULL);
+    STAILQ_INIT(&conn->write_queue);
+    STAILQ_INIT(&conn->read_queue);
     return -1; // FIXME
 }
 
@@ -40,7 +43,7 @@ int conn_wants_write(const goat_connection *conn) {
     if (conn->state == GOAT_CONN_CONNECTING) {
         return 1;
     }
-    else if (conn->state == GOAT_CONN_CONNECTED && conn->write_queue) { // FIXME
+    else if (conn->state == GOAT_CONN_CONNECTED && !STAILQ_EMPTY(&conn->write_queue)) {
         return 1;
     }
     else {
@@ -112,8 +115,12 @@ int conn_queue_message(
     strcat(buf, "\x0d\x0a");
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
-
         // now stick it on the connection's write queue
+        size_t len = strlen(buf) + 1;
+        str_queue_entry *entry = malloc(sizeof(str_queue_entry) + len);
+        entry->len = len;
+        strcpy(entry->str, buf);
+        STAILQ_INSERT_TAIL(&conn->write_queue, entry, entries);
 
         pthread_mutex_unlock(&conn->mutex);
         return 0;
