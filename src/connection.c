@@ -47,6 +47,16 @@ int conn_wants_write(const goat_connection *conn) {
     }
 }
 
+int conn_wants_timeout(const goat_connection *conn) {
+    assert(conn != NULL);
+    if (conn->state == GOAT_CONN_RESOLVING) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
 

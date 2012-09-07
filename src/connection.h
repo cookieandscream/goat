@@ -37,6 +37,7 @@ int conn_disconnect(goat_connection *); // FIXME
 
 int conn_wants_read(const goat_connection *);
 int conn_wants_write(const goat_connection *);
+int conn_wants_timeout(const goat_connection *);
 
 int conn_pump_socket(goat_connection *, int, int); // read ready, write ready
 

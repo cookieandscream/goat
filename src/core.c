@@ -13,6 +13,8 @@ void *_goat_core (void *arg) {
     const int notify_fd = *(int *)arg;
     fd_set readfds, writefds;
     int nfds;
+    const static struct timeval ms200 = { .tv_sec = 0, .tv_usec = 200 * 1000 * 1000 };
+    struct timeval timeout, *timeout_ptr;
 
     pthread_mutex_lock(&core_state.mutex);
     while (core_state.running) {
@@ -23,6 +25,8 @@ void *_goat_core (void *arg) {
 
         FD_SET(notify_fd, &readfds);
         nfds = notify_fd;
+
+        timeout_ptr = NULL;
 
         pthread_mutex_lock(&core_connection_list.mutex);
         for (unsigned i = 0; i < core_connection_list.connection_pool_size; i++) {
@@ -35,12 +39,18 @@ void *_goat_core (void *arg) {
                 if (conn_wants_write(conn)) {
                     FD_SET(conn->socket, &writefds);
                 }
+                if (!timeout_ptr && conn_wants_timeout(conn)) {
+                    timeout = ms200;
+                    timeout_ptr = &timeout;
+                }
+
                 nfds = (conn->socket > nfds ? conn->socket : nfds);
             }
         }
         pthread_mutex_unlock(&core_connection_list.mutex);
 
-        if (select(nfds + 1, &readfds, &writefds, NULL, NULL) > 0) {
+        if (select(nfds + 1, &readfds, &writefds, NULL, timeout_ptr) >= 0) {
+            // n.b. we pump the connection even if select timed out
             for (unsigned i = 0; i < core_connection_list.connection_pool_size; i++) {
                 if (core_connection_list.connection_pool[i] != NULL) {
                     goat_connection *conn = core_connection_list.connection_pool[i];
