@@ -29,7 +29,7 @@ int goat_shutdown(void) {
 
     write(core_thread_notify_fd, s, sizeof s);
     while (0 != pthread_mutex_trylock(&core_state.mutex)) {
-        const struct timespec delay = { 0, 200 * 1000 * 1000 };  // 0.2s
+        static const struct timespec delay = { 0, 200 * 1000 * 1000 };  // 0.2s
         nanosleep(&delay, NULL);
         write(core_thread_notify_fd, s, sizeof s);
     }
