@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "connection.h"
 
@@ -116,8 +117,8 @@ int conn_queue_message(
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
         // now stick it on the connection's write queue
-        size_t len = strlen(buf) + 1;
-        str_queue_entry *entry = malloc(sizeof(str_queue_entry) + len);
+        size_t len = strlen(buf);
+        str_queue_entry *entry = malloc(sizeof(str_queue_entry) + len + 1);
         entry->len = len;
         strcpy(entry->str, buf);
         STAILQ_INSERT_TAIL(&conn->write_queue, entry, entries);
@@ -160,6 +161,38 @@ void _state_connected(goat_connection *conn, int socket_readable, int socket_wri
     if (socket_writeable) {
         // burn through write buffer
         // if it's been disconnected, bump the state to disconnecting
+//            ssize_t write(int fildes, const void *buf, size_t nbyte);
+
+        while (!STAILQ_EMPTY(&conn->write_queue)) {
+            str_queue_entry *n = STAILQ_FIRST(&conn->write_queue);
+
+            ssize_t wrote = write(conn->socket, n->str, n->len);
+
+            if (wrote < 0) {
+                // FIXME write failed for some reason
+                break;
+            }
+            else if (wrote < n->len) {
+                // partial write - reinsert the remainder at the queue head for next
+                // time the socket is writeable
+                STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+
+                size_t len = n->len - wrote;
+                str_queue_entry *tmp = malloc(sizeof(str_queue_entry) + len + 1);
+                tmp->len = len;
+                strcpy(tmp->str, &n->str[wrote]);
+
+                STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
+
+                free(n);
+                break;
+            }
+            else {
+                // wrote the whole thing, remove it from the queue
+                STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+                free(n);
+            }
+        }
     }
 }
 
