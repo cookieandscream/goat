@@ -39,6 +39,8 @@ int conn_wants_read(const goat_connection *);
 int conn_wants_write(const goat_connection *);
 int conn_wants_timeout(const goat_connection *);
 
+int conn_queue_message(goat_connection *restrict, const char *restrict, const char *restrict, const char **restrict);
+
 int conn_pump_socket(goat_connection *, int, int); // read ready, write ready
 
 #endif

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include "connection.h"
 
@@ -76,6 +77,50 @@ int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writ
     }
 
     return (conn->state == GOAT_CONN_ERROR) ? -1 : 0;
+}
+
+int conn_queue_message(
+        goat_connection *restrict conn,
+        const char *restrict prefix,
+        const char *restrict command,
+        const char **restrict params
+) {
+    assert(conn != NULL);
+    char buf[516] = { 0 };
+    size_t len = 0;
+
+    // n.b. internal only, so trusts caller to provide valid args
+    if (prefix) {
+        strcat(buf, ":");
+        strcat(buf, prefix);
+        strcat(buf, " ");
+    }
+
+    strcat(buf, command);
+
+    while (params) {
+        strcat(buf, " ");
+        if (strchr(*params, ' ')) {
+            strcat(buf, ":");
+            strcat(buf, *params);
+            break;
+        }
+        strcat(buf, *params);
+        ++ params;
+    }
+
+    strcat(buf, "\x0d\x0a");
+
+    if (0 == pthread_mutex_lock(&conn->mutex)) {
+
+        // now stick it on the connection's write queue
+
+        pthread_mutex_unlock(&conn->mutex);
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
 
 void _state_disconnected(goat_connection *conn, int socket_readable, int socket_writeable) {

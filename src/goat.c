@@ -70,6 +70,10 @@ int goat_send_message(
         const char *restrict command,
         const char **restrict params
 ) {
+    // validate:
+    //   prefix/command cannot contain spaces
+    //   if a param contains spaces it must be the last param
+    //   sum of lengths must be <= 510... long line handling?
     return -1;
 }
 
