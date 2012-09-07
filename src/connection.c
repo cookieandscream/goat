@@ -2,6 +2,22 @@
 
 #include "connection.h"
 
+typedef void (*state_function)(goat_connection *, int, int);
+
+static void _state_disconnected(goat_connection *, int, int);
+static void _state_resolving(goat_connection *, int, int);
+static void _state_connecting(goat_connection *, int, int);
+static void _state_connected(goat_connection *, int, int);
+static void _state_disconnecting(goat_connection *, int, int);
+
+const static state_function do_state[] = {
+    _state_disconnected,
+    _state_resolving,
+    _state_connecting,
+    _state_connected,
+    _state_disconnecting,
+};
+
 int conn_init(goat_connection *conn) {
     assert(conn != NULL);
     return -1; // FIXME
@@ -33,31 +49,60 @@ int conn_wants_write(const goat_connection *conn) {
 
 int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
-    int result = -1;
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
         switch (conn->state) {
+            case GOAT_CONN_RESOLVING:
             case GOAT_CONN_CONNECTING:
-                if (socket_writeable) {
-                    conn->state = GOAT_CONN_CONNECTED;
-                }
-                result = 0;
-                break;
             case GOAT_CONN_CONNECTED:
-                if (socket_readable) {
-                    // read data into the read buffer
-                }
-                if (socket_writeable) {
-                    // burn through write buffer
-                }
-                result = 0;
-                break;
             case GOAT_CONN_DISCONNECTING:
+                do_state[conn->state](conn, socket_readable, socket_writeable);
+                break;
+
             case GOAT_CONN_ERROR:
-                result = -1; // FIXME
+                break;
         }
         pthread_mutex_unlock(&conn->mutex);
     }
 
-    return result;
+    return (conn->state == GOAT_CONN_ERROR) ? -1 : 0;
+}
+
+void _state_disconnected(goat_connection *conn, int socket_readable, int socket_writeable) {
+    assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTED);
+    // no automatic progression to any other state
+}
+
+void _state_resolving(goat_connection *conn, int socket_readable, int socket_writeable) {
+    assert(conn != NULL && conn->state == GOAT_CONN_RESOLVING);
+    // see if we've got a result yet
+    if (0) {
+        // got a result!  start connecting
+        conn->state = GOAT_CONN_CONNECTING;
+    }
+}
+
+void _state_connecting(goat_connection *conn, int socket_readable, int socket_writeable) {
+    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTING);
+    if (socket_writeable) {
+        conn->state = GOAT_CONN_CONNECTED;
+    }
+}
+
+void _state_connected(goat_connection *conn, int socket_readable, int socket_writeable) {
+    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+    if (socket_readable) {
+        // read data into the read buffer
+        // if it's been disconnected, bump the state to disconnecting
+    }
+    if (socket_writeable) {
+        // burn through write buffer
+        // if it's been disconnected, bump the state to disconnecting
+    }
+}
+
+void _state_disconnecting(goat_connection *conn, int socket_readable, int socket_writeable) {
+    assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTING);
+    // any processing we need to do during disconnect
+    conn->state = GOAT_CONN_DISCONNECTED;
 }

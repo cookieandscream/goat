@@ -11,9 +11,10 @@
 typedef enum {
     GOAT_CONN_ERROR         = -1,
     GOAT_CONN_DISCONNECTED  = 0,
-    GOAT_CONN_CONNECTING    = 1,
-    GOAT_CONN_CONNECTED     = 2,
-    GOAT_CONN_DISCONNECTING = 3,
+    GOAT_CONN_RESOLVING,
+    GOAT_CONN_CONNECTING,
+    GOAT_CONN_CONNECTED,
+    GOAT_CONN_DISCONNECTING,
 } goat_connection_state;
 
 typedef struct {
