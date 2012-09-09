@@ -1,7 +1,10 @@
 
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/uio.h>
 
 #include <pthread.h>
+#include <unistd.h>
 
 #include "core.h"
 
@@ -59,6 +62,12 @@ void *_goat_core (void *arg) {
                     int write_ready = FD_ISSET(conn->socket, &writefds);
                     conn_pump_socket(conn, read_ready, write_ready);
                 }
+            }
+
+            if (FD_ISSET(notify_fd, &readfds)) {
+                // consume contents of notify pipe
+                char buf[64];
+                while (read(notify_fd, buf, sizeof(buf)) > 0) ;
             }
         }
 
