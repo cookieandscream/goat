@@ -1,6 +1,8 @@
 #ifndef GOAT_CORE_H
 #define GOAT_CORE_H
 
+#include <config.h>
+
 #include <pthread.h>
 
 #include "goat.h"

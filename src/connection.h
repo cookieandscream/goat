@@ -1,6 +1,8 @@
 #ifndef GOAT_CONNECTION_H
 #define GOAT_CONNECTION_H
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <fcntl.h>
 #include <time.h>
 #include <unistd.h>

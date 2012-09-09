@@ -1,6 +1,8 @@
 #ifndef GOAT_EVENT_H
 #define GOAT_EVENT_H
 
+#include <config.h>
+
 typedef struct {
     goat_handle handle;
     size_t message_len;
