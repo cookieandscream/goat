@@ -8,8 +8,8 @@
 #include "connection.h"
 #include "sm.h"
 
-static goat_conn_state _conn_pump_read_queue(goat_connection *);
-static goat_conn_state _conn_pump_write_queue(goat_connection *);
+static int _conn_pump_read_queue(goat_connection *);
+static int _conn_pump_write_queue(goat_connection *);
 
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection *conn)
@@ -188,7 +188,7 @@ int conn_queue_message(
     }
 }
 
-goat_conn_state _conn_pump_write_queue(goat_connection *conn) {
+int _conn_pump_write_queue(goat_connection *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     while (!STAILQ_EMPTY(&conn->write_queue)) {
@@ -198,11 +198,11 @@ goat_conn_state _conn_pump_write_queue(goat_connection *conn) {
 
         if (wrote < 0) {
             // FIXME write failed for some reason
-            return GOAT_CONN_ERROR;
+            return -1;
         }
         else if (wrote == 0) {
             // socket has been disconnected
-            return GOAT_CONN_DISCONNECTING;
+            return 0;
         }
         else if (wrote < n->len) {
             // partial write - reinsert the remainder at the queue head for next
@@ -217,18 +217,18 @@ goat_conn_state _conn_pump_write_queue(goat_connection *conn) {
             STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
 
             free(n);
-            return conn->state;
+            return 1;
         }
         else {
             // wrote the whole thing, remove it from the queue
             STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
-            return conn->state;
+            return 2;
         }
     }
 }
 
 // FIXME function name... this isn't really pumping the queue so much as its populating it
-goat_conn_state _conn_pump_read_queue(goat_connection *conn) {
+int _conn_pump_read_queue(goat_connection *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     char buf[516], saved[516] = {0};
@@ -286,10 +286,10 @@ goat_conn_state _conn_pump_read_queue(goat_connection *conn) {
 
     if (bytes == 0) {
         // FIXME disconnected
-        return GOAT_CONN_DISCONNECTING;
+        return 0;
     }
 
-    return conn->state;
+    return 1;
 }
 
 CONN_STATE_ENTER(DISCONNECTED) { }
@@ -340,15 +340,19 @@ CONN_STATE_ENTER(CONNECTED) { }
 
 CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
-    goat_conn_state next_state = conn->state;
+
     if (s_rd) {
-        next_state = _conn_pump_read_queue(conn);
+        if (_conn_pump_read_queue(conn) <= 0) {
+            return GOAT_CONN_DISCONNECTING;
+        }
     }
-    if (s_wr && conn->state == next_state) {
-        next_state = _conn_pump_write_queue(conn);
+    if (s_wr) {
+        if (_conn_pump_write_queue(conn) <= 0) {
+            return GOAT_CONN_DISCONNECTING;
+        }
     }
 
-    return next_state;
+    return conn->state;
 }
 
 CONN_STATE_EXIT(CONNECTED) { }
