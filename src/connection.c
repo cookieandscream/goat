@@ -13,6 +13,9 @@ static void _state_connecting(goat_connection *, int, int);
 static void _state_connected(goat_connection *, int, int);
 static void _state_disconnecting(goat_connection *, int, int);
 
+static void _conn_pump_read_queue(goat_connection *);
+static void _conn_pump_write_queue(goat_connection *);
+
 const static state_function do_state[] = {
     _state_disconnected,
     _state_resolving,
@@ -155,48 +158,10 @@ void _state_connecting(goat_connection *conn, int socket_readable, int socket_wr
 void _state_connected(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
     if (socket_readable) {
-        // read data into the read buffer
-        // if it's been disconnected, bump the state to disconnecting
+        _conn_pump_read_queue(conn);
     }
     if (socket_writeable && conn->state == GOAT_CONN_CONNECTED) {
-        // burn through write buffer
-        // if it's been disconnected, bump the state to disconnecting
-
-        while (!STAILQ_EMPTY(&conn->write_queue)) {
-            str_queue_entry *n = STAILQ_FIRST(&conn->write_queue);
-
-            ssize_t wrote = write(conn->socket, n->str, n->len);
-
-            if (wrote < 0) {
-                // FIXME write failed for some reason
-                break;
-            }
-            else if (wrote == 0) {
-                // socket has been disconnected
-                conn->state = GOAT_CONN_DISCONNECTING;
-                break;
-            }
-            else if (wrote < n->len) {
-                // partial write - reinsert the remainder at the queue head for next
-                // time the socket is writeable
-                STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
-
-                size_t len = n->len - wrote;
-                str_queue_entry *tmp = malloc(sizeof(str_queue_entry) + len + 1);
-                tmp->len = len;
-                strcpy(tmp->str, &n->str[wrote]);
-
-                STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
-
-                free(n);
-                break;
-            }
-            else {
-                // wrote the whole thing, remove it from the queue
-                STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
-                free(n);
-            }
-        }
+        _conn_pump_write_queue(conn);
     }
 }
 
@@ -222,4 +187,44 @@ void _state_disconnecting(goat_connection *conn, int socket_readable, int socket
     STAILQ_INIT(&conn->write_queue);
 
     conn->state = GOAT_CONN_DISCONNECTED;
+}
+
+void _conn_pump_write_queue(goat_connection *conn) {
+    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+
+    while (!STAILQ_EMPTY(&conn->write_queue)) {
+        str_queue_entry *n = STAILQ_FIRST(&conn->write_queue);
+
+        ssize_t wrote = write(conn->socket, n->str, n->len);
+
+        if (wrote < 0) {
+            // FIXME write failed for some reason
+            break;
+        }
+        else if (wrote == 0) {
+            // socket has been disconnected
+            conn->state = GOAT_CONN_DISCONNECTING;
+            break;
+        }
+        else if (wrote < n->len) {
+            // partial write - reinsert the remainder at the queue head for next
+            // time the socket is writeable
+            STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+
+            size_t len = n->len - wrote;
+            str_queue_entry *tmp = malloc(sizeof(str_queue_entry) + len + 1);
+            tmp->len = len;
+            strcpy(tmp->str, &n->str[wrote]);
+
+            STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
+
+            free(n);
+            break;
+        }
+        else {
+            // wrote the whole thing, remove it from the queue
+            STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+            free(n);
+        }
+    }
 }
