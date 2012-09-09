@@ -158,10 +158,9 @@ void _state_connected(goat_connection *conn, int socket_readable, int socket_wri
         // read data into the read buffer
         // if it's been disconnected, bump the state to disconnecting
     }
-    if (socket_writeable) {
+    if (socket_writeable && conn->state == GOAT_CONN_CONNECTED) {
         // burn through write buffer
         // if it's been disconnected, bump the state to disconnecting
-//            ssize_t write(int fildes, const void *buf, size_t nbyte);
 
         while (!STAILQ_EMPTY(&conn->write_queue)) {
             str_queue_entry *n = STAILQ_FIRST(&conn->write_queue);
@@ -170,6 +169,11 @@ void _state_connected(goat_connection *conn, int socket_readable, int socket_wri
 
             if (wrote < 0) {
                 // FIXME write failed for some reason
+                break;
+            }
+            else if (wrote == 0) {
+                // socket has been disconnected
+                conn->state = GOAT_CONN_DISCONNECTING;
                 break;
             }
             else if (wrote < n->len) {
@@ -199,5 +203,6 @@ void _state_connected(goat_connection *conn, int socket_readable, int socket_wri
 void _state_disconnecting(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTING);
     // any processing we need to do during disconnect
+    // FIXME clear read/write queues
     conn->state = GOAT_CONN_DISCONNECTED;
 }
