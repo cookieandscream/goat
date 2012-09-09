@@ -50,7 +50,7 @@ int goat_destroy(goat_handle handle) {
     return -1;
 }
 
-int goat_connect(goat_handle handle, const char *hostname, int port) {
+int goat_connect(goat_handle handle, const char *hostname, int port, int ssl) {
     return -1;
 }
 

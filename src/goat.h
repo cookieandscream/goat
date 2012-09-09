@@ -14,7 +14,7 @@ int goat_shutdown(void);
 goat_handle goat_alloc(void);
 int goat_destroy(goat_handle);
 
-int goat_connect(goat_handle, const char *, int);
+int goat_connect(goat_handle, const char *, int, int);
 int goat_disconnect(goat_handle);
 int goat_is_connected(goat_handle);
 int goat_get_connected_hostname(goat_handle, char **);
