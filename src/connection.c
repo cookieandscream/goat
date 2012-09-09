@@ -231,3 +231,66 @@ void _conn_pump_write_queue(goat_connection *conn) {
         }
     }
 }
+
+// FIXME function name... this isn't really pumping the queue so much as its populating it
+void _conn_pump_read_queue(goat_connection *conn) {
+    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+
+    char buf[516], saved[516] = {0};
+    ssize_t bytes;
+
+    bytes = read(conn->socket, buf, sizeof(buf));
+    while (bytes > 0) {
+        const char const *end = &buf[bytes];
+        char *curr = buf, *next = NULL;
+
+        while (curr != end) {
+            next = curr;
+            while (next != end && *(next++) != '\x0a') ;
+
+            if (*(next - 1) == '\x0a') {
+                // found a complete line, queue it
+                size_t saved_len = strnlen(saved, sizeof(saved));
+                size_t len = next - curr;
+
+                str_queue_entry *n = malloc(sizeof(str_queue_entry) + saved_len + len + 1);
+                n->len = len;
+                n->str[0] = '\0';
+                if (saved[0] != '\0') {
+                    strncat(n->str, saved, saved_len);
+                    memset(saved, 0, sizeof(saved));
+                }
+                strncat(n->str, curr, len);
+                STAILQ_INSERT_TAIL(&conn->read_queue, n, entries);
+            }
+            else {
+                // found a partial line, save it for the next read
+                assert(next == end);
+                strncpy(saved, curr, next - curr);
+                saved[next - curr] = '\0';
+            }
+
+            curr = next;
+        }
+
+        bytes = read(conn->socket, buf, sizeof(buf));
+    }
+
+    if (saved[0] != '\0') {
+        // no \r\n at end of last read, queue it anyway
+        size_t len = strnlen(saved, sizeof(saved));
+
+        str_queue_entry *n = malloc(sizeof(str_queue_entry) + len + 1);
+        n->len = len;
+        strncpy(n->str, saved, len);
+        n->str[len] = '\0';
+        STAILQ_INSERT_TAIL(&conn->read_queue, n, entries);
+
+        memset(saved, 0, sizeof(saved));
+    }
+
+    if (bytes == 0) {
+        // FIXME disconnected
+        conn->state = GOAT_CONN_DISCONNECTING;
+    }
+}
