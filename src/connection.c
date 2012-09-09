@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "connection.h"
-#include "connsm.h"
+#include "sm.h"
 
 static goat_conn_state _conn_pump_read_queue(goat_connection *);
 static goat_conn_state _conn_pump_write_queue(goat_connection *);

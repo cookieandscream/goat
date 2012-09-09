@@ -12,12 +12,14 @@
 #include "goat.h"
 
 typedef enum {
-    GOAT_CONN_ERROR         = -1,
     GOAT_CONN_DISCONNECTED  = 0,
     GOAT_CONN_RESOLVING,
     GOAT_CONN_CONNECTING,
     GOAT_CONN_CONNECTED,
     GOAT_CONN_DISCONNECTING,
+
+    // keep error as last
+    GOAT_CONN_ERROR
 } goat_conn_state;
 
 typedef struct str_queue_entry_s {

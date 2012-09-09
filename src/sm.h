@@ -1,5 +1,5 @@
-#ifndef GOAT_CONNSM_H
-#define GOAT_CONNSM_H
+#ifndef GOAT_SM_H
+#define GOAT_SM_H
 
 #define ST_ENTER_NAME(name)      _state_##name##_enter
 #define ST_EXECUTE_NAME(name)    _state_##name##_execute
