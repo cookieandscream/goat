@@ -203,6 +203,23 @@ void _state_connected(goat_connection *conn, int socket_readable, int socket_wri
 void _state_disconnecting(goat_connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTING);
     // any processing we need to do during disconnect
-    // FIXME clear read/write queues
+
+    str_queue_entry *n1, *n2;
+    n1 = STAILQ_FIRST(&conn->read_queue);
+    while (n1 != NULL) {
+        n2 = STAILQ_NEXT(n1, entries);
+        free(n1);
+        n1 = n2;
+    }
+    STAILQ_INIT(&conn->read_queue);
+
+    n1 = STAILQ_FIRST(&conn->write_queue);
+    while (n1 != NULL) {
+        n2 = STAILQ_NEXT(n1, entries);
+        free(n1);
+        n1 = n2;
+    }
+    STAILQ_INIT(&conn->write_queue);
+
     conn->state = GOAT_CONN_DISCONNECTED;
 }
