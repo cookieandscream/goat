@@ -36,6 +36,7 @@ typedef struct {
     struct sockaddr *address;
     socklen_t address_len;
     goat_conn_state state;
+    void *state_data;
     int ssl;
     str_queue_head write_queue;
     str_queue_head read_queue;

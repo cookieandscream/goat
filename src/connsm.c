@@ -14,6 +14,7 @@ static goat_conn_state _conn_pump_write_queue(goat_connection *);
 STATE_EXECUTE(DISCONNECTED) {
     assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTED);
     // no automatic progression to any other state
+    return conn->state;
 }
 
 STATE_EXECUTE(RESOLVING) {
@@ -21,15 +22,19 @@ STATE_EXECUTE(RESOLVING) {
     // see if we've got a result yet
     if (0) {
         // got a result!  start connecting
-        conn->state = GOAT_CONN_CONNECTING;
+        return GOAT_CONN_CONNECTING;
     }
+
+    return conn->state;
 }
 
 STATE_EXECUTE(CONNECTING) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTING);
     if (socket_writeable) {
-        conn->state = GOAT_CONN_CONNECTED;
+        return GOAT_CONN_CONNECTED;
     }
+
+    return conn->state;
 }
 
 STATE_EXECUTE(CONNECTED) {
@@ -72,7 +77,7 @@ STATE_EXECUTE(DISCONNECTING) {
 STATE_EXECUTE(ERROR) {
     assert(conn != NULL && conn->state == GOAT_CONN_ERROR);
 
-    // recover to newly-initialised state
+    // FIXME recover to newly-initialised state
 
     return GOAT_CONN_DISCONNECTED;
 }

@@ -49,29 +49,39 @@ int conn_destroy(goat_connection *conn) {
 int conn_wants_read(const goat_connection *conn) {
     assert(conn != NULL);
 
-    return conn->state >= GOAT_CONN_CONNECTING;
+    switch (conn->state) {
+        case GOAT_CONN_CONNECTING:
+        case GOAT_CONN_CONNECTED:
+        case GOAT_CONN_DISCONNECTING:
+            return 1;
+
+        default:
+            return 0;
+    }
 }
 
 int conn_wants_write(const goat_connection *conn) {
     assert(conn != NULL);
-    if (conn->state == GOAT_CONN_CONNECTING) {
-        return 1;
-    }
-    else if (conn->state == GOAT_CONN_CONNECTED && !STAILQ_EMPTY(&conn->write_queue)) {
-        return 1;
-    }
-    else {
-        return 0;
+    switch (conn->state) {
+        case GOAT_CONN_CONNECTED:
+            if (STAILQ_EMPTY(&conn->write_queue))  return 0;
+            /* fall through */
+        case GOAT_CONN_CONNECTING:
+            return 1;
+
+        default:
+            return 0;
     }
 }
 
 int conn_wants_timeout(const goat_connection *conn) {
     assert(conn != NULL);
-    if (conn->state == GOAT_CONN_RESOLVING) {
-        return 1;
-    }
-    else {
-        return 0;
+    switch (conn->state) {
+        case GOAT_CONN_RESOLVING:
+            return 1;
+
+        default:
+            return 0;
     }
 }
 
@@ -151,4 +161,3 @@ int conn_queue_message(
         return -1;
     }
 }
-
