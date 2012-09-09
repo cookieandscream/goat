@@ -70,6 +70,7 @@ int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writ
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
         switch (conn->state) {
+            case GOAT_CONN_DISCONNECTED:
             case GOAT_CONN_RESOLVING:
             case GOAT_CONN_CONNECTING:
             case GOAT_CONN_CONNECTED:
@@ -77,6 +78,8 @@ int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writ
                 do_state[conn->state](conn, socket_readable, socket_writeable);
                 break;
 
+            default:
+                assert(0 == "shouldn't get here");
             case GOAT_CONN_ERROR:
                 break;
         }
