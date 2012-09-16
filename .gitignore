@@ -1,5 +1,5 @@
 # editor swap/temp files
-.*.swp
+.*.sw*
 
 # compilation output
 *.o
