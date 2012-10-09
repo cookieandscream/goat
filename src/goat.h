@@ -1,45 +1,51 @@
 #ifndef GOAT_H
 #define GOAT_H
 
-typedef struct s_goat_context goat_context;
+typedef struct s_goat_context goat_context_t;
 
-typedef void (*goat_callback)(
-    goat_context *,
-    int,
-    const char *restrict,
-    const char *restrict,
-    const char **restrict
+typedef void (*goat_callback_t)(
+    goat_context_t          *context,
+    int                     connection,
+    const char *restrict    prefix,
+    const char *restrict    command,
+    const char **restrict   params
 );
 
 typedef enum {
     GOAT_EVENT_GENERIC,
-} goat_event;
+    GOAT_EVENT_LAST /* don't use */
+} goat_event_t;
 
-goat_context *goat_context_new();
-int goat_context_delete(goat_context *);
+typedef enum {
+    // ...
+} goat_error_t;
 
-const char *goat_error(goat_context *);
+goat_context_t *goat_context_new();
+int goat_context_delete(goat_context_t *context);
 
-int *goat_connection_new(goat_context *);
-int goat_connection_delete(goat_context *, int);
+goat_error_t goat_error(goat_context_t *context);
+const char *goat_strerror(goat_error_t error);
 
-int goat_connect(goat_context *restrict, int, const char *restrict, int, int);
-int goat_disconnect(goat_context *restrict, int);
-int goat_is_connected(goat_context *restrict, int);
-int goat_get_hostname(goat_context *restrict, int, char **restrict);
+int goat_connection_new(goat_context_t *context);
+int goat_connection_delete(goat_context_t *context, int connection);
+
+int goat_connect(goat_context_t *context, int connection, const char *hostname, int port, int ssl);
+int goat_disconnect(goat_context_t *connect, int connection);
+int goat_is_connected(goat_context_t *connect, int connection);
+int goat_get_hostname(goat_context_t *connect, int connection, char **hostname);
 
 int goat_send_message(
-    goat_context *restrict,
-    int,
-    const char *restrict,
-    const char *restrict,
-    const char **restrict
+    goat_context_t          *context,
+    int                     connection,
+    const char *restrict    prefix,
+    const char *restrict    command,
+    const char **restrict   params
 );
 
-int goat_install_callback(goat_context *restrict, goat_event, goat_callback);
-int goat_uninstall_callback(goat_context *restrict, goat_event, goat_callback);
+int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
+int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
 
-int goat_tick(goat_context *restrict, struct timeval *restrict);
-int goat_dispatch_events(goat_context *restrict);
+int goat_tick(goat_context_t *context, struct timeval *timeout);
+int goat_dispatch_events(goat_context_t *context);
 
 #endif
