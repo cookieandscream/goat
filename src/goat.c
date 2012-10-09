@@ -1,12 +1,47 @@
 #include <config.h>
 
 #include <fcntl.h>
+#include <pthread.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "goat.h"
-#include "core.h"
 
+#include "connection.h"
+#include "event.h"
+
+typedef struct s_goat_connection goat_connection_t; // FIXME connection.h
+
+struct s_goat_context {
+    goat_connection_t   **m_connection_pool;
+    size_t              m_connection_pool_size;
+    pthread_mutex_t     m_connection_pool_mutex;
+    goat_callback_t     *m_callbacks;
+    goat_error_t        m_error;
+};
+
+goat_context_t *goat_context_new() {
+    goat_context_t *context = malloc(sizeof goat_context_t);
+    if (!context)  return NULL;
+
+    // FIXME initialise connection pool
+
+    if ((context->m_callbacks = malloc(sizeof goat_callback_t * GOAT_EVENT_LAST))) {
+        // FIXME install default callbacks
+    }
+    else {
+        goto cleanup;
+    }
+
+    return context;
+
+cleanup:
+    free(context);
+    return NULL;
+}
+
+#if 0
 int core_thread_notify_fd;
 pthread_t core_thread;
 
@@ -86,3 +121,4 @@ int goat_install_callback(goat_event event, goat_callback callback) {
 int goat_uninstall_callback(goat_event event, goat_callback callback) {
     return -1;
 }
+#endif

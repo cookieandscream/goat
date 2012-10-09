@@ -1,6 +1,8 @@
 #ifndef GOAT_H
 #define GOAT_H
 
+#include <sys/time.h> /* struct timeval */
+
 typedef struct s_goat_context goat_context_t;
 
 typedef void (*goat_callback_t)(
@@ -13,11 +15,14 @@ typedef void (*goat_callback_t)(
 
 typedef enum {
     GOAT_EVENT_GENERIC,
-    GOAT_EVENT_LAST /* don't use */
+
+    GOAT_EVENT_LAST /* don't use; keep last */
 } goat_event_t;
 
 typedef enum {
-    // ...
+    GOAT_E_NONE = 0,
+
+    GOAT_E_LAST /* don't use; keep last */
 } goat_error_t;
 
 goat_context_t *goat_context_new();
