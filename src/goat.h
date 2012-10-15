@@ -50,6 +50,7 @@ int goat_send_message(
 int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
 int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
 
+int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds);
 int goat_tick(goat_context_t *context, struct timeval *timeout);
 int goat_dispatch_events(goat_context_t *context);
 
