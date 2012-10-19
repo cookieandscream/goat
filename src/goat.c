@@ -116,6 +116,63 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
     }
 }
 
+int goat_tick(goat_context_t *context, struct timeval *timeout) {
+    fd_set readfds, writefds;
+    int nfds = -1;
+    int events = 0;
+
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+
+    if (0 == pthread_rwlock_tryrdlock(&context->m_rwlock)) {
+        if (context->m_connections_count > 0) {
+            for (size_t i = 0; i < context->m_connections_size; i++) {
+                if (context->m_connections[i] != NULL) {
+                    goat_connection_t *const conn = context->m_connections[i];
+
+                    if (conn_wants_read(conn)) {
+                        nfds = (conn->socket > nfds ? conn->socket : nfds);
+                        FD_SET(conn->socket, &readfds);
+                    }
+
+                    if (conn_wants_write(conn)) {
+                        nfds = (conn->socket > nfds ? conn->socket : nfds);
+                        FD_SET(conn->socket, &writefds);
+                    }
+                }
+            }
+        }
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+    }
+
+    // we unlock here because the select might block indefinitely,
+    // and we don't want to do that while holding a lock
+
+    if (select(nfds + 1, &readfds, &writefds, NULL, timeout) >= 0) {
+        if (0 == pthread_rwlock_tryrdlock(&context->m_rwlock)) {
+            if (context->m_connections_count > 0) {
+                for (size_t i = 0; i < context->m_connections_size; i++) {
+                    if (context->m_connections[i] != NULL) {
+                        goat_connection_t *conn = context->m_connections[i];
+
+                        int read_ready = FD_ISSET(conn->socket, &readfds);
+                        int write_ready = FD_ISSET(conn->socket, &writefds);
+
+                        // FIXME advance the connection state machine
+
+                        events += 1; // FIXME
+                    }
+                }
+            }
+
+            pthread_rwlock_unlock(&context->m_rwlock);
+        }
+    }
+
+    return events;
+}
+
 #if 0
 int core_thread_notify_fd;
 pthread_t core_thread;
