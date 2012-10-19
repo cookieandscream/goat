@@ -14,7 +14,7 @@ typedef void (*goat_callback_t)(
 );
 
 typedef enum {
-    GOAT_EVENT_GENERIC,
+    GOAT_EVENT_GENERIC = 0,
 
     GOAT_EVENT_LAST /* don't use; keep last */
 } goat_event_t;

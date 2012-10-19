@@ -40,10 +40,7 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    if ((context->m_callbacks = malloc(sizeof(goat_callback_t) * GOAT_EVENT_LAST))) {
-        // FIXME install default callbacks
-    }
-    else {
+    if (NULL == (context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(goat_callback_t)))) {
         goto cleanup;
     }
 
@@ -290,8 +287,38 @@ int goat_dispatch_events(goat_context_t *context) {
     return 0;
 }
 
-#if 0
+int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback) {
+    assert(context != NULL);
+    assert(event >= GOAT_EVENT_GENERIC);
+    assert(event < GOAT_EVENT_LAST);
 
+    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
+        context->m_callbacks[event] = callback;
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+        return 0;
+    }
+    else {
+        return -1;
+    }
+}
+
+int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback) {
+    assert(context != NULL);
+    assert(event >= GOAT_EVENT_GENERIC);
+    assert(event < GOAT_EVENT_LAST);
+
+    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
+        context->m_callbacks[event] = NULL;
+        pthread_rwlock_unlock(&context->m_rwlock);
+        return 0;
+    }
+    else {
+        return -1;
+    }
+}
+
+#if 0
 int goat_send_message(
         goat_handle handle,
         const char *restrict prefix,
@@ -302,14 +329,6 @@ int goat_send_message(
     //   prefix/command cannot contain spaces
     //   if a param contains spaces it must be the last param
     //   sum of lengths must be <= 510... long line handling?
-    return -1;
-}
-
-int goat_install_callback(goat_event event, goat_callback callback) {
-    return -1;
-}
-
-int goat_uninstall_callback(goat_event event, goat_callback callback) {
     return -1;
 }
 #endif
