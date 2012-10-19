@@ -61,6 +61,8 @@ int conn_reset_error(goat_connection_t *conn);
 
 int conn_queue_message(goat_connection_t *restrict, const char *restrict, const char *restrict, const char **restrict);
 
+char *conn_pop_message(goat_connection_t *conn);
+
 int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable);
 
 #endif

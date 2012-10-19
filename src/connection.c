@@ -215,6 +215,26 @@ int conn_queue_message(
     }
 }
 
+char *conn_pop_message(goat_connection_t *conn) {
+    assert(conn != NULL);
+
+    char *message = NULL;
+
+    str_queue_entry_t *node = STAILQ_FIRST(&conn->m_read_queue);
+
+    if (node != NULL && node->has_eol) {
+        if (NULL != (message = malloc(node->len + 1))) {
+            strncpy(message, node->str, node->len);
+            message[node->len] = '\0';
+
+            STAILQ_REMOVE_HEAD(&conn->m_read_queue, entries);
+            free(node);
+        }
+    }
+
+    return message;
+}
+
 ssize_t _conn_send_data(goat_connection_t *conn) {
     assert(conn != NULL && conn->m_state == GOAT_CONN_CONNECTED);
     ssize_t total_bytes_sent = 0;
