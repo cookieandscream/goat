@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -202,8 +203,16 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
         ssize_t wrote = write(conn->socket, node->str, node->len);
 
         if (wrote < 0) {
-            // FIXME write failed for some reason
-            return total_bytes_sent ? total_bytes_sent : -1;
+            int e = errno;
+            switch (e) {
+                case EAGAIN:
+                case EWOULDBLOCK:
+                case EINTR:
+                    return total_bytes_sent;
+
+                default:
+                    return -1;
+            }
         }
         else if (wrote == 0) {
             // socket has been disconnected
