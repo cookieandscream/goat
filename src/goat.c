@@ -128,6 +128,34 @@ int goat_connection_new(goat_context_t *context) {
     return handle;
 }
 
+int goat_connection_delete(goat_context_t *context, int connection) {
+    assert(context != NULL);
+    assert(connection >= 0);
+    assert(connection < context->m_connections_size);
+
+    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
+        if (context->m_connections[connection] != NULL) {
+            goat_connection_t *const conn = context->m_connections[connection];
+
+            context->m_connections[connection] = NULL;
+            -- context->m_connections_count;
+
+            pthread_rwlock_unlock(&context->m_rwlock);
+
+            conn_destroy(conn);
+            free(conn);
+            return 0;
+        }
+        else {
+            pthread_rwlock_unlock(&context->m_rwlock);
+            return -1;
+        }
+    }
+    else {
+        return -1;
+    }
+}
+
 int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
     assert(context != NULL);
     assert(readfds != NULL);
