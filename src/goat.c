@@ -13,19 +13,31 @@
 
 typedef struct s_goat_connection goat_connection_t; // FIXME connection.h
 
+const size_t CONN_ALLOC_INCR = 16;
+
 struct s_goat_context {
-    goat_connection_t   **m_connection_pool;
-    size_t              m_connection_pool_size;
-    pthread_mutex_t     m_connection_pool_mutex;
+    pthread_rwlock_t    m_rwlock;
+    goat_connection_t   **m_connections;
+    size_t              m_connections_size;
+    pthread_mutex_t     m_connections_count;
     goat_callback_t     *m_callbacks;
     goat_error_t        m_error;
 };
 
 goat_context_t *goat_context_new() {
-    goat_context_t *context = malloc(sizeof goat_context_t);
+    // we don't need to lock in here, because no other thread has a pointer to this context yet
+    goat_context_t *context = calloc(1, sizeof goat_context_t);
     if (!context)  return NULL;
 
-    // FIXME initialise connection pool
+    if (0 != pthread_rwlock_init(&context->m_rwlock, NULL))  goto cleanup;
+
+    if ((m_connections = calloc(CONN_ALLOC_INCR, sizeof goat_connection_t *))) {
+        context->m_connections_size = CONN_ALLOC_INCR;
+        context->m_connections_count = 0;
+    }
+    else {
+        goto cleanup;
+    }
 
     if ((context->m_callbacks = malloc(sizeof goat_callback_t * GOAT_EVENT_LAST))) {
         // FIXME install default callbacks
@@ -37,6 +49,9 @@ goat_context_t *goat_context_new() {
     return context;
 
 cleanup:
+    if (context->m_callbacks)  free(context->m_callbacks);
+    if (context->m_connections)  free(context->m_connections);
+    pthread_rwlock_destroy(&context->m_rwlock);
     free(context);
     return NULL;
 }
