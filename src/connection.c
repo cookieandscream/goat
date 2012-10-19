@@ -110,11 +110,11 @@ int conn_wants_timeout(const goat_connection_t *conn) {
     }
 }
 
-int conn_pump_socket(goat_connection_t *conn, int socket_readable, int socket_writeable) {
+int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
-        goat_conn_state next_state;
+        goat_conn_state_t next_state;
         switch (conn->state) {
             case GOAT_CONN_DISCONNECTED:
             case GOAT_CONN_RESOLVING:

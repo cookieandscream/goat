@@ -55,6 +55,6 @@ int conn_wants_timeout(const goat_connection_t *);
 
 int conn_queue_message(goat_connection_t *restrict, const char *restrict, const char *restrict, const char **restrict);
 
-int conn_tick(goat_connection_t *conn, int read_ready, int write_ready);
+int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable);
 
 #endif
