@@ -61,8 +61,8 @@ static const state_exit_function state_exit[] = {
 
 int conn_init(goat_connection_t *conn, int handle) {
     assert(conn != NULL);
-    STAILQ_INIT(&conn->write_queue);
-    STAILQ_INIT(&conn->read_queue);
+    STAILQ_INIT(&conn->m_write_queue);
+    STAILQ_INIT(&conn->m_read_queue);
     return -1; // FIXME
 }
 
@@ -74,7 +74,7 @@ int conn_destroy(goat_connection_t *conn) {
 int conn_wants_read(const goat_connection_t *conn) {
     assert(conn != NULL);
 
-    switch (conn->state) {
+    switch (conn->m_state) {
         case GOAT_CONN_CONNECTING:
         case GOAT_CONN_CONNECTED:
         case GOAT_CONN_DISCONNECTING:
@@ -87,9 +87,9 @@ int conn_wants_read(const goat_connection_t *conn) {
 
 int conn_wants_write(const goat_connection_t *conn) {
     assert(conn != NULL);
-    switch (conn->state) {
+    switch (conn->m_state) {
         case GOAT_CONN_CONNECTED:
-            if (STAILQ_EMPTY(&conn->write_queue))  return 0;
+            if (STAILQ_EMPTY(&conn->m_write_queue))  return 0;
             /* fall through */
         case GOAT_CONN_CONNECTING:
             return 1;
@@ -101,7 +101,7 @@ int conn_wants_write(const goat_connection_t *conn) {
 
 int conn_wants_timeout(const goat_connection_t *conn) {
     assert(conn != NULL);
-    switch (conn->state) {
+    switch (conn->m_state) {
         case GOAT_CONN_RESOLVING:
             return 1;
 
@@ -113,53 +113,53 @@ int conn_wants_timeout(const goat_connection_t *conn) {
 int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
 
-    if (0 == pthread_mutex_lock(&conn->mutex)) {
-        conn->socket_is_readable = socket_readable;
-        conn->socket_is_writeable = socket_writeable;
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
+        conn->m_socket_is_readable = socket_readable;
+        conn->m_socket_is_writeable = socket_writeable;
         goat_conn_state_t next_state;
-        switch (conn->state) {
+        switch (conn->m_state) {
             case GOAT_CONN_DISCONNECTED:
             case GOAT_CONN_RESOLVING:
             case GOAT_CONN_CONNECTING:
             case GOAT_CONN_CONNECTED:
             case GOAT_CONN_DISCONNECTING:
             case GOAT_CONN_ERROR:
-                next_state = state_execute[conn->state](conn);
-                if (next_state != conn->state) {
-                    state_exit[conn->state](conn);
-                    conn->state = next_state;
-                    state_enter[conn->state](conn);
+                next_state = state_execute[conn->m_state](conn);
+                if (next_state != conn->m_state) {
+                    state_exit[conn->m_state](conn);
+                    conn->m_state = next_state;
+                    state_enter[conn->m_state](conn);
                 }
                 break;
 
             default:
                 assert(0 == "shouldn't get here");
                 conn->m_error = GOAT_E_STATE;
-                conn->state = GOAT_CONN_ERROR;
-                state_enter[conn->state](conn);
+                conn->m_state = GOAT_CONN_ERROR;
+                state_enter[conn->m_state](conn);
                 break;
         }
-        pthread_mutex_unlock(&conn->mutex);
+        pthread_mutex_unlock(&conn->m_mutex);
     }
 
-    if (conn->state == GOAT_CONN_ERROR)  return -1;
+    if (conn->m_state == GOAT_CONN_ERROR)  return -1;
 
-    return !STAILQ_EMPTY(&conn->read_queue);  // cheap estimate of number of events
+    return !STAILQ_EMPTY(&conn->m_read_queue);  // cheap estimate of number of events
 }
 
 int conn_reset_error(goat_connection_t *conn) {
     assert(conn!= NULL);
 
-    if (0 == pthread_mutex_lock(&conn->mutex)) {
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
         conn->m_error = GOAT_E_NONE;
 
-        if (conn->state == GOAT_CONN_ERROR) {
-            state_exit[conn->state](conn);
-            conn->state = GOAT_CONN_DISCONNECTED;
-            state_enter[conn->state](conn);
+        if (conn->m_state == GOAT_CONN_ERROR) {
+            state_exit[conn->m_state](conn);
+            conn->m_state = GOAT_CONN_DISCONNECTED;
+            state_enter[conn->m_state](conn);
         }
 
-        pthread_mutex_unlock(&conn->mutex);
+        pthread_mutex_unlock(&conn->m_mutex);
         return 0;
     }
     else {
@@ -198,16 +198,16 @@ int conn_queue_message(
 
     strcat(buf, "\x0d\x0a");
 
-    if (0 == pthread_mutex_lock(&conn->mutex)) {
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
         // now stick it on the connection's write queue
         size_t len = strlen(buf);
         str_queue_entry_t *entry = malloc(sizeof(str_queue_entry_t) + len + 1);
         entry->len = len;
         entry->has_eol = 1;
         strcpy(entry->str, buf);
-        STAILQ_INSERT_TAIL(&conn->write_queue, entry, entries);
+        STAILQ_INSERT_TAIL(&conn->m_write_queue, entry, entries);
 
-        pthread_mutex_unlock(&conn->mutex);
+        pthread_mutex_unlock(&conn->m_mutex);
         return 0;
     }
     else {
@@ -216,13 +216,13 @@ int conn_queue_message(
 }
 
 ssize_t _conn_send_data(goat_connection_t *conn) {
-    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_CONNECTED);
     ssize_t total_bytes_sent = 0;
 
-    while (!STAILQ_EMPTY(&conn->write_queue)) {
-        str_queue_entry_t *node = STAILQ_FIRST(&conn->write_queue);
+    while (!STAILQ_EMPTY(&conn->m_write_queue)) {
+        str_queue_entry_t *node = STAILQ_FIRST(&conn->m_write_queue);
 
-        ssize_t wrote = write(conn->socket, node->str, node->len);
+        ssize_t wrote = write(conn->m_socket, node->str, node->len);
 
         if (wrote < 0) {
             int e = errno;
@@ -245,7 +245,7 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
         else if (wrote < node->len) {
             // partial write - reinsert the remainder at the queue head for next
             // time the socket is writeable
-            STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+            STAILQ_REMOVE_HEAD(&conn->m_write_queue, entries);
 
             size_t len = node->len - wrote;
             str_queue_entry_t *tmp = malloc(sizeof(str_queue_entry_t) + len + 1);
@@ -253,14 +253,14 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
             tmp->has_eol = node->has_eol;
             strcpy(tmp->str, &node->str[wrote]);
 
-            STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
+            STAILQ_INSERT_HEAD(&conn->m_write_queue, tmp, entries);
 
             free(node);
             return 1;
         }
         else {
             // wrote the whole thing, remove it from the queue
-            STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
+            STAILQ_REMOVE_HEAD(&conn->m_write_queue, entries);
             total_bytes_sent += wrote;
         }
     }
@@ -269,12 +269,12 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
 }
 
 ssize_t _conn_recv_data(goat_connection_t *conn) {
-    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_CONNECTED);
 
     char buf[516], saved[516] = {0};
     ssize_t bytes, total_bytes_read = 0;
 
-    bytes = read(conn->socket, buf, sizeof(buf));
+    bytes = read(conn->m_socket, buf, sizeof(buf));
     while (bytes > 0) {
         const char const *end = &buf[bytes];
         char *curr = buf, *next = NULL;
@@ -288,7 +288,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
                 // if the previously-queued line was incomplete, dequeue it and combine with this
                 // if we have saved data from the last read, combine with this
                 str_queue_entry_t *const partial = STAILQ_LAST(
-                    &conn->read_queue,
+                    &conn->m_read_queue,
                     s_str_queue_entry,
                     entries
                 );
@@ -306,7 +306,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 
                 if (partial_len) {
                     strncat(node->str, partial->str, partial_len);
-                    STAILQ_REMOVE(&conn->read_queue, partial, s_str_queue_entry, entries);
+                    STAILQ_REMOVE(&conn->m_read_queue, partial, s_str_queue_entry, entries);
                     free(partial);
                 }
 
@@ -317,7 +317,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 
                 strncat(node->str, curr, len);
 
-                STAILQ_INSERT_TAIL(&conn->read_queue, node, entries);
+                STAILQ_INSERT_TAIL(&conn->m_read_queue, node, entries);
             }
             else {
                 // FIXME if >1 read in a row doesn't contain an eol, all data except the last one
@@ -332,7 +332,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
         }
 
         total_bytes_read += bytes;
-        bytes = read(conn->socket, buf, sizeof(buf));
+        bytes = read(conn->m_socket, buf, sizeof(buf));
     }
 
     if (saved[0] != '\0') {
@@ -344,7 +344,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
         n->has_eol = 0;
         strncpy(n->str, saved, len);
         n->str[len] = '\0';
-        STAILQ_INSERT_TAIL(&conn->read_queue, n, entries);
+        STAILQ_INSERT_TAIL(&conn->m_read_queue, n, entries);
 
         memset(saved, 0, sizeof(saved));
     }
@@ -355,9 +355,9 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 CONN_STATE_ENTER(DISCONNECTED) { }
 
 CONN_STATE_EXECUTE(DISCONNECTED) {
-    assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTED);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_DISCONNECTED);
     // no automatic progression to any other state
-    return conn->state;
+    return conn->m_state;
 }
 
 CONN_STATE_EXIT(DISCONNECTED) { }
@@ -367,14 +367,14 @@ CONN_STATE_ENTER(RESOLVING) {
 }
 
 CONN_STATE_EXECUTE(RESOLVING) {
-    assert(conn != NULL && conn->state == GOAT_CONN_RESOLVING);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_RESOLVING);
     // see if we've got a result yet
     if (0) {
         // got a result!  start connecting
         return GOAT_CONN_CONNECTING;
     }
 
-    return conn->state;
+    return conn->m_state;
 }
 
 CONN_STATE_EXIT(RESOLVING) {
@@ -386,12 +386,12 @@ CONN_STATE_ENTER(CONNECTING) {
 }
 
 CONN_STATE_EXECUTE(CONNECTING) {
-    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTING);
-    if (conn->socket_is_writeable) {
+    assert(conn != NULL && conn->m_state == GOAT_CONN_CONNECTING);
+    if (conn->m_socket_is_writeable) {
         return GOAT_CONN_CONNECTED;
     }
 
-    return conn->state;
+    return conn->m_state;
 }
 
 CONN_STATE_EXIT(CONNECTING) { }
@@ -399,20 +399,20 @@ CONN_STATE_EXIT(CONNECTING) { }
 CONN_STATE_ENTER(CONNECTED) { }
 
 CONN_STATE_EXECUTE(CONNECTED) {
-    assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_CONNECTED);
 
-    if (conn->socket_is_readable) {
+    if (conn->m_socket_is_readable) {
         if (_conn_recv_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
     }
-    if (conn->socket_is_writeable) {
+    if (conn->m_socket_is_writeable) {
         if (_conn_send_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
     }
 
-    return conn->state;
+    return conn->m_state;
 }
 
 CONN_STATE_EXIT(CONNECTED) { }
@@ -420,25 +420,25 @@ CONN_STATE_EXIT(CONNECTED) { }
 CONN_STATE_ENTER(DISCONNECTING) { }
 
 CONN_STATE_EXECUTE(DISCONNECTING) {
-    assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTING);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_DISCONNECTING);
     // any processing we need to do during disconnect
 
     str_queue_entry_t *n1, *n2;
-    n1 = STAILQ_FIRST(&conn->read_queue);
+    n1 = STAILQ_FIRST(&conn->m_read_queue);
     while (n1 != NULL) {
         n2 = STAILQ_NEXT(n1, entries);
         free(n1);
         n1 = n2;
     }
-    STAILQ_INIT(&conn->read_queue);
+    STAILQ_INIT(&conn->m_read_queue);
 
-    n1 = STAILQ_FIRST(&conn->write_queue);
+    n1 = STAILQ_FIRST(&conn->m_write_queue);
     while (n1 != NULL) {
         n2 = STAILQ_NEXT(n1, entries);
         free(n1);
         n1 = n2;
     }
-    STAILQ_INIT(&conn->write_queue);
+    STAILQ_INIT(&conn->m_write_queue);
 
     return GOAT_CONN_DISCONNECTED;
 }
@@ -448,7 +448,7 @@ CONN_STATE_EXIT(DISCONNECTING) { }
 CONN_STATE_ENTER(ERROR) { }
 
 CONN_STATE_EXECUTE(ERROR) {
-    assert(conn != NULL && conn->state == GOAT_CONN_ERROR);
+    assert(conn != NULL && conn->m_state == GOAT_CONN_ERROR);
 
 
     return GOAT_CONN_ERROR;

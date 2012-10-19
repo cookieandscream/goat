@@ -190,10 +190,10 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
                 if (context->m_connections[i] != NULL) {
                     goat_connection_t *const conn = context->m_connections[i];
                     if (conn_wants_read(conn)) {
-                        FD_SET(conn->socket, readfds);
+                        FD_SET(conn->m_socket, readfds);
                     }
                     if (conn_wants_write(conn)) {
-                        FD_SET(conn->socket, writefds);
+                        FD_SET(conn->m_socket, writefds);
                     }
                 }
             }
@@ -222,13 +222,13 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
                     goat_connection_t *const conn = context->m_connections[i];
 
                     if (conn_wants_read(conn)) {
-                        nfds = (conn->socket > nfds ? conn->socket : nfds);
-                        FD_SET(conn->socket, &readfds);
+                        nfds = (conn->m_socket > nfds ? conn->m_socket : nfds);
+                        FD_SET(conn->m_socket, &readfds);
                     }
 
                     if (conn_wants_write(conn)) {
-                        nfds = (conn->socket > nfds ? conn->socket : nfds);
-                        FD_SET(conn->socket, &writefds);
+                        nfds = (conn->m_socket > nfds ? conn->m_socket : nfds);
+                        FD_SET(conn->m_socket, &writefds);
                     }
                 }
             }
@@ -247,8 +247,8 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
                     if (context->m_connections[i] != NULL) {
                         goat_connection_t *const conn = context->m_connections[i];
 
-                        int read_ready = FD_ISSET(conn->socket, &readfds);
-                        int write_ready = FD_ISSET(conn->socket, &writefds);
+                        int read_ready = FD_ISSET(conn->m_socket, &readfds);
+                        int write_ready = FD_ISSET(conn->m_socket, &writefds);
 
                         int conn_events = conn_tick(conn, read_ready, write_ready);
 
