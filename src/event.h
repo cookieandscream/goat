@@ -4,7 +4,7 @@
 #include <config.h>
 
 typedef struct {
-    goat_handle handle;
+    int handle;
     size_t message_len;
     char message[516];
 } goat_event_queue_entry;
@@ -13,7 +13,7 @@ typedef struct {
 
 goat_event_queue_entry goat_event_queue[GOAT_EVENT_QUEUE_SIZE];
 
-int event_queue_push(goat_handle, size_t, const char *);
+int event_queue_push(int, size_t, const char *);
 int event_queue_pop(/*TODO*/);
 
 #endif
