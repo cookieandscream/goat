@@ -1,5 +1,6 @@
 #include <config.h>
 
+#include <assert.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -54,6 +55,34 @@ cleanup:
     pthread_rwlock_destroy(&context->m_rwlock);
     free(context);
     return NULL;
+}
+
+int goat_context_delete(goat_context_t *context) {
+    assert(context != NULL);
+
+    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
+        assert(context->m_callbacks != NULL);
+        free(context->m_callbacks);
+        context->m_callbacks = NULL;
+
+        for (size_t i = 0; i < context->m_connections_size; i++) {
+            if (context->m_connections[i] != NULL) {
+                conn_destroy(context->m_connections[i]);
+                context->m_connections[i] = NULL;
+                -- context->m_connections_count;
+            }
+        }
+        free(context->m_connections);
+        context->m_connections = NULL;
+        context->m_connections_size;
+        assert(context->m_connections_count == 0);
+
+        pthread_wrlock_unlock(&context->m_rwlock);
+        pthread_wrlock_destroy(&context->m_rwlock);
+    }
+    else {
+        return -1;
+    }
 }
 
 #if 0
