@@ -228,7 +228,9 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
             int e = errno;
             switch (e) {
                 case EAGAIN:
+#if EAGAIN != EWOULDBLOCK
                 case EWOULDBLOCK:
+#endif
                 case EINTR:
                     return total_bytes_sent;
 
