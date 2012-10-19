@@ -22,6 +22,7 @@ typedef enum {
 typedef enum {
     GOAT_E_NONE = 0,        // everything is fine
     GOAT_E_ERRORINV = 1,    // invalid argument passed to goat_error
+    GOAT_E_STATE = 2,       // invalid connection state
 
     GOAT_E_LAST /* don't use; keep last */
 } goat_error_t;

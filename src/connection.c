@@ -134,6 +134,9 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
 
             default:
                 assert(0 == "shouldn't get here");
+                conn->m_error = GOAT_E_STATE;
+                conn->state = GOAT_CONN_ERROR;
+                state_enter[conn->state](conn);
                 break;
         }
         pthread_mutex_unlock(&conn->mutex);
@@ -142,6 +145,25 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
     if (conn->state == GOAT_CONN_ERROR)  return -1;
 
     return !STAILQ_EMPTY(&conn->read_queue);  // cheap estimate of number of events
+}
+
+int conn_reset_error(goat_connection_t *conn) {
+    assert(conn!= NULL);
+
+    if (0 == pthread_mutex_lock(&conn->mutex)) {
+        conn->m_error = GOAT_E_NONE;
+
+        if (conn->state == GOAT_CONN_ERROR) {
+            state_exit[conn->state](conn);
+            conn->state = GOAT_CONN_DISCONNECTED;
+            state_enter[conn->state](conn);
+        }
+
+        pthread_mutex_unlock(&conn->mutex);
+    }
+    else {
+        return -1;
+    }
 }
 
 int conn_queue_message(
@@ -426,9 +448,10 @@ CONN_STATE_ENTER(ERROR) { }
 CONN_STATE_EXECUTE(ERROR) {
     assert(conn != NULL && conn->state == GOAT_CONN_ERROR);
 
-    // FIXME recover to newly-initialised state
 
-    return GOAT_CONN_DISCONNECTED;
+    return GOAT_CONN_ERROR;
 }
 
-CONN_STATE_EXIT(ERROR) { }
+CONN_STATE_EXIT(ERROR) {
+    // FIXME recover to newly-initialised state
+}
