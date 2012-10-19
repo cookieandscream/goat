@@ -11,6 +11,7 @@
 #include "goat.h"
 
 #include "connection.h"
+#include "error.h"
 #include "event.h"
 
 const size_t CONN_ALLOC_INCR = 16;
@@ -94,6 +95,10 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
     if (context->m_connections[connection] == NULL)  return GOAT_E_ERRORINV;
 
     return context->m_connections[connection]->m_error;
+}
+
+const char *goat_strerror(goat_error_t error) {
+    return error_strings[error];
 }
 
 int goat_reset_error(goat_context_t *context, int connection) {
