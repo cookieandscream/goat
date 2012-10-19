@@ -178,6 +178,7 @@ int conn_queue_message(
         size_t len = strlen(buf);
         str_queue_entry_t *entry = malloc(sizeof(str_queue_entry_t) + len + 1);
         entry->len = len;
+        entry->has_eol = 1;
         strcpy(entry->str, buf);
         STAILQ_INSERT_TAIL(&conn->write_queue, entry, entries);
 
@@ -213,6 +214,7 @@ int _conn_pump_write_queue(goat_connection_t *conn) {
             size_t len = n->len - wrote;
             str_queue_entry_t *tmp = malloc(sizeof(str_queue_entry_t) + len + 1);
             tmp->len = len;
+            tmp->has_eol = 1;
             strcpy(tmp->str, &n->str[wrote]);
 
             STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
@@ -251,6 +253,7 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
 
                 str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + saved_len + len + 1);
                 n->len = len;
+                n->has_eol = 1;
                 n->str[0] = '\0';
                 if (saved[0] != '\0') {
                     strncat(n->str, saved, saved_len);
@@ -278,6 +281,7 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
 
         str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + len + 1);
         n->len = len;
+        n->has_eol = 0;
         strncpy(n->str, saved, len);
         n->str[len] = '\0';
         STAILQ_INSERT_TAIL(&conn->read_queue, n, entries);

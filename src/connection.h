@@ -24,8 +24,9 @@ typedef enum {
 
 typedef struct s_str_queue_entry {
     STAILQ_ENTRY(s_str_queue_entry) entries;
-    size_t len;
-    char str[0];
+    size_t  len;
+    int     has_eol;
+    char    str[0];
 } str_queue_entry_t;
 
 typedef STAILQ_HEAD(s_str_queue_head, s_str_queue_entry) str_queue_head_t;
