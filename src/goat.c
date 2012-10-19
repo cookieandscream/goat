@@ -173,6 +173,29 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
     return events;
 }
 
+int goat_dispatch_events(goat_context_t *context) {
+    assert(context != NULL);
+
+    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
+        if (context->m_connections_count > 0) {
+            for (size_t i = 0; i < m_connections_size; i++) {
+                if (context->m_connections[i] != NULL) {
+                    goat_connection_t *const conn = context->m_connections[i];
+
+                    // FIXME process events on the connection, call callbacks
+                }
+            }
+        }
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+    }
+    else {
+        return -1;
+    }
+
+    return 0;
+}
+
 #if 0
 int core_thread_notify_fd;
 pthread_t core_thread;
