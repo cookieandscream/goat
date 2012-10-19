@@ -5,8 +5,6 @@
 
 #include "goat.h"
 
-extern const goat_callback_t event_default_callbacks[];
-
 int event_process(goat_context_t *context, int connection, const char *message);
 
 #endif
