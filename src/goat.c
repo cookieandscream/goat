@@ -18,19 +18,19 @@ struct s_goat_context {
     pthread_rwlock_t    m_rwlock;
     goat_connection_t   **m_connections;
     size_t              m_connections_size;
-    pthread_mutex_t     m_connections_count;
+    size_t              m_connections_count;
     goat_callback_t     *m_callbacks;
     goat_error_t        m_error;
 };
 
 goat_context_t *goat_context_new() {
     // we don't need to lock in here, because no other thread has a pointer to this context yet
-    goat_context_t *context = calloc(1, sizeof goat_context_t);
+    goat_context_t *context = calloc(1, sizeof(goat_context_t));
     if (!context)  return NULL;
 
     if (0 != pthread_rwlock_init(&context->m_rwlock, NULL))  goto cleanup;
 
-    if ((m_connections = calloc(CONN_ALLOC_INCR, sizeof goat_connection_t *))) {
+    if ((context->m_connections = calloc(CONN_ALLOC_INCR, sizeof(goat_connection_t *)))) {
         context->m_connections_size = CONN_ALLOC_INCR;
         context->m_connections_count = 0;
     }
@@ -38,7 +38,7 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    if ((context->m_callbacks = malloc(sizeof goat_callback_t * GOAT_EVENT_LAST))) {
+    if ((context->m_callbacks = malloc(sizeof(goat_callback_t) * GOAT_EVENT_LAST))) {
         // FIXME install default callbacks
     }
     else {
@@ -75,8 +75,8 @@ int goat_context_delete(goat_context_t *context) {
         context->m_connections_size;
         assert(context->m_connections_count == 0);
 
-        pthread_wrlock_unlock(&context->m_rwlock);
-        pthread_wrlock_destroy(&context->m_rwlock);
+        pthread_rwlock_unlock(&context->m_rwlock);
+        pthread_rwlock_destroy(&context->m_rwlock);
     }
     else {
         return -1;
@@ -95,13 +95,14 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
 
     if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
         if (context->m_connections_count > 0) {
-            for (size_t i = 0; i < m_connections_size; i++) {
-                if (m_connections[i] != NULL) {
-                    if (conn_wants_read(m_connections[i])) {
-                        FD_SET(m_connections[i]->socket, readfds);
+            for (size_t i = 0; i < context->m_connections_size; i++) {
+                if (context->m_connections[i] != NULL) {
+                    goat_connection_t *const conn = context->m_connections[i];
+                    if (conn_wants_read(conn)) {
+                        FD_SET(conn->socket, readfds);
                     }
-                    if (conn_wants_write(m_connections[i])) {
-                        FD_SET(m_connections[i]->socket, writefds);
+                    if (conn_wants_write(conn)) {
+                        FD_SET(conn->socket, writefds);
                     }
                 }
             }
@@ -176,7 +177,7 @@ int goat_dispatch_events(goat_context_t *context) {
 
     if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
         if (context->m_connections_count > 0) {
-            for (size_t i = 0; i < m_connections_size; i++) {
+            for (size_t i = 0; i < context->m_connections_size; i++) {
                 if (context->m_connections[i] != NULL) {
                     goat_connection_t *const conn = context->m_connections[i];
 
