@@ -273,7 +273,11 @@ int goat_dispatch_events(goat_context_t *context) {
                 if (context->m_connections[i] != NULL) {
                     goat_connection_t *const conn = context->m_connections[i];
 
-                    // FIXME process events on the connection, call callbacks
+                    char *message;
+                    while ((message = conn_pop_message(conn))) {
+                        event_process(context, i, message);
+                        free(message);
+                    }
                 }
             }
         }
