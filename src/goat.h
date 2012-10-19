@@ -40,11 +40,11 @@ int goat_is_connected(goat_context_t *connect, int connection);
 int goat_get_hostname(goat_context_t *connect, int connection, char **hostname);
 
 int goat_send_message(
-    goat_context_t          *context,
-    int                     connection,
-    const char *restrict    prefix,
-    const char *restrict    command,
-    const char **restrict   params
+    goat_context_t  * context,
+    int             connection,
+    const char      *restrict prefix,
+    const char      *restrict command,
+    const char      **restrict params
 );
 
 int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
