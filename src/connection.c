@@ -8,7 +8,7 @@
 #include "connection.h"
 #include "sm.h"
 
-static int _conn_pump_read_queue(goat_connection_t *);
+static ssize_t _conn_recv_data(goat_connection_t *);
 static ssize_t _conn_send_data(goat_connection_t *);
 
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
@@ -233,12 +233,11 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
     return total_bytes_sent;
 }
 
-// FIXME function name... this isn't really pumping the queue so much as its populating it
-int _conn_pump_read_queue(goat_connection_t *conn) {
+ssize_t _conn_recv_data(goat_connection_t *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     char buf[516], saved[516] = {0};
-    ssize_t bytes;
+    ssize_t bytes, total_bytes_read = 0;
 
     bytes = read(conn->socket, buf, sizeof(buf));
     while (bytes > 0) {
@@ -251,21 +250,43 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
 
             if (*(next - 1) == '\x0a') {
                 // found a complete line, queue it
+                // if the previously-queued line was incomplete, dequeue it and combine with this
+                // if we have saved data from the last read, combine with this
+                str_queue_entry_t *const partial = STAILQ_LAST(
+                    &conn->read_queue,
+                    s_str_queue_entry,
+                    entries
+                );
+
+                size_t partial_len = partial->has_eol ? 0 : partial->len;
                 size_t saved_len = strnlen(saved, sizeof(saved));
                 size_t len = next - curr;
 
-                str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + saved_len + len + 1);
-                n->len = len;
-                n->has_eol = 1;
-                n->str[0] = '\0';
-                if (saved[0] != '\0') {
-                    strncat(n->str, saved, saved_len);
+                str_queue_entry_t *node = malloc(
+                    sizeof(str_queue_entry_t) + partial_len + saved_len + len + 1
+                );
+                node->len = partial_len + saved_len + len;
+                node->has_eol = 1;
+                memset(node->str, '\0', node->len + 1);
+
+                if (partial_len) {
+                    strncat(node->str, partial->str, partial_len);
+                    STAILQ_REMOVE(&conn->read_queue, partial, s_str_queue_entry, entries);
+                    free(partial);
+                }
+
+                if (saved_len) {
+                    strncat(node->str, saved, saved_len);
                     memset(saved, 0, sizeof(saved));
                 }
-                strncat(n->str, curr, len);
-                STAILQ_INSERT_TAIL(&conn->read_queue, n, entries);
+
+                strncat(node->str, curr, len);
+
+                STAILQ_INSERT_TAIL(&conn->read_queue, node, entries);
             }
             else {
+                // FIXME if >1 read in a row doesn't contain an eol, all data except the last one
+                // FIXME will be discarded.
                 // found a partial line, save it for the next read
                 assert(next == end);
                 strncpy(saved, curr, next - curr);
@@ -275,11 +296,12 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
             curr = next;
         }
 
+        total_bytes_read += bytes;
         bytes = read(conn->socket, buf, sizeof(buf));
     }
 
     if (saved[0] != '\0') {
-        // no \r\n at end of last read, queue it anyway
+        // no eol at end of last read, queue partial line anyway
         size_t len = strnlen(saved, sizeof(saved));
 
         str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + len + 1);
@@ -292,12 +314,7 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
         memset(saved, 0, sizeof(saved));
     }
 
-    if (bytes == 0) {
-        // FIXME disconnected
-        return 0;
-    }
-
-    return 1;
+    return total_bytes_read;
 }
 
 CONN_STATE_ENTER(DISCONNECTED) { }
@@ -350,7 +367,7 @@ CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     if (s_rd) {
-        if (_conn_pump_read_queue(conn) <= 0) {
+        if (_conn_recv_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
     }
