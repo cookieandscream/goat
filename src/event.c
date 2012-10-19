@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "context.h"
 #include "event.h"
 
 static const goat_callback_t event_default_callbacks[GOAT_EVENT_LAST] = {

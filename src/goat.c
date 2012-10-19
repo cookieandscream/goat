@@ -11,19 +11,11 @@
 #include "goat.h"
 
 #include "connection.h"
+#include "context.h"
 #include "error.h"
 #include "event.h"
 
 const size_t CONN_ALLOC_INCR = 16;
-
-struct s_goat_context {
-    pthread_rwlock_t    m_rwlock;
-    goat_connection_t   **m_connections;
-    size_t              m_connections_size;
-    size_t              m_connections_count;
-    goat_callback_t     *m_callbacks;
-    goat_error_t        m_error;
-};
 
 goat_context_t *goat_context_new() {
     // we don't need to lock in here, because no other thread has a pointer to this context yet
