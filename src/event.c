@@ -50,9 +50,9 @@ int _event_parse_message(const char *message, char **r_prefix, char **r_command,
     size_t len;
     int ret = -1;
 
-    eol = strchr(message, '\x0d');
-    if (eol == NULL)  eol = strchr(message, '\x0a');
-    if (eol == NULL)  eol = strchr(message, '\0');
+    eol = strchr(message, '\0');
+    if (*(eol - 1) == '\x0a')  --eol;
+    if (*(eol - 1) == '\x0d')  --eol;
 
     p1 = message;
 
