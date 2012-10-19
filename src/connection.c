@@ -138,8 +138,9 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
         pthread_mutex_unlock(&conn->mutex);
     }
 
-    // FIXME return an estimate of the number of events pending
-    return (conn->state == GOAT_CONN_ERROR) ? -1 : 0;
+    if (conn->state == GOAT_CONN_ERROR)  return -1;
+
+    return !STAILQ_EMPTY(&conn->read_queue);  // cheap estimate of number of events
 }
 
 int conn_queue_message(
