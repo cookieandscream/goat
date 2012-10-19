@@ -12,8 +12,6 @@
 #include "connection.h"
 #include "event.h"
 
-typedef struct s_goat_connection goat_connection_t; // FIXME connection.h
-
 const size_t CONN_ALLOC_INCR = 16;
 
 struct s_goat_context {
