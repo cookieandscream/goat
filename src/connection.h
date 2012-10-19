@@ -44,6 +44,7 @@ typedef struct {
     str_queue_head_t read_queue;
     int socket_is_readable;
     int socket_is_writeable;
+    goat_error_t m_error;
 } goat_connection_t;
 
 int conn_init(goat_connection_t *connection, int handle);
