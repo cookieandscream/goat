@@ -90,6 +90,31 @@ goat_error_t goat_error(goat_context_t *context) {
     return context->m_error;
 }
 
+int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
+    assert(context != NULL);
+    assert(readfds != NULL);
+    assert(writefds != NULL);
+
+    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
+        if (context->m_connections_count > 0) {
+            for (size_t i = 0; i < m_connections_size; i++) {
+                if (m_connections[i] != NULL) {
+                    if (conn_wants_read(m_connections[i])) {
+                        FD_SET(m_connections[i]->socket, readfds);
+                    }
+                    if (conn_wants_write(m_connections[i])) {
+                        FD_SET(m_connections[i]->socket, writefds);
+                    }
+                }
+            }
+        }
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+    }
+    else {
+        return -1;
+    }
+}
 
 #if 0
 int core_thread_notify_fd;
