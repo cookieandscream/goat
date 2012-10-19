@@ -15,7 +15,7 @@ static const char *const event_commands[] = {
 };
 
 static int _event_commands_cmp(const void *a, const void *b);
-static int _event_parse_message(const char *message, char **prefix, char **command, char ***params);
+static int _event_parse_msg(const char *msg, char **prefix, char **command, char ***params);
 static goat_event_t _event_get_type(const char *prefix, const char *command, const char **params);
 
 int event_process(goat_context_t *context, int connection, const char *message) {
@@ -24,7 +24,7 @@ int event_process(goat_context_t *context, int connection, const char *message) 
 
     char *prefix, *command, **params;
 
-    int ret = _event_parse_message(message, &prefix, &command, &params);
+    int ret = _event_parse_msg(message, &prefix, &command, &params);
     if (ret != 0)  return ret;
 
     goat_event_t event = _event_get_type(prefix, command, params);  // FIXME warning?
@@ -44,101 +44,99 @@ goat_event_t _event_get_type(const char *prefix, const char *command, const char
     return GOAT_EVENT_GENERIC; // FIXME
 }
 
-int _event_parse_message(const char *message, char **r_prefix, char **r_command, char ***r_params) {
+int _event_parse_msg(const char *msg, char **r_prefix, char **r_command, char ***r_params) {
     char *prefix = NULL, *command = NULL, **params = NULL;
-    const char *p1, *p2, *eol;
-    size_t len;
+    char *msg_copy, *remainder, *token, *end;
     int ret = -1;
 
-    eol = strchr(message, '\0');
-    if (*(eol - 1) == '\x0a')  --eol;
-    if (*(eol - 1) == '\x0d')  --eol;
+    remainder = msg_copy = strdup(msg);
+    if (remainder == NULL)  return GOAT_E_NOMEM;
 
-    p1 = message;
+    // chomp crlf
+    end = strchr(remainder, '\0');
+    if (*(end - 1) == '\x0a')  *(--end) = '\0';
+    if (*(end - 1) == '\x0d')  *(--end) = '\0';
 
     // [ ':' prefix SPACE ]
-    if (*p1 == ':') {
-        ++ p1;
-        p2 = strchr(p1, ' ');
-        if (p2 == NULL) { ret = GOAT_E_INVMSG; goto cleanup; }
-        len = p2 - p1;
-
-        prefix = malloc(len + 1);
-        if (prefix == NULL) { ret = GOAT_E_NOMEM; goto cleanup; }
-
-        strncpy(prefix, p1, len);
-        prefix[len] = '\0';
-
-        p1 = p2 + 1;
-        if (p1 >= eol) { ret = GOAT_E_INVMSG; goto cleanup; }
+    if (*remainder == ':') {
+        ++ remainder;
+        if ((token = strsep(&remainder, " "))) {
+            if (*token == '\0') {
+                ret = GOAT_E_INVMSG;
+                goto cleanup;
+            }
+            prefix = strdup(token);
+            if (prefix == NULL) {
+                ret = GOAT_E_NOMEM;
+                goto cleanup;
+            }
+        }
     }
 
     // command
-    p2 = strchr(p1, ' ');
-    if (p2 == NULL)  p2 = eol;
-    len = p2 - p1;
-
-    command = malloc(len + 1);
-    if (command == NULL) { ret = GOAT_E_NOMEM; goto cleanup; }
-
-    strncpy(command, p1, len);
-    command[len] = '\0';
-
-    if (p2 == eol)  goto finished;
-    p1 = p2;
+    if ((token = strsep(&remainder, " "))) {
+        if (*token == '\0') {
+            ret = GOAT_E_INVMSG;
+            goto cleanup;
+        }
+        command = strdup(token);
+        if (command == NULL) {
+            ret = GOAT_E_NOMEM;
+            goto cleanup;
+        }
+    }
+    else {
+        ret = GOAT_E_INVMSG;
+        goto cleanup;
+    }
 
     // *14( SPACE middle ) [ SPACE ":" trailing ]
     // 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
-    params = calloc(16, sizeof(char *));
-    if (params == NULL) { ret = GOAT_E_NOMEM; goto cleanup; }
-    unsigned i = 0;
-    while (i < 14 && *p1 == ' ') {
-        ++ p1;
-        if (*p1 == ':')  goto trailing;
+    if (remainder) {
+        params = calloc(16, sizeof(char *));
+        if (params == NULL) {
+            ret = GOAT_E_NOMEM;
+            goto cleanup;
+        }
 
-        p2 = strchr(p1, ' ');
-        if (p2 == NULL)  p2 = eol;
-        len = p2 - p1;
+        unsigned i = 0;
+        while (i < 14 && remainder != NULL) {
+            if (*remainder == ':')  break;
+            token = strsep(&remainder, " ");
+            params[i] = strdup(token);
+            if (params[i] == NULL) {
+                ret = GOAT_E_NOMEM;
+                goto cleanup;
+            }
+            ++ i;
+        }
 
-        params[i] = malloc(len + 1);
-        if (params[i] == NULL) { ret = GOAT_E_NOMEM; goto cleanup; }
-
-        strncpy(params[i], p1, len);
-        params[i][len] = '\0';
-
-        if (p2 == eol)  goto finished;
-        p1 = p2;
-        ++ i;
+        if (remainder) {
+            if (*remainder == ':')  ++remainder;
+            params[i] = strdup(remainder);
+            if (params[i] == NULL) {
+                ret = GOAT_E_NOMEM;
+                goto cleanup;
+            }
+        }
     }
 
-trailing:
-    ++ p1;
-    p2 = eol;
-    len = p2 - p1;
-
-    params[i] = malloc(len + 1);
-    if (params[i] == NULL) { ret = GOAT_E_NOMEM; goto cleanup; }
-
-    strncpy(params[i], p1, len);
-    params[i][len] = '\0';
-
-finished:
+    free(msg_copy);
     *r_prefix = prefix;
     *r_command = command;
     *r_params = params;
     return 0;
 
 cleanup:
-    if (prefix)  free(prefix);
-    if (command)  free(command);
     if (params) {
         char **p = params;
-        while (*p) {
-            free(*p);
-            ++p;
-        }
+        while (*p)  free(*(p++));
         free(params);
     }
+    if (command)  free(command);
+    if (prefix)  free(prefix);
+
+    free(msg_copy);
     return ret;
 }
 
