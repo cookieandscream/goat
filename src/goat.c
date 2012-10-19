@@ -73,11 +73,12 @@ int goat_context_delete(goat_context_t *context) {
         }
         free(context->m_connections);
         context->m_connections = NULL;
-        context->m_connections_size;
+        context->m_connections_size = 0;
         assert(context->m_connections_count == 0);
 
         pthread_rwlock_unlock(&context->m_rwlock);
         pthread_rwlock_destroy(&context->m_rwlock);
+        return 0;
     }
     else {
         return -1;
@@ -194,6 +195,7 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
         }
 
         pthread_rwlock_unlock(&context->m_rwlock);
+        return 0;
     }
     else {
         return -1;

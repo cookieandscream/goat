@@ -160,6 +160,7 @@ int conn_reset_error(goat_connection_t *conn) {
         }
 
         pthread_mutex_unlock(&conn->mutex);
+        return 0;
     }
     else {
         return -1;
@@ -174,7 +175,6 @@ int conn_queue_message(
 ) {
     assert(conn != NULL);
     char buf[516] = { 0 };
-    size_t len = 0;
 
     // n.b. internal only, so trusts caller to provide valid args
     if (prefix) {
