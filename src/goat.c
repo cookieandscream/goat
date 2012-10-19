@@ -98,7 +98,10 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
 }
 
 const char *goat_strerror(goat_error_t error) {
-    return error_strings[error];
+    assert(error >= GOAT_E_NONE);
+    assert(error < GOAT_E_LAST);
+    if (error >= GOAT_E_NONE && error < GOAT_E_LAST)  return error_strings[error];
+    return NULL;
 }
 
 int goat_reset_error(goat_context_t *context, int connection) {
