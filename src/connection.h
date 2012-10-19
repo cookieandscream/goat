@@ -43,8 +43,8 @@ typedef struct {
     str_queue_head_t read_queue;
 } goat_connection_t;
 
-int conn_init(goat_connection_t *);
-int conn_destroy(goat_connection_t *);
+int conn_init(goat_connection_t *connection, int handle);
+int conn_destroy(goat_connection_t *connection);
 
 int conn_connect(goat_connection_t *); // FIXME
 int conn_disconnect(goat_connection_t *); // FIXME

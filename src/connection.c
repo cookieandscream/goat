@@ -59,7 +59,7 @@ static const state_exit_function state_exit[] = {
     ST_EXIT_NAME(ERROR),
 };
 
-int conn_init(goat_connection_t *conn) {
+int conn_init(goat_connection_t *conn, int handle) {
     assert(conn != NULL);
     STAILQ_INIT(&conn->write_queue);
     STAILQ_INIT(&conn->read_queue);
