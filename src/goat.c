@@ -95,6 +95,17 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
     return context->m_connections[connection]->m_error;
 }
 
+int goat_reset_error(goat_context_t *context, int connection) {
+    assert(context != NULL);
+
+    if (context == NULL)  return -1;
+    if (connection < 0)  context->m_error = GOAT_E_NONE;
+    if (connection >= context->m_connections_size)  return -1;
+    if (context->m_connections[connection] == NULL)  return -1;
+
+    return conn_reset_error(context->m_connections[connection]);
+}
+
 int goat_connection_new(goat_context_t *context) {
     assert(context != NULL);
     goat_connection_t *conn;

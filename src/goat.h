@@ -32,6 +32,7 @@ int goat_context_delete(goat_context_t *context);
 
 goat_error_t goat_error(goat_context_t *context, int);
 const char *goat_strerror(goat_error_t error);
+int goat_reset_error(goat_context_t *context, int connection);
 
 int goat_connection_new(goat_context_t *context);
 int goat_connection_delete(goat_context_t *context, int connection);
