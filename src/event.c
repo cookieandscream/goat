@@ -60,16 +60,15 @@ int _event_parse_msg(const char *msg, char **r_prefix, char **r_command, char **
     // [ ':' prefix SPACE ]
     if (*remainder == ':') {
         ++ remainder;
-        if ((token = strsep(&remainder, " "))) {
-            if (*token == '\0') {
-                ret = GOAT_E_INVMSG;
-                goto cleanup;
-            }
-            prefix = strdup(token);
-            if (prefix == NULL) {
-                ret = GOAT_E_NOMEM;
-                goto cleanup;
-            }
+        token = strsep(&remainder, " ");
+        if (*token == '\0') {
+            ret = GOAT_E_INVMSG;
+            goto cleanup;
+        }
+        prefix = strdup(token);
+        if (prefix == NULL) {
+            ret = GOAT_E_NOMEM;
+            goto cleanup;
         }
     }
 
