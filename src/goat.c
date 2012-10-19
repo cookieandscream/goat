@@ -152,14 +152,14 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
             if (context->m_connections_count > 0) {
                 for (size_t i = 0; i < context->m_connections_size; i++) {
                     if (context->m_connections[i] != NULL) {
-                        goat_connection_t *conn = context->m_connections[i];
+                        goat_connection_t *const conn = context->m_connections[i];
 
                         int read_ready = FD_ISSET(conn->socket, &readfds);
                         int write_ready = FD_ISSET(conn->socket, &writefds);
 
-                        // FIXME advance the connection state machine
+                        int conn_events = conn_tick(conn, read_ready, write_ready);
 
-                        events += 1; // FIXME
+                        if (conn_events > 0)  events += conn_events;
                     }
                 }
             }
