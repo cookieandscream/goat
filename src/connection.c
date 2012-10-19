@@ -9,7 +9,7 @@
 #include "sm.h"
 
 static int _conn_pump_read_queue(goat_connection_t *);
-static int _conn_pump_write_queue(goat_connection_t *);
+static ssize_t _conn_send_data(goat_connection_t *);
 
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
@@ -190,44 +190,47 @@ int conn_queue_message(
     }
 }
 
-int _conn_pump_write_queue(goat_connection_t *conn) {
+ssize_t _conn_send_data(goat_connection_t *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
+    ssize_t total_bytes_sent = 0;
 
     while (!STAILQ_EMPTY(&conn->write_queue)) {
-        str_queue_entry_t *n = STAILQ_FIRST(&conn->write_queue);
+        str_queue_entry_t *node = STAILQ_FIRST(&conn->write_queue);
 
-        ssize_t wrote = write(conn->socket, n->str, n->len);
+        ssize_t wrote = write(conn->socket, node->str, node->len);
 
         if (wrote < 0) {
             // FIXME write failed for some reason
-            return -1;
+            return total_bytes_sent ? total_bytes_sent : -1;
         }
         else if (wrote == 0) {
             // socket has been disconnected
-            return 0;
+            return total_bytes_sent ? total_bytes_sent : 0;
         }
-        else if (wrote < n->len) {
+        else if (wrote < node->len) {
             // partial write - reinsert the remainder at the queue head for next
             // time the socket is writeable
             STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
 
-            size_t len = n->len - wrote;
+            size_t len = node->len - wrote;
             str_queue_entry_t *tmp = malloc(sizeof(str_queue_entry_t) + len + 1);
             tmp->len = len;
-            tmp->has_eol = 1;
-            strcpy(tmp->str, &n->str[wrote]);
+            tmp->has_eol = node->has_eol;
+            strcpy(tmp->str, &node->str[wrote]);
 
             STAILQ_INSERT_HEAD(&conn->write_queue, tmp, entries);
 
-            free(n);
+            free(node);
             return 1;
         }
         else {
             // wrote the whole thing, remove it from the queue
             STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
-            return 2;
+            total_bytes_sent += wrote;
         }
     }
+
+    return total_bytes_sent;
 }
 
 // FIXME function name... this isn't really pumping the queue so much as its populating it
@@ -352,7 +355,7 @@ CONN_STATE_EXECUTE(CONNECTED) {
         }
     }
     if (s_wr) {
-        if (_conn_pump_write_queue(conn) <= 0) {
+        if (_conn_send_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
     }
