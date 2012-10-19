@@ -85,6 +85,12 @@ int goat_context_delete(goat_context_t *context) {
     }
 }
 
+goat_error_t goat_error(goat_context_t *context) {
+    assert(context != NULL);
+    return context->m_error;
+}
+
+
 #if 0
 int core_thread_notify_fd;
 pthread_t core_thread;
