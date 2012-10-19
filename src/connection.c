@@ -13,7 +13,7 @@ static int _conn_pump_write_queue(goat_connection_t *);
 
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
-#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state, goat_connection_t *conn,\
+#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state_t, goat_connection_t *conn,\
                                         int s_rd, int s_wr)
 
 #define CONN_STATE_DECL(name)       \
@@ -29,7 +29,7 @@ CONN_STATE_DECL(DISCONNECTING);
 CONN_STATE_DECL(ERROR);
 
 typedef void (*state_enter_function)(goat_connection_t *);
-typedef goat_conn_state (*state_execute_function)(goat_connection_t *, int, int);
+typedef goat_conn_state_t (*state_execute_function)(goat_connection_t *, int, int);
 typedef void (*state_exit_function)(goat_connection_t *);
 
 static const state_enter_function state_enter[] = {
@@ -176,7 +176,7 @@ int conn_queue_message(
     if (0 == pthread_mutex_lock(&conn->mutex)) {
         // now stick it on the connection's write queue
         size_t len = strlen(buf);
-        str_queue_entry *entry = malloc(sizeof(str_queue_entry) + len + 1);
+        str_queue_entry_t *entry = malloc(sizeof(str_queue_entry_t) + len + 1);
         entry->len = len;
         strcpy(entry->str, buf);
         STAILQ_INSERT_TAIL(&conn->write_queue, entry, entries);
@@ -193,7 +193,7 @@ int _conn_pump_write_queue(goat_connection_t *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     while (!STAILQ_EMPTY(&conn->write_queue)) {
-        str_queue_entry *n = STAILQ_FIRST(&conn->write_queue);
+        str_queue_entry_t *n = STAILQ_FIRST(&conn->write_queue);
 
         ssize_t wrote = write(conn->socket, n->str, n->len);
 
@@ -211,7 +211,7 @@ int _conn_pump_write_queue(goat_connection_t *conn) {
             STAILQ_REMOVE_HEAD(&conn->write_queue, entries);
 
             size_t len = n->len - wrote;
-            str_queue_entry *tmp = malloc(sizeof(str_queue_entry) + len + 1);
+            str_queue_entry_t *tmp = malloc(sizeof(str_queue_entry_t) + len + 1);
             tmp->len = len;
             strcpy(tmp->str, &n->str[wrote]);
 
@@ -249,7 +249,7 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
                 size_t saved_len = strnlen(saved, sizeof(saved));
                 size_t len = next - curr;
 
-                str_queue_entry *n = malloc(sizeof(str_queue_entry) + saved_len + len + 1);
+                str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + saved_len + len + 1);
                 n->len = len;
                 n->str[0] = '\0';
                 if (saved[0] != '\0') {
@@ -276,7 +276,7 @@ int _conn_pump_read_queue(goat_connection_t *conn) {
         // no \r\n at end of last read, queue it anyway
         size_t len = strnlen(saved, sizeof(saved));
 
-        str_queue_entry *n = malloc(sizeof(str_queue_entry) + len + 1);
+        str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + len + 1);
         n->len = len;
         strncpy(n->str, saved, len);
         n->str[len] = '\0';
@@ -364,7 +364,7 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
     assert(conn != NULL && conn->state == GOAT_CONN_DISCONNECTING);
     // any processing we need to do during disconnect
 
-    str_queue_entry *n1, *n2;
+    str_queue_entry_t *n1, *n2;
     n1 = STAILQ_FIRST(&conn->read_queue);
     while (n1 != NULL) {
         n2 = STAILQ_NEXT(n1, entries);
