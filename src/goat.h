@@ -30,7 +30,7 @@ typedef enum {
 goat_context_t *goat_context_new();
 int goat_context_delete(goat_context_t *context);
 
-goat_error_t goat_error(goat_context_t *context, int);
+goat_error_t goat_error(goat_context_t *context, int connection);
 const char *goat_strerror(goat_error_t error);
 int goat_reset_error(goat_context_t *context, int connection);
 

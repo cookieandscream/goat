@@ -47,8 +47,8 @@ typedef struct {
     goat_error_t m_error;
 } goat_connection_t;
 
-int conn_init(goat_connection_t *connection, int handle);
-int conn_destroy(goat_connection_t *connection);
+int conn_init(goat_connection_t *conn, int handle);
+int conn_destroy(goat_connection_t *conn);
 
 int conn_connect(goat_connection_t *); // FIXME
 int conn_disconnect(goat_connection_t *); // FIXME
