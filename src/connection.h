@@ -42,6 +42,8 @@ typedef struct {
     int ssl;
     str_queue_head_t write_queue;
     str_queue_head_t read_queue;
+    int socket_is_readable;
+    int socket_is_writeable;
 } goat_connection_t;
 
 int conn_init(goat_connection_t *connection, int handle);

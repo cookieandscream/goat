@@ -13,8 +13,7 @@ static ssize_t _conn_send_data(goat_connection_t *);
 
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
-#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state_t, goat_connection_t *conn,\
-                                        int s_rd, int s_wr)
+#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state_t, goat_connection_t *conn)
 
 #define CONN_STATE_DECL(name)       \
     static CONN_STATE_ENTER(name);  \
@@ -29,7 +28,7 @@ CONN_STATE_DECL(DISCONNECTING);
 CONN_STATE_DECL(ERROR);
 
 typedef void (*state_enter_function)(goat_connection_t *);
-typedef goat_conn_state_t (*state_execute_function)(goat_connection_t *, int, int);
+typedef goat_conn_state_t (*state_execute_function)(goat_connection_t *);
 typedef void (*state_exit_function)(goat_connection_t *);
 
 static const state_enter_function state_enter[] = {
@@ -114,6 +113,8 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
     assert(conn != NULL);
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
+        conn->socket_is_readable = socket_readable;
+        conn->socket_is_writeable = socket_writeable;
         goat_conn_state_t next_state;
         switch (conn->state) {
             case GOAT_CONN_DISCONNECTED:
@@ -122,7 +123,7 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
             case GOAT_CONN_CONNECTED:
             case GOAT_CONN_DISCONNECTING:
             case GOAT_CONN_ERROR:
-                next_state = state_execute[conn->state](conn, socket_readable, socket_writeable);
+                next_state = state_execute[conn->state](conn);
                 if (next_state != conn->state) {
                     state_exit[conn->state](conn);
                     conn->state = next_state;
@@ -352,7 +353,7 @@ CONN_STATE_ENTER(CONNECTING) {
 
 CONN_STATE_EXECUTE(CONNECTING) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTING);
-    if (s_wr) {
+    if (conn->socket_is_writeable) {
         return GOAT_CONN_CONNECTED;
     }
 
@@ -366,12 +367,12 @@ CONN_STATE_ENTER(CONNECTED) { }
 CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
-    if (s_rd) {
+    if (conn->socket_is_readable) {
         if (_conn_recv_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
     }
-    if (s_wr) {
+    if (conn->socket_is_writeable) {
         if (_conn_send_data(conn) <= 0) {
             return GOAT_CONN_DISCONNECTING;
         }
