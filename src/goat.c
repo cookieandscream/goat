@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -86,6 +87,45 @@ int goat_context_delete(goat_context_t *context) {
 goat_error_t goat_error(goat_context_t *context) {
     assert(context != NULL);
     return context->m_error;
+}
+
+int goat_connection_new(goat_context_t *context) {
+    assert(context != NULL);
+    goat_connection_t *conn;
+    int handle = -1;
+
+    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
+        if (context->m_connections_count == context->m_connections_size) {
+            size_t new_size = context->m_connections_size + CONN_ALLOC_INCR;
+            goat_connection_t **tmp;
+            if (NULL != (tmp = calloc(new_size, sizeof(goat_connection_t *)))) {
+                memcpy(
+                    tmp,
+                    context->m_connections,
+                    context->m_connections_size * sizeof(goat_connection_t *)
+                );
+                free(context->m_connections);
+                context->m_connections = tmp;
+                context->m_connections_size = new_size;
+            }
+            else {
+                pthread_rwlock_unlock(&context->m_rwlock);
+                return -1;
+            }
+        }
+
+        if (NULL != (conn = malloc(sizeof(goat_connection_t)))) {
+            if (0 == conn_init(conn, context->m_connections_count)) {
+                handle = context->m_connections_count;
+                context->m_connections[handle] = conn;
+                ++ context->m_connections_count;
+            }
+        }
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+    }
+
+    return handle;
 }
 
 int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
