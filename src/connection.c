@@ -8,12 +8,12 @@
 #include "connection.h"
 #include "sm.h"
 
-static int _conn_pump_read_queue(goat_connection *);
-static int _conn_pump_write_queue(goat_connection *);
+static int _conn_pump_read_queue(goat_connection_t *);
+static int _conn_pump_write_queue(goat_connection_t *);
 
-#define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection *conn)
-#define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection *conn)
-#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state, goat_connection *conn,\
+#define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
+#define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
+#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state, goat_connection_t *conn,\
                                         int s_rd, int s_wr)
 
 #define CONN_STATE_DECL(name)       \
@@ -28,9 +28,9 @@ CONN_STATE_DECL(CONNECTED);
 CONN_STATE_DECL(DISCONNECTING);
 CONN_STATE_DECL(ERROR);
 
-typedef void (*state_enter_function)(goat_connection *);
-typedef goat_conn_state (*state_execute_function)(goat_connection *, int, int);
-typedef void (*state_exit_function)(goat_connection *);
+typedef void (*state_enter_function)(goat_connection_t *);
+typedef goat_conn_state (*state_execute_function)(goat_connection_t *, int, int);
+typedef void (*state_exit_function)(goat_connection_t *);
 
 static const state_enter_function state_enter[] = {
     ST_ENTER_NAME(DISCONNECTED),
@@ -59,19 +59,19 @@ static const state_exit_function state_exit[] = {
     ST_EXIT_NAME(ERROR),
 };
 
-int conn_init(goat_connection *conn) {
+int conn_init(goat_connection_t *conn) {
     assert(conn != NULL);
     STAILQ_INIT(&conn->write_queue);
     STAILQ_INIT(&conn->read_queue);
     return -1; // FIXME
 }
 
-int conn_destroy(goat_connection *conn) {
+int conn_destroy(goat_connection_t *conn) {
     assert(conn != NULL);
     return -1; // FIXME
 }
 
-int conn_wants_read(const goat_connection *conn) {
+int conn_wants_read(const goat_connection_t *conn) {
     assert(conn != NULL);
 
     switch (conn->state) {
@@ -85,7 +85,7 @@ int conn_wants_read(const goat_connection *conn) {
     }
 }
 
-int conn_wants_write(const goat_connection *conn) {
+int conn_wants_write(const goat_connection_t *conn) {
     assert(conn != NULL);
     switch (conn->state) {
         case GOAT_CONN_CONNECTED:
@@ -99,7 +99,7 @@ int conn_wants_write(const goat_connection *conn) {
     }
 }
 
-int conn_wants_timeout(const goat_connection *conn) {
+int conn_wants_timeout(const goat_connection_t *conn) {
     assert(conn != NULL);
     switch (conn->state) {
         case GOAT_CONN_RESOLVING:
@@ -110,7 +110,7 @@ int conn_wants_timeout(const goat_connection *conn) {
     }
 }
 
-int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writeable) {
+int conn_pump_socket(goat_connection_t *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
 
     if (0 == pthread_mutex_lock(&conn->mutex)) {
@@ -141,7 +141,7 @@ int conn_pump_socket(goat_connection *conn, int socket_readable, int socket_writ
 }
 
 int conn_queue_message(
-        goat_connection *restrict conn,
+        goat_connection_t *restrict conn,
         const char *restrict prefix,
         const char *restrict command,
         const char **restrict params
@@ -188,7 +188,7 @@ int conn_queue_message(
     }
 }
 
-int _conn_pump_write_queue(goat_connection *conn) {
+int _conn_pump_write_queue(goat_connection_t *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     while (!STAILQ_EMPTY(&conn->write_queue)) {
@@ -228,7 +228,7 @@ int _conn_pump_write_queue(goat_connection *conn) {
 }
 
 // FIXME function name... this isn't really pumping the queue so much as its populating it
-int _conn_pump_read_queue(goat_connection *conn) {
+int _conn_pump_read_queue(goat_connection_t *conn) {
     assert(conn != NULL && conn->state == GOAT_CONN_CONNECTED);
 
     char buf[516], saved[516] = {0};
