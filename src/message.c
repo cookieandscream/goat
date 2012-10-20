@@ -60,3 +60,18 @@ int message_delete(goat_message_t *message) {
     return 0;
 }
 
+char *message_strdup(const goat_message_t *message) {
+    assert(message != NULL);
+
+    char *str = malloc(message->m_len + 1);
+    if (str == NULL)  return NULL;
+
+    memcpy(str, message->m_bytes, message->m_len);
+    str[message->m_len] = '\0';
+
+    for (unsigned i = 0; i < message->m_len; i++) {
+        if (str[i] == '\0')  str[i] = ' ';
+    }
+
+    return str;
+}

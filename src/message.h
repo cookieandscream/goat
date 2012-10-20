@@ -14,4 +14,6 @@ typedef struct s_goat_message {
 goat_message_t *message_new(const char *str, size_t len);
 int message_delete(goat_message_t *message);
 
+char *message_strdup(const goat_message_t *message);
+
 #endif
