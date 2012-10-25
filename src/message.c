@@ -3,7 +3,7 @@
 
 #include "message.h"
 
-goat_message_t *message_new(const char *str, size_t len) {
+goat_message_t *message_new_from_string(const char *str, size_t len) {
     assert(str != NULL);
     assert(len > 0);
     assert(len == strnlen(str, len + 5));
