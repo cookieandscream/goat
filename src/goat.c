@@ -83,7 +83,7 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
     if (connection >= context->m_connections_size)  return GOAT_E_ERRORINV;
     if (context->m_connections[connection] == NULL)  return GOAT_E_ERRORINV;
 
-    return context->m_connections[connection]->m_error;
+    return context->m_connections[connection]->m_state.error;
 }
 
 const char *goat_strerror(goat_error_t error) {
@@ -182,10 +182,10 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
                 if (context->m_connections[i] != NULL) {
                     goat_connection_t *const conn = context->m_connections[i];
                     if (conn_wants_read(conn)) {
-                        FD_SET(conn->m_socket, readfds);
+                        FD_SET(conn->m_network.socket, readfds);
                     }
                     if (conn_wants_write(conn)) {
-                        FD_SET(conn->m_socket, writefds);
+                        FD_SET(conn->m_network.socket, writefds);
                     }
                 }
             }
@@ -214,13 +214,13 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
                     goat_connection_t *const conn = context->m_connections[i];
 
                     if (conn_wants_read(conn)) {
-                        nfds = (conn->m_socket > nfds ? conn->m_socket : nfds);
-                        FD_SET(conn->m_socket, &readfds);
+                        nfds = (conn->m_network.socket > nfds ? conn->m_network.socket : nfds);
+                        FD_SET(conn->m_network.socket, &readfds);
                     }
 
                     if (conn_wants_write(conn)) {
-                        nfds = (conn->m_socket > nfds ? conn->m_socket : nfds);
-                        FD_SET(conn->m_socket, &writefds);
+                        nfds = (conn->m_network.socket > nfds ? conn->m_network.socket : nfds);
+                        FD_SET(conn->m_network.socket, &writefds);
                     }
                 }
             }
@@ -239,8 +239,8 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
                     if (context->m_connections[i] != NULL) {
                         goat_connection_t *const conn = context->m_connections[i];
 
-                        int read_ready = FD_ISSET(conn->m_socket, &readfds);
-                        int write_ready = FD_ISSET(conn->m_socket, &writefds);
+                        int read_ready = FD_ISSET(conn->m_network.socket, &readfds);
+                        int write_ready = FD_ISSET(conn->m_network.socket, &writefds);
 
                         int conn_events = conn_tick(conn, read_ready, write_ready);
 

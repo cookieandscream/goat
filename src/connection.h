@@ -34,17 +34,21 @@ typedef STAILQ_HEAD(s_str_queue_head, s_str_queue_entry) str_queue_head_t;
 typedef struct {
     int                 m_handle;
     pthread_mutex_t     m_mutex;
-    int                 m_socket;
-    struct sockaddr     *m_address;
-    socklen_t           m_address_len;
-    goat_conn_state_t   m_state;
-    void                *m_state_data;
+    struct {
+        int                 socket;
+        struct sockaddr     *address;
+        socklen_t           address_len;
+    } m_network;
+    struct {
+        goat_conn_state_t   state;
+        void                *data;
+        int                 socket_is_readable;
+        int                 socket_is_writeable;
+        goat_error_t        error;
+    } m_state;
     int                 m_ssl;
     str_queue_head_t    m_write_queue;
     str_queue_head_t    m_read_queue;
-    int                 m_socket_is_readable;
-    int                 m_socket_is_writeable;
-    goat_error_t        m_error;
 } goat_connection_t;
 
 int conn_init(goat_connection_t *conn, int handle);
