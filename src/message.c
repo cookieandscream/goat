@@ -18,6 +18,7 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
         }
         len += 1;
     }
+    if (len > 510)  return NULL;
 
     goat_message_t *message = calloc(1, sizeof(goat_message_t) + len + 1);
     if (message == NULL)  return NULL;
