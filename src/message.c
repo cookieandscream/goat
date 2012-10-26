@@ -3,6 +3,58 @@
 
 #include "message.h"
 
+goat_message_t *message_new(const char *prefix, const char *command, const char **params) {
+    assert(command != NULL);
+    size_t len = 0, n_params = 0;
+
+    if (prefix != NULL)  len += strlen(prefix) + 2;
+    len += strlen(command);
+    if (params) {
+        for (const char **p = params; *p; p++) {
+            len += strlen(*p) + 1;
+            ++ n_params;
+            if (n_params == 15)  break;
+            if (strchr(*p, ' ') != NULL)  break;
+        }
+        len += 1;
+    }
+
+    goat_message_t *message = calloc(1, sizeof(goat_message_t) + len + 1);
+    if (message == NULL)  return NULL;
+
+    char *position = message->m_bytes;
+
+    if (prefix) {
+        *position++ = ':';
+        message->m_prefix = position;
+        position = stpcpy(position, prefix);
+        ++ position;
+    }
+
+    message->m_command = position;
+    position = stpcpy(position, command);
+
+    if (params) {
+        size_t i;
+        for (i = 0; i < n_params - 1; i++) {
+            ++position;
+            message->m_params[i] = position;
+            position = stpcpy(position, params[i]);
+        }
+        ++position;
+        *position++ = ':';
+        message->m_params[i] = position;
+        position = stpcpy(position, params[i]);
+    }
+
+    message->m_len = position - message->m_bytes;
+    return message;
+
+cleanup:
+    free(message);
+    return NULL;
+}
+
 goat_message_t *message_new_from_string(const char *str, size_t len) {
     assert(str != NULL);
     assert(len > 0);
