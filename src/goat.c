@@ -14,6 +14,7 @@
 #include "context.h"
 #include "error.h"
 #include "event.h"
+#include "message.h"
 
 const size_t CONN_ALLOC_INCR = 16;
 
@@ -90,6 +91,13 @@ const char *goat_strerror(goat_error_t error) {
     assert(error >= GOAT_E_NONE);
     assert(error < GOAT_E_LAST);
     if (error >= GOAT_E_NONE && error < GOAT_E_LAST)  return error_strings[error];
+    return NULL;
+}
+
+const char *goat_strcommand(goat_command_t command) {
+    assert(command >= GOAT_IRC_PASS);
+    assert(command < GOAT_IRC_LAST);
+    if (command >= GOAT_IRC_PASS && command < GOAT_IRC_LAST)  return message_commands[command];
     return NULL;
 }
 

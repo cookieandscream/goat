@@ -251,6 +251,8 @@ goat_error_t goat_error(goat_context_t *context, int connection);
 const char *goat_strerror(goat_error_t error);
 int goat_reset_error(goat_context_t *context, int connection);
 
+const char *goat_strcommand(goat_command_t command);
+
 int goat_connection_new(goat_context_t *context);
 int goat_connection_delete(goat_context_t *context, int connection);
 
