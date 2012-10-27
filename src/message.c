@@ -50,10 +50,6 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
 
     message->m_len = position - message->m_bytes;
     return message;
-
-cleanup:
-    free(message);
-    return NULL;
 }
 
 goat_message_t *message_new_from_string(const char *str, size_t len) {
