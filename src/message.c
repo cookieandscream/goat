@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "goat.h"
@@ -214,6 +215,8 @@ const char *const message_commands[GOAT_IRC_LAST] = {
     [GOAT_IRC_WHOWAS]   = "WHOWAS",
 };
 
+static int _message_commands_cmp(const void *a, const void *b);
+
 goat_message_t *message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
     size_t len = 0, n_params = 0;
@@ -245,6 +248,7 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
 
     message->m_command = position;
     position = stpcpy(position, command);
+    message->m_command = (char *) message_static_command(message->m_command);
 
     if (params) {
         size_t i;
@@ -294,7 +298,7 @@ goat_message_t *message_new_from_string(const char *str, size_t len) {
     // command
     token = strsep(&position, " ");
     if (token == NULL || token[0] == '\0')  goto cleanup;
-    message->m_command = token;
+    message->m_command = (char *) message_static_command(token);
 
     // *14( SPACE middle ) [ SPACE ":" trailing ]
     // 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
@@ -334,4 +338,18 @@ char *message_strdup(const goat_message_t *message) {
     }
 
     return str;
+}
+
+const char *message_static_command(const char *command) {
+    static const size_t width = sizeof(message_commands[0]);
+    static const size_t nel = sizeof(message_commands) / sizeof(message_commands[0]);
+
+    const char *ptr = bsearch(command, message_commands, nel, width, _message_commands_cmp);
+
+    if (ptr)  return ptr;
+    return command;
+}
+
+int _message_commands_cmp(const void *a, const void *b) {
+    return strcmp(*(const char **) a, *(const char **)b);
 }

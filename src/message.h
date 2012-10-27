@@ -19,4 +19,6 @@ int message_delete(goat_message_t *message);
 
 char *message_strdup(const goat_message_t *message);
 
+const char *message_static_command(const char *command);
+
 #endif
