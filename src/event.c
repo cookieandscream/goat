@@ -10,13 +10,6 @@ static const goat_callback_t event_default_callbacks[GOAT_EVENT_LAST] = {
 
 };
 
-static const char *const event_commands[] = {
-    // keep this sorted
-    "MODE",
-    "PRIVMSG",
-};
-
-static int _event_commands_cmp(const void *a, const void *b);
 static goat_event_t _event_get_type(const goat_message_t *message);
 
 int event_process(goat_context_t *context, int connection, const char *msg) {
@@ -42,8 +35,4 @@ int event_process(goat_context_t *context, int connection, const char *msg) {
 
 goat_event_t _event_get_type(const goat_message_t *message) {
     return GOAT_EVENT_GENERIC; // FIXME
-}
-
-int _event_commands_cmp(const void *a, const void *b) {
-    return strcmp(*(const char **) a, *(const char **)b);
 }
