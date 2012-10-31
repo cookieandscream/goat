@@ -12,6 +12,15 @@
 static ssize_t _conn_recv_data(goat_connection_t *);
 static ssize_t _conn_send_data(goat_connection_t *);
 
+static const char *const _conn_state_names[] = {
+    [GOAT_CONN_DISCONNECTED]    = "disconnected",
+    [GOAT_CONN_RESOLVING]       = "resolving",
+    [GOAT_CONN_CONNECTING]      = "connecting",
+    [GOAT_CONN_CONNECTED]       = "connected",
+    [GOAT_CONN_DISCONNECTING]   = "disconnecting",
+    [GOAT_CONN_ERROR]           = "error"
+};
+
 #define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state_t, goat_connection_t *conn)
@@ -127,6 +136,23 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
                 next_state = state_execute[conn->m_state.state](conn);
                 if (next_state != conn->m_state.state) {
                     state_exit[conn->m_state.state](conn);
+
+                    const char *params[] = {
+                        "changed",
+                        "from",
+                        _conn_state_names[conn->m_state.state],
+                        "to",
+                        _conn_state_names[next_state],
+                        conn->m_state.change_reason,
+                        NULL
+                    };
+
+                    //TODO: equivalent of below, but on the read queue to trigger event
+                    //conn_queue_message(conn, ":goat.connection", "state", params);
+
+                    if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
+                    conn->m_state.change_reason = NULL;
+
                     conn->m_state.state = next_state;
                     state_enter[conn->m_state.state](conn);
                 }

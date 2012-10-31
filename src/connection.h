@@ -45,6 +45,7 @@ typedef struct {
         int                 socket_is_readable;
         int                 socket_is_writeable;
         goat_error_t        error;
+        char                *change_reason;
     } m_state;
     int                 m_ssl;
     str_queue_head_t    m_write_queue;
