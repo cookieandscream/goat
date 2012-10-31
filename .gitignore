@@ -1,6 +1,3 @@
-# editor swap/temp files
-.*.sw*
-
 # compilation output
 *.o
 *.a
