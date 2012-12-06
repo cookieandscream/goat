@@ -7,10 +7,13 @@
 #include <unistd.h>
 
 #include "connection.h"
+#include "message.h"
 #include "sm.h"
 
 static ssize_t _conn_recv_data(goat_connection_t *);
 static ssize_t _conn_send_data(goat_connection_t *);
+static int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message);
+static goat_message_t *_conn_dequeue_message(str_queue_head_t *queue);
 
 static const char *const _conn_state_names[] = {
     [GOAT_CONN_DISCONNECTED]    = "disconnected",
@@ -147,8 +150,11 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
                         NULL
                     };
 
-                    //TODO: equivalent of below, but on the read queue to trigger event
-                    //conn_queue_message(conn, ":goat.connection", "state", params);
+                    goat_message_t *message;
+                    if (NULL != (message = message_new(":goat.connection", "state", params))) {
+                        _conn_enqueue_message(&conn->m_read_queue, message);
+                        message_delete(message);
+                    }
 
                     if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
                     conn->m_state.change_reason = NULL;
@@ -193,6 +199,7 @@ int conn_reset_error(goat_connection_t *conn) {
     }
 }
 
+// FIXME rewrite this to use _conn_enqueue_message
 int conn_queue_message(
         goat_connection_t *restrict conn,
         const char *restrict prefix,
@@ -397,6 +404,50 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 
     return total_bytes_read;
 }
+
+int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message) {
+    assert(queue != NULL);
+    assert(message != NULL);
+    // FIXME assert is valid message
+
+    char *tmp;
+    str_queue_entry_t *entry;
+
+    if (NULL != (tmp = message_strdup(message))) {
+        if (NULL != (entry = malloc(sizeof(str_queue_entry_t) + message->m_len + 1))) {
+            entry->len = message->m_len;
+            entry->has_eol = 1;
+            strcpy(entry->str, tmp);
+            STAILQ_INSERT_TAIL(queue, entry, entries);
+            free(tmp);
+            return 0;
+        }
+        else {
+            free(tmp);
+            return -1;
+        }
+    }
+    else {
+        return -1;
+    }
+}
+
+goat_message_t *_conn_dequeue_message(str_queue_head_t *queue) {
+    assert(queue != NULL);
+
+    goat_message_t *message = NULL;
+
+    str_queue_entry_t *node = STAILQ_FIRST(queue);
+    if (node != NULL && node->has_eol) {
+        if (NULL != (message = message_new_from_string(node->str, node->len))) {
+            STAILQ_REMOVE_HEAD(queue, entries);
+            free(node);
+        }
+    }
+
+    return message;
+}
+
 
 CONN_STATE_ENTER(DISCONNECTED) { }
 
