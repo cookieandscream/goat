@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "goat.h"
+#include "message.h"
 
 typedef enum {
     GOAT_CONN_DISCONNECTED  = 0,
@@ -64,9 +65,9 @@ int conn_wants_timeout(const goat_connection_t *);
 
 int conn_reset_error(goat_connection_t *conn);
 
-int conn_queue_message(goat_connection_t *restrict, const char *restrict, const char *restrict, const char **restrict);
+int conn_send_message(goat_connection_t *conn, const goat_message_t *message);
 
-char *conn_pop_message(goat_connection_t *conn);
+goat_message_t *conn_recv_message(goat_connection_t *conn);
 
 int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable);
 

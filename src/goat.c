@@ -273,10 +273,10 @@ int goat_dispatch_events(goat_context_t *context) {
                 if (context->m_connections[i] != NULL) {
                     goat_connection_t *const conn = context->m_connections[i];
 
-                    char *message;
-                    while ((message = conn_pop_message(conn))) {
+                    goat_message_t *message;
+                    while ((message = conn_recv_message(conn))) {
                         event_process(context, i, message);
-                        free(message);
+                        message_delete(message);
                     }
                 }
             }

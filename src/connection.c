@@ -199,73 +199,34 @@ int conn_reset_error(goat_connection_t *conn) {
     }
 }
 
-// FIXME rewrite this to use _conn_enqueue_message
-int conn_queue_message(
-        goat_connection_t *restrict conn,
-        const char *restrict prefix,
-        const char *restrict command,
-        const char **restrict params
-) {
+int conn_send_message(goat_connection_t *conn, const goat_message_t *message) {
     assert(conn != NULL);
-    char buf[516] = { 0 };
-
-    // n.b. internal only, so trusts caller to provide valid args
-    if (prefix) {
-        strcat(buf, ":");
-        strcat(buf, prefix);
-        strcat(buf, " ");
-    }
-
-    strcat(buf, command);
-
-    while (params) {
-        strcat(buf, " ");
-        if (strchr(*params, ' ')) {
-            strcat(buf, ":");
-            strcat(buf, *params);
-            break;
-        }
-        strcat(buf, *params);
-        ++ params;
-    }
-
-    strcat(buf, "\x0d\x0a");
+    assert(message != NULL);
 
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
         // now stick it on the connection's write queue
-        size_t len = strlen(buf);
-        str_queue_entry_t *entry = malloc(sizeof(str_queue_entry_t) + len + 1);
-        entry->len = len;
-        entry->has_eol = 1;
-        strcpy(entry->str, buf);
-        STAILQ_INSERT_TAIL(&conn->m_write_queue, entry, entries);
+        int ret = _conn_enqueue_message(&conn->m_write_queue, message);
 
         pthread_mutex_unlock(&conn->m_mutex);
-        return 0;
+        return ret;
     }
     else {
         return -1;
     }
 }
 
-char *conn_pop_message(goat_connection_t *conn) {
+goat_message_t *conn_recv_message(goat_connection_t *conn) {
     assert(conn != NULL);
 
-    char *message = NULL;
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
+        goat_message_t *message = _conn_dequeue_message(&conn->m_read_queue);
 
-    str_queue_entry_t *node = STAILQ_FIRST(&conn->m_read_queue);
-
-    if (node != NULL && node->has_eol) {
-        if (NULL != (message = malloc(node->len + 1))) {
-            strncpy(message, node->str, node->len);
-            message[node->len] = '\0';
-
-            STAILQ_REMOVE_HEAD(&conn->m_read_queue, entries);
-            free(node);
-        }
+        pthread_mutex_unlock(&conn->m_mutex);
+        return message;
     }
-
-    return message;
+    else {
+        return NULL;
+    }
 }
 
 ssize_t _conn_send_data(goat_connection_t *conn) {
