@@ -290,7 +290,7 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 
     bytes = read(conn->m_network.socket, buf, sizeof(buf));
     while (bytes > 0) {
-        const char const *end = &buf[bytes];
+        const char * const end = &buf[bytes];
         char *curr = buf, *next = NULL;
 
         while (curr != end) {
