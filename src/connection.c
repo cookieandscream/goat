@@ -286,7 +286,7 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
 ssize_t _conn_recv_data(goat_connection_t *conn) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
 
-    char buf[516], saved[516] = {0};
+    char buf[516] = {0};
     ssize_t bytes, total_bytes_read = 0;
 
     bytes = read(conn->m_network.socket, buf, sizeof(buf));
@@ -301,7 +301,6 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
             if (*(next - 1) == '\x0a') {
                 // found a complete line, queue it
                 // if the previously-queued line was incomplete, dequeue it and combine with this
-                // if we have saved data from the last read, combine with this
                 str_queue_entry_t *const partial = STAILQ_LAST(
                     &conn->m_read_queue,
                     s_str_queue_entry,
@@ -309,13 +308,12 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
                 );
 
                 size_t partial_len = partial->has_eol ? 0 : partial->len;
-                size_t saved_len = strnlen(saved, sizeof(saved));
                 size_t len = next - curr;
 
                 str_queue_entry_t *node = malloc(
-                    sizeof(str_queue_entry_t) + partial_len + saved_len + len + 1
+                    sizeof(str_queue_entry_t) + partial_len + len + 1
                 );
-                node->len = partial_len + saved_len + len;
+                node->len = partial_len + len;
                 node->has_eol = 1;
                 memset(node->str, '\0', node->len + 1);
 
@@ -325,22 +323,21 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
                     free(partial);
                 }
 
-                if (saved_len) {
-                    strncat(node->str, saved, saved_len);
-                    memset(saved, 0, sizeof(saved));
-                }
-
                 strncat(node->str, curr, len);
 
                 STAILQ_INSERT_TAIL(&conn->m_read_queue, node, entries);
             }
             else {
-                // FIXME if >1 read in a row doesn't contain an eol, all data except the last one
-                // FIXME will be discarded.
-                // found a partial line, save it for the next read
-                assert(next == end);
-                strncpy(saved, curr, next - curr);
-                saved[next - curr] = '\0';
+                // found a partial line, queue it for completion later
+                size_t len = next - curr;
+
+                str_queue_entry_t *node = malloc(sizeof(str_queue_entry_t) + len + 1);
+                node->len = len;
+                node->has_eol = 0;
+                strncpy(node->str, curr, len);
+                node->str[len] = '\0';
+
+                STAILQ_INSERT_TAIL(&conn->m_read_queue, node, entries);
             }
 
             curr = next;
@@ -348,20 +345,6 @@ ssize_t _conn_recv_data(goat_connection_t *conn) {
 
         total_bytes_read += bytes;
         bytes = read(conn->m_network.socket, buf, sizeof(buf));
-    }
-
-    if (saved[0] != '\0') {
-        // no eol at end of last read, queue partial line anyway
-        size_t len = strnlen(saved, sizeof(saved));
-
-        str_queue_entry_t *n = malloc(sizeof(str_queue_entry_t) + len + 1);
-        n->len = len;
-        n->has_eol = 0;
-        strncpy(n->str, saved, len);
-        n->str[len] = '\0';
-        STAILQ_INSERT_TAIL(&conn->m_read_queue, n, entries);
-
-        memset(saved, 0, sizeof(saved));
     }
 
     return total_bytes_read;
