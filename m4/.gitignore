@@ -1,0 +1,5 @@
+# 'autoreconf -i -s' needs the m4 directory to already exist for whatever reason.
+# we don't want anything it creates to be version controlled, so ignore it all
+*
+# but, keep this file around so this directory already exists in new clones
+!.gitignore

@@ -22,7 +22,6 @@ missing
 ltmain.sh
 libtool
 install-sh
-m4
 stamp-*
 *.tar.gz
 
