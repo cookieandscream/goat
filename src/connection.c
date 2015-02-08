@@ -260,6 +260,7 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
             // partial write - reinsert the remainder at the queue head for next
             // time the socket is writeable
             STAILQ_REMOVE_HEAD(&conn->m_write_queue, entries);
+            total_bytes_sent += wrote;
 
             size_t len = node->len - wrote;
             str_queue_entry_t *tmp = malloc(sizeof(str_queue_entry_t) + len + 1);
@@ -270,7 +271,7 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
             STAILQ_INSERT_HEAD(&conn->m_write_queue, tmp, entries);
 
             free(node);
-            return 1;
+            return total_bytes_sent;
         }
         else {
             // wrote the whole thing, remove it from the queue
