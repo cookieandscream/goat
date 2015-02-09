@@ -69,6 +69,8 @@ int goat_context_delete(goat_context_t *context) {
 
         pthread_rwlock_unlock(&context->m_rwlock);
         pthread_rwlock_destroy(&context->m_rwlock);
+        free(context);
+
         return 0;
     }
     else {
