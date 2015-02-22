@@ -157,29 +157,7 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
             case GOAT_CONN_ERROR:
                 next_state = state_execute[conn->m_state.state](conn);
                 if (next_state != conn->m_state.state) {
-                    state_exit[conn->m_state.state](conn);
-
-                    const char *params[] = {
-                        "changed",
-                        "from",
-                        _conn_state_names[conn->m_state.state],
-                        "to",
-                        _conn_state_names[next_state],
-                        conn->m_state.change_reason,
-                        NULL
-                    };
-
-                    goat_message_t *message;
-                    if (NULL != (message = message_new(":goat.connection", "state", params))) {
-                        _conn_enqueue_message(&conn->m_read_queue, message);
-                        message_delete(message);
-                    }
-
-                    if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
-                    conn->m_state.change_reason = NULL;
-
-                    conn->m_state.state = next_state;
-                    state_enter[conn->m_state.state](conn);
+                    _conn_set_state(conn, next_state);
                 }
                 break;
 
@@ -246,6 +224,38 @@ goat_message_t *conn_recv_message(goat_connection_t *conn) {
     else {
         return NULL;
     }
+}
+
+int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state) {
+    assert(conn != NULL);
+
+    if (conn->m_state.state != new_state) {
+        state_exit[conn->m_state.state](conn);
+
+        const char *params[] = {
+            "changed",
+            "from",
+            _conn_state_names[conn->m_state.state],
+            "to",
+            _conn_state_names[new_state],
+            conn->m_state.change_reason,
+            NULL
+        };
+
+        goat_message_t *message;
+        if (NULL != (message = message_new(":goat.connection", "state", params))) {
+            _conn_enqueue_message(&conn->m_read_queue, message);
+            message_delete(message);
+        }
+
+        if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
+        conn->m_state.change_reason = NULL;
+
+        conn->m_state.state = new_state;
+        state_enter[conn->m_state.state](conn);
+    }
+
+    return 0;
 }
 
 ssize_t _conn_send_data(goat_connection_t *conn) {
