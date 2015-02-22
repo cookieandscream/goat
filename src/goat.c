@@ -18,7 +18,16 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
+static int _ssl_initalised = 0;
+
 goat_context_t *goat_context_new() {
+    // initialise SSL library on first invocation
+    if (! _ssl_initialised) {
+        SSL_load_error_strings();
+        SSL_library_init();
+        _ssl_initialised = 1;
+    }
+
     // we don't need to lock in here, because no other thread has a pointer to this context yet
     goat_context_t *context = calloc(1, sizeof(goat_context_t));
     if (!context)  return NULL;
@@ -36,6 +45,8 @@ goat_context_t *goat_context_new() {
     if (NULL == (context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(goat_callback_t)))) {
         goto cleanup;
     }
+
+    context->m_ssl_ctx = NULL;  // initialise this on use
 
     return context;
 
@@ -181,6 +192,8 @@ int goat_connection_delete(goat_context_t *context, int connection) {
     }
 }
 
+// use this to get fdsets to select on from your app, if you have your own
+// fds to block on as well
 int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
     assert(context != NULL);
     assert(readfds != NULL);

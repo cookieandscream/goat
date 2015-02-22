@@ -9,6 +9,8 @@
 
 #include <pthread.h>
 
+#include <openssl/ssh.h>
+
 #include "goat.h"
 #include "message.h"
 
@@ -39,6 +41,7 @@ typedef struct {
         int                 socket;
         struct sockaddr     *address;
         socklen_t           address_len;
+        SSL                 *ssl;
     } m_network;
     struct {
         goat_conn_state_t   state;
@@ -48,7 +51,7 @@ typedef struct {
         goat_error_t        error;
         char                *change_reason;
     } m_state;
-    int                 m_ssl;
+    int                 m_use_ssl;
     str_queue_head_t    m_write_queue;
     str_queue_head_t    m_read_queue;
 } goat_connection_t;

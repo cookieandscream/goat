@@ -71,6 +71,25 @@ static const state_exit_function state_exit[] = {
     ST_EXIT_NAME(ERROR),
 };
 
+//       The OpenSSL ssl library implements the Secure Sockets Layer (SSL v2/v3) and
+//       Transport Layer Security (TLS v1) protocols. It provides a rich API which is
+//       documented here.
+//
+//       At first the library must be initialized; see SSL_library_init(3).
+//
+//       Then an SSL_CTX object is created as a framework to establish TLS/SSL enabled
+//       connections (see SSL_CTX_new(3)).  Various options regarding certificates,
+//       algorithms etc. can be set in this object.
+//
+//       When a network connection has been created, it can be assigned to an SSL object.
+//       After the SSL object has been created using SSL_new(3), SSL_set_fd(3) or
+//       SSL_set_bio(3) can be used to associate the network connection with the object.
+//
+//       Then the TLS/SSL handshake is performed using SSL_accept(3) or SSL_connect(3)
+//       respectively.  SSL_read(3) and SSL_write(3) are used to read and write data on the
+//       TLS/SSL connection.  SSL_shutdown(3) can be used to shut down the TLS/SSL
+//       connection.
+
 int conn_init(goat_connection_t *conn, int handle) {
     assert(conn != NULL);
     STAILQ_INIT(&conn->m_write_queue);
