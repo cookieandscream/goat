@@ -102,6 +102,33 @@ int conn_destroy(goat_connection_t *conn) {
     return -1; // FIXME
 }
 
+int conn_connect(goat_connection_t *conn, const char *hostname, int port, int ssl) {
+    assert(conn != NULL);
+    assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
+
+    // populate conn with appropriate bits, set state to connecting, state enter
+    // will initiate connection attempt
+
+    // FIXME
+    return -1;
+}
+
+int conn_disconnect(goat_connection_t *conn) {
+    assert(conn != NULL);
+    // FIXME check the current state?
+
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
+        conn->m_state.change_reason = strdup("disconnect requested by client");
+        _conn_set_state(conn, GOAT_CONN_DISCONNECTING);
+
+        pthread_mutex_unlock(&conn->m_mutex);
+        return 0;
+    }
+    else {
+        return -1;
+    }
+}
+
 int conn_wants_read(const goat_connection_t *conn) {
     assert(conn != NULL);
 
