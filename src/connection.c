@@ -106,8 +106,8 @@ int conn_connect(goat_connection_t *conn, const char *hostname, int port, int ss
     assert(conn != NULL);
     assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
 
-    // populate conn with appropriate bits, set state to connecting, state enter
-    // will initiate connection attempt
+    // populate conn with appropriate bits, set state to resolving, state machine
+    // will take care of rest
 
     // FIXME
     return -1;
