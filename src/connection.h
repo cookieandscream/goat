@@ -9,7 +9,7 @@
 
 #include <pthread.h>
 
-#include <openssl/ssh.h>
+#include <openssl/ssl.h>
 
 #include "goat.h"
 #include "message.h"
