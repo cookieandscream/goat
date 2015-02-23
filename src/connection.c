@@ -556,9 +556,10 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
         return GOAT_CONN_ERROR;
     }
     else {
-        // FIXME clean shutdown of non-ssl socket
+        if (0 == shutdown(conn->m_network.socket, SHUT_RDWR))  return GOAT_CONN_DISCONNECTED;
 
-        return GOAT_CONN_DISCONNECTED;
+        conn->m_state.change_reason = strdup(strerror(errno));
+        return GOAT_CONN_ERROR;
     }
 }
 
