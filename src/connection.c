@@ -150,6 +150,7 @@ int conn_wants_write(const goat_connection_t *conn) {
             if (STAILQ_EMPTY(&conn->m_write_queue))  return 0;
             /* fall through */
         case GOAT_CONN_CONNECTING:
+        case GOAT_CONN_DISCONNECTING:
             return 1;
 
         default:
@@ -515,9 +516,7 @@ CONN_STATE_EXECUTE(CONNECTED) {
 
 CONN_STATE_EXIT(CONNECTED) { }
 
-CONN_STATE_ENTER(DISCONNECTING) { }
-
-CONN_STATE_EXECUTE(DISCONNECTING) {
+CONN_STATE_ENTER(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
     // any processing we need to do during disconnect
 
@@ -537,8 +536,30 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
         n1 = n2;
     }
     STAILQ_INIT(&conn->m_write_queue);
+}
 
-    return GOAT_CONN_DISCONNECTED;
+CONN_STATE_EXECUTE(DISCONNECTING) {
+    assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
+
+    if (conn->m_use_ssl) {
+        int ret = SSL_shutdown(conn->m_network.ssl);
+        int err = SSL_get_error(conn->m_network.ssl, ret);
+
+        if (ret == 1)  return GOAT_CONN_DISCONNECTED;
+
+        if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+            // need to call shutdown again to finish handshake
+            return conn->m_state.state;
+        }
+
+        conn->m_state.change_reason = strdup(ERR_error_string(err, NULL));
+        return GOAT_CONN_ERROR;
+    }
+    else {
+        // FIXME clean shutdown of non-ssl socket
+
+        return GOAT_CONN_DISCONNECTED;
+    }
 }
 
 CONN_STATE_EXIT(DISCONNECTING) { }
