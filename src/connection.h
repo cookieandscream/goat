@@ -59,7 +59,7 @@ typedef struct {
 int conn_init(goat_connection_t *conn, int handle);
 int conn_destroy(goat_connection_t *conn);
 
-int conn_connect(goat_connection_t *); // FIXME
+int conn_connect(goat_connection_t *conn, const char *hostname, int port, int ssl);
 int conn_disconnect(goat_connection_t *); // FIXME
 
 int conn_wants_read(const goat_connection_t *);

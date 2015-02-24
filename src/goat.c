@@ -18,7 +18,7 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
-static int _ssl_initalised = 0;
+static int _ssl_initialised = 0;
 
 goat_context_t *goat_context_new() {
     // initialise SSL library on first invocation
