@@ -24,7 +24,7 @@ struct s_resolver_state {
     char hostname[0];
 };
 
-void *_resolver_thread(void *);
+static void *_resolver_thread(void *);
 
 // returns:
 //  0 - ok: if res is set, finished, otherwise still busy
