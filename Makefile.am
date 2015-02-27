@@ -7,6 +7,7 @@ libgoat_la_SOURCES =                    \
     src/error.c src/error.h             \
     src/event.c src/event.h             \
     src/message.c src/message.h         \
+    src/tresolver.c src/tresolver.h     \
     src/context.h                       \
     src/sm.h                            \
     src/goat.c
