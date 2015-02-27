@@ -6,6 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/err.h>
+
 #include "connection.h"
 #include "message.h"
 #include "sm.h"
@@ -15,6 +17,7 @@ static ssize_t _conn_recv_data(goat_connection_t *);
 static ssize_t _conn_send_data(goat_connection_t *);
 static int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message);
 static goat_message_t *_conn_dequeue_message(str_queue_head_t *queue);
+static int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state);
 
 static const char *const _conn_state_names[] = {
     [GOAT_CONN_DISCONNECTED]    = "disconnected",
