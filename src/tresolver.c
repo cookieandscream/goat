@@ -100,12 +100,11 @@ int resolver_cancel(struct s_resolver_state **statep) {
     struct s_resolver_state *state = *statep;
 
     if (0 == pthread_mutex_lock(&state->mutex)) {
+        *statep = NULL;
         state->status = RESOLVER_CANCELLED;
         pthread_detach(state->thread);
-
         pthread_mutex_unlock(&state->mutex);
 
-        *statep = NULL;
         return 0;
     }
 
@@ -125,9 +124,10 @@ void *_resolver_thread(void *arg) {
             // request has been cancelled and thread detached
             // clean up after yourself, no-one else has pointers anymore
 
-            if (res) freeaddrinfo(res);
+            if (res)  freeaddrinfo(res);
             pthread_mutex_unlock(&state->mutex);
             pthread_mutex_destroy(&state->mutex);
+            free(state);
             return NULL;
         }
 

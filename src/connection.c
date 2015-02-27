@@ -9,6 +9,7 @@
 #include "connection.h"
 #include "message.h"
 #include "sm.h"
+#include "tresolver.h"
 
 static ssize_t _conn_recv_data(goat_connection_t *);
 static ssize_t _conn_send_data(goat_connection_t *);
@@ -463,13 +464,33 @@ CONN_STATE_EXIT(DISCONNECTED) { }
 
 CONN_STATE_ENTER(RESOLVING) {
     // set up a resolver and kick it off
+    assert(conn != NULL);
+    assert(conn->m_network.res_state == NULL);
+
+    conn->m_network.res_state = NULL;
+
+    if (conn->m_network.res_ai) {
+        freeaddrinfo(conn->m_network.res_ai);
+        conn->m_network.res_ai = NULL;
+    }
 }
 
 CONN_STATE_EXECUTE(RESOLVING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_RESOLVING);
-    // see if we've got a result yet
-    if (0) {
-        // got a result!  start connecting
+
+    int r = resolver_getaddrinfo(
+        &conn->m_network.res_state,
+        conn->m_network.hostname,
+        &conn->m_network.res_ai
+    );
+
+    if (r != 0) {
+        conn->m_state.change_reason = strdup(gai_strerror(r));
+        return GOAT_CONN_ERROR;
+    }
+
+    if (conn->m_network.res_ai) {
+        // got a result
         return GOAT_CONN_CONNECTING;
     }
 
@@ -478,6 +499,11 @@ CONN_STATE_EXECUTE(RESOLVING) {
 
 CONN_STATE_EXIT(RESOLVING) {
     // clean up resolver
+    if (conn->m_network.res_state) {
+        // if there's still resolve state around, then we aren't exiting due
+        // to completion of the resolve request, so explicitly cancel the request
+        resolver_cancel(&conn->m_network.res_state);
+    }
 }
 
 CONN_STATE_ENTER(CONNECTING) {

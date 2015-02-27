@@ -7,12 +7,14 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 
+#include <netdb.h>
 #include <pthread.h>
 
 #include <openssl/ssl.h>
 
 #include "goat.h"
 #include "message.h"
+#include "tresolver.h"
 
 typedef enum {
     GOAT_CONN_DISCONNECTED  = 0,
@@ -41,6 +43,9 @@ typedef struct {
         int                 socket;
         struct sockaddr     *address;
         socklen_t           address_len;
+        char                *hostname;
+        resolver_state_t    *res_state;
+        struct addrinfo     *res_ai;
         SSL                 *ssl;
     } m_network;
     struct {
