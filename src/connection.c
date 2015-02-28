@@ -522,17 +522,29 @@ CONN_STATE_ENTER(CONNECTING) {
 CONN_STATE_EXECUTE(CONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTING);
     if (conn->m_state.socket_is_writeable) {
-        unsigned char buf[32] = {0};
-        socklen_t bufsize = sizeof(buf);
+        int err;
+        socklen_t errsize = sizeof(err);
 
-        // "writeable" socket means connect() completed
-        // getpeername() can tell us whether it actually connected or not
-        if (0 == getpeername(conn->m_network.socket, (struct sockaddr *) &buf, &bufsize)) {
+        // "writeable" socket means connect() finished
+        // getsockopt() can tell us whether it actually connected or not
+
+        if (0 == getsockopt(conn->m_network.socket, SOL_SOCKET, SO_ERROR, &err, &errsize)) {
+            if (err) {
+                if (err == EALREADY || err == EINPROGRESS) {
+                    // connect hasn't finished but for some reason we're writeable?
+                    assert(0 == "shouldn't get here?");
+                    // just keep waiting for it to finish?
+                    return conn->m_state.state;
+                }
+
+                conn->m_state.change_reason = strdup(strerror(err));
+                return GOAT_CONN_ERROR;
+            }
+
             return GOAT_CONN_CONNECTED;
         }
 
-        // connect failed
-        // FIXME this is getpeername's error, not connect's....
+        // getsockopt itself failed, that's unexpected...
         conn->m_state.change_reason = strdup(strerror(errno));
         return GOAT_CONN_ERROR;
     }
