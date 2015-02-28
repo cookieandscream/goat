@@ -517,7 +517,19 @@ CONN_STATE_ENTER(CONNECTING) {
 CONN_STATE_EXECUTE(CONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTING);
     if (conn->m_state.socket_is_writeable) {
-        return GOAT_CONN_CONNECTED;
+        unsigned char buf[32] = {0};
+        socklen_t bufsize = sizeof(buf);
+
+        // "writeable" socket means connect() completed
+        // getpeername() can tell us whether it actually connected or not
+        if (0 == getpeername(conn->m_network.socket, (struct sockaddr *) &buf, &bufsize)) {
+            return GOAT_CONN_CONNECTED;
+        }
+
+        // connect failed
+        // FIXME this is getpeername's error, not connect's....
+        conn->m_state.change_reason = strdup(strerror(errno));
+        return GOAT_CONN_ERROR;
     }
 
     return conn->m_state.state;
