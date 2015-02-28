@@ -466,7 +466,6 @@ CONN_STATE_EXECUTE(DISCONNECTED) {
 CONN_STATE_EXIT(DISCONNECTED) { }
 
 CONN_STATE_ENTER(RESOLVING) {
-    // set up a resolver and kick it off
     assert(conn != NULL);
     assert(conn->m_network.res_state == NULL);
 
@@ -502,9 +501,11 @@ CONN_STATE_EXECUTE(RESOLVING) {
 
 CONN_STATE_EXIT(RESOLVING) {
     // clean up resolver
+
     if (conn->m_network.res_state) {
-        // if there's still resolve state around, then we aren't exiting due
-        // to completion of the resolve request, so explicitly cancel the request
+        // if there's still resolve state around, then we're exiting this state for
+        // some reason other than completion of the resolve request, so explicitly
+        // cancel it
         resolver_cancel(&conn->m_network.res_state);
     }
 }
