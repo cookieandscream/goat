@@ -585,17 +585,9 @@ CONN_STATE_EXIT(CONNECTED) { }
 
 CONN_STATE_ENTER(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
-    // any processing we need to do during disconnect
 
+    // clear out the write queue, we're not going to send it
     str_queue_entry_t *n1, *n2;
-    n1 = STAILQ_FIRST(&conn->m_read_queue);
-    while (n1 != NULL) {
-        n2 = STAILQ_NEXT(n1, entries);
-        free(n1);
-        n1 = n2;
-    }
-    STAILQ_INIT(&conn->m_read_queue);
-
     n1 = STAILQ_FIRST(&conn->m_write_queue);
     while (n1 != NULL) {
         n2 = STAILQ_NEXT(n1, entries);
@@ -612,7 +604,7 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
         int ret = SSL_shutdown(conn->m_network.ssl);
         int err = SSL_get_error(conn->m_network.ssl, ret);
 
-        if (ret == 1)  return GOAT_CONN_DISCONNECTED;
+        if (ret == 1)  goto queue_wait;
 
         if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
             // need to call shutdown again to finish handshake
@@ -623,11 +615,18 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
         return GOAT_CONN_ERROR;
     }
     else {
-        if (0 == shutdown(conn->m_network.socket, SHUT_RDWR))  return GOAT_CONN_DISCONNECTED;
+        if (0 == shutdown(conn->m_network.socket, SHUT_RDWR))  goto queue_wait;
 
         conn->m_state.change_reason = strdup(strerror(errno));
         return GOAT_CONN_ERROR;
     }
+
+queue_wait:
+    // once the socket is shut down, stay in disconnecting state until read queue
+    // has been emptied (since it contains our status events, not just net io)
+    if (STAILQ_EMPTY(&conn->m_read_queue))  return GOAT_CONN_DISCONNECTED;
+
+    return conn->m_state.state;
 }
 
 CONN_STATE_EXIT(DISCONNECTING) { }
