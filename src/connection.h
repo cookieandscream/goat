@@ -45,8 +45,7 @@ typedef struct {
         struct sockaddr     *address;
         socklen_t           address_len;
         char                *hostname;
-        resolver_state_t    *res_state;
-        struct addrinfo     *res_ai;
+        struct addrinfo     *ai0;
         SSL                 *ssl;
     } m_network;
     struct {
@@ -56,6 +55,8 @@ typedef struct {
         int                 socket_is_writeable;
         goat_error_t        error;
         char                *change_reason;
+        resolver_state_t    *res_state;
+        struct addrinfo     *conn_next;
     } m_state;
     int                 m_use_ssl;
     str_queue_head_t    m_write_queue;

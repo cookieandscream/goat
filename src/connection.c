@@ -472,13 +472,14 @@ CONN_STATE_EXIT(DISCONNECTED) { }
 
 CONN_STATE_ENTER(RESOLVING) {
     assert(conn != NULL);
-    assert(conn->m_network.res_state == NULL);
+    assert(conn->m_state.res_state == NULL);
 
-    conn->m_network.res_state = NULL;
+    conn->m_state.res_state = NULL;
 
-    if (conn->m_network.res_ai) {
-        freeaddrinfo(conn->m_network.res_ai);
-        conn->m_network.res_ai = NULL;
+    if (conn->m_network.ai0) {
+        freeaddrinfo(conn->m_network.ai0);
+        conn->m_network.ai0 = NULL;
+        conn->m_state.conn_next = NULL;
     }
 }
 
@@ -486,9 +487,9 @@ CONN_STATE_EXECUTE(RESOLVING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_RESOLVING);
 
     int r = resolver_getaddrinfo(
-        &conn->m_network.res_state,
+        &conn->m_state.res_state,
         conn->m_network.hostname,
-        &conn->m_network.res_ai
+        &conn->m_network.ai0
     );
 
     if (r != 0) {
@@ -496,7 +497,7 @@ CONN_STATE_EXECUTE(RESOLVING) {
         return GOAT_CONN_ERROR;
     }
 
-    if (conn->m_network.res_ai) {
+    if (conn->m_network.ai0) {
         // got a result
         return GOAT_CONN_CONNECTING;
     }
@@ -507,11 +508,11 @@ CONN_STATE_EXECUTE(RESOLVING) {
 CONN_STATE_EXIT(RESOLVING) {
     // clean up resolver
 
-    if (conn->m_network.res_state) {
+    if (conn->m_state.res_state) {
         // if there's still resolve state around, then we're exiting this state for
         // some reason other than completion of the resolve request, so explicitly
         // cancel it
-        resolver_cancel(&conn->m_network.res_state);
+        resolver_cancel(&conn->m_state.res_state);
     }
 }
 
