@@ -56,7 +56,7 @@ typedef struct {
         goat_error_t        error;
         char                *change_reason;
         resolver_state_t    *res_state;
-        struct addrinfo     *conn_next;
+        struct addrinfo     *ai;
     } m_state;
     int                 m_use_ssl;
     str_queue_head_t    m_write_queue;

@@ -18,6 +18,7 @@ static ssize_t _conn_send_data(goat_connection_t *);
 static int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message);
 static goat_message_t *_conn_dequeue_message(str_queue_head_t *queue);
 static int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state);
+static int _conn_start_connect(goat_connection_t *conn);
 
 static const char *const _conn_state_names[] = {
     [GOAT_CONN_DISCONNECTED]    = "disconnected",
@@ -460,6 +461,24 @@ goat_message_t *_conn_dequeue_message(str_queue_head_t *queue) {
     return message;
 }
 
+int _conn_start_connect(goat_connection_t *conn) {
+    assert(conn != NULL);
+    assert(conn->m_state.ai != NULL);
+
+    struct addrinfo *ai = conn->m_state.ai;
+
+    conn->m_network.socket = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
+    if (conn->m_network.socket < 0)  return -1; // FIXME report error
+
+    int ret = connect(conn->m_network.socket, ai->ai_addr, ai->ai_addrlen);
+    int err = errno;
+
+    if (ret == 0 || err == EALREADY || err == EINPROGRESS)  return 0;
+
+    return -1;
+}
+
 
 CONN_STATE_ENTER(DISCONNECTED) { }
 
@@ -480,7 +499,7 @@ CONN_STATE_ENTER(RESOLVING) {
     if (conn->m_network.ai0) {
         freeaddrinfo(conn->m_network.ai0);
         conn->m_network.ai0 = NULL;
-        conn->m_state.conn_next = NULL;
+        conn->m_state.ai = NULL;
     }
 }
 
@@ -519,6 +538,12 @@ CONN_STATE_EXIT(RESOLVING) {
 
 CONN_STATE_ENTER(CONNECTING) {
     // start up a connection attempt
+    assert(conn != NULL);
+    assert(conn->m_network.ai0 != NULL);
+
+    if (conn->m_state.ai == NULL)  conn->m_state.ai = conn->m_network.ai0;
+
+    _conn_start_connect(conn); // FIXME what if this errors
 }
 
 CONN_STATE_EXECUTE(CONNECTING) {
@@ -539,9 +564,21 @@ CONN_STATE_EXECUTE(CONNECTING) {
                     return conn->m_state.state;
                 }
 
+                // connect failed -- try the next address if there is one
+                if (conn->m_state.ai->ai_next != NULL) {
+                    conn->m_state.ai = conn->m_state.ai->ai_next;
+
+                    // FIXME send a message about trying again
+
+                    _conn_start_connect(conn);  // FIXME what if this fails
+                    return conn->m_state.state;
+                }
+
                 conn->m_state.change_reason = strdup(strerror(err));
                 return GOAT_CONN_ERROR;
             }
+
+            if (conn->m_use_ssl)  return GOAT_CONN_SSLHANDSHAKE;
 
             return GOAT_CONN_CONNECTED;
         }
