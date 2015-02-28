@@ -189,6 +189,7 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
             case GOAT_CONN_DISCONNECTED:
             case GOAT_CONN_RESOLVING:
             case GOAT_CONN_CONNECTING:
+            case GOAT_CONN_SSLHANDSHAKE:
             case GOAT_CONN_CONNECTED:
             case GOAT_CONN_DISCONNECTING:
             case GOAT_CONN_ERROR:
