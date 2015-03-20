@@ -109,6 +109,12 @@ int conn_init(goat_connection_t *conn, int handle) {
 
 int conn_destroy(goat_connection_t *conn) {
     assert(conn != NULL);
+
+    if (conn->m_network.hostname) {
+        free(conn->m_network.hostname);
+        conn->m_network.hostname = NULL;
+    }
+
     return -1; // FIXME
 }
 
@@ -116,11 +122,19 @@ int conn_connect(goat_connection_t *conn, const char *hostname, int port, int ss
     assert(conn != NULL);
     assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
 
-    // populate conn with appropriate bits, set state to resolving, state machine
-    // will take care of rest
+    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
+        conn->m_network.hostname = strdup(hostname);
 
-    // FIXME
-    return -1;
+        conn->m_state.change_reason = strdup("connect requested by client");
+        _conn_set_state(conn, GOAT_CONN_RESOLVING);
+
+        // FIXME port?
+        pthread_mutex_unlock(&conn->m_mutex);
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
 
 int conn_disconnect(goat_connection_t *conn) {
