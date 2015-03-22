@@ -18,15 +18,28 @@ int event_process(goat_context_t *context, int connection, const goat_message_t 
 
     goat_event_t event = _event_get_type(message);
 
-    // FIXME if there's a callback for it, call that
+    goat_callback_t callback = NULL;
 
-    // FIXME or if there's a default callback for it, call that
+    if (NULL != context->m_callbacks[event]) {
+        callback = context->m_callbacks[event];
+    }
+    else if (NULL != event_default_callbacks[event]) {
+        callback = event_default_callbacks[event];
+    }
+    else if (NULL != context->m_callbacks[GOAT_EVENT_GENERIC]) {
+        callback = context->m_callbacks[GOAT_EVENT_GENERIC];
+    }
+    else if (NULL != event_default_callbacks[GOAT_EVENT_GENERIC]) {
+        callback = event_default_callbacks[GOAT_EVENT_GENERIC];
+    }
+    else {
+        return 0;
+    }
 
-    // FIXME or if there's a generic callback, call that
+    // FIXME how to handle passing params around? length? null-ended?
+    callback(context, connection, message->m_prefix, message->m_command, message->m_params);
 
-    // FIXME or if there's a default generic callback, call that
-
-    return -1; // FIXME
+    return 0;
 }
 
 goat_event_t _event_get_type(const goat_message_t *message) {
