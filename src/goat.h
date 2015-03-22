@@ -5,12 +5,17 @@
 
 typedef struct s_goat_context goat_context_t;
 
+typedef struct s_goat_callback_msg {
+    char *prefix;
+    char *command;
+    char *params[16];
+    size_t nparams;
+} goat_callback_msg_t;
+
 typedef void (*goat_callback_t)(
     goat_context_t          *context,
     int                     connection,
-    const char *restrict    prefix,
-    const char *restrict    command,
-    const char **restrict   params
+    const goat_callback_msg_t *message
 );
 
 typedef enum {

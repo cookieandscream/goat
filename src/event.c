@@ -36,8 +36,23 @@ int event_process(goat_context_t *context, int connection, const goat_message_t 
         return 0;
     }
 
-    // FIXME how to handle passing params around? length? null-ended?
-    callback(context, connection, message->m_prefix, message->m_command, message->m_params);
+    goat_callback_msg_t cb_msg = { 0 };
+
+    if (message->m_prefix)  cb_msg.prefix = strdup(message->m_prefix);
+    if (message->m_command)  cb_msg.command = strdup(message->m_command);
+
+    size_t i;
+    for (i = 0; i < 16; i++) {
+        if (NULL == message->m_params[i])  break;
+        cb_msg.params[i] = strdup(message->m_params[i]);
+    }
+    cb_msg.nparams = i;
+
+    callback(context, connection, &cb_msg);
+
+    if (cb_msg.prefix)  free(cb_msg.prefix);
+    if (cb_msg.command)  free(cb_msg.command);
+    for (int i = 0; i < cb_msg.nparams; i++)  free(cb_msg.params[i]);
 
     return 0;
 }
