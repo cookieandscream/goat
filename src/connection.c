@@ -118,17 +118,17 @@ int conn_destroy(goat_connection_t *conn) {
     return -1; // FIXME
 }
 
-int conn_connect(goat_connection_t *conn, const char *hostname, int port, int ssl) {
+int conn_connect(goat_connection_t *conn, const char *hostname, const char *servname, int ssl) {
     assert(conn != NULL);
     assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
 
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
         conn->m_network.hostname = strdup(hostname);
+        conn->m_network.servname = strdup(servname);
 
         conn->m_state.change_reason = strdup("connect requested by client");
         _conn_set_state(conn, GOAT_CONN_RESOLVING);
 
-        // FIXME port?
         pthread_mutex_unlock(&conn->m_mutex);
         return 0;
     }
@@ -523,6 +523,7 @@ CONN_STATE_EXECUTE(RESOLVING) {
     int r = resolver_getaddrinfo(
         &conn->m_state.res_state,
         conn->m_network.hostname,
+        conn->m_network.servname,
         &conn->m_network.ai0
     );
 

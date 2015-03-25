@@ -5,7 +5,8 @@
 
 typedef struct s_resolver_state resolver_state_t;
 
-int resolver_getaddrinfo(resolver_state_t **statep, const char *hostname, struct addrinfo **resp);
+int resolver_getaddrinfo(resolver_state_t **statep, const char *hostname,
+    const char *servname, struct addrinfo **resp);
 
 int resolver_cancel(resolver_state_t **statep);
 

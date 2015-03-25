@@ -20,8 +20,8 @@ struct s_resolver_state {
     struct addrinfo *res;
     enum e_resolver_status status;
     int error;
-    size_t hostname_size;
-    char hostname[0];
+    char *hostname;
+    char *servname;
 };
 
 static void *_resolver_thread(void *);
@@ -29,14 +29,16 @@ static void *_resolver_thread(void *);
 // returns:
 //  0 - ok: if res is set, finished, otherwise still busy
 //  nonzero - error
-int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname, struct addrinfo **resp) {
+int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
+    const char *servname, struct addrinfo **resp)
+{
     if (! *statep) {
-        size_t sz = strlen(hostname) + 1;
-        struct s_resolver_state *state = calloc(1, sizeof(struct s_resolver_state) + sz);
+        struct s_resolver_state *state = calloc(1, sizeof(struct s_resolver_state));
         if (!state)  return -1;
 
-        state->hostname_size = sz;
-        strlcpy(state->hostname, hostname, sz);
+        state->hostname = strdup(hostname);
+        state->servname = strdup(servname);
+        if (!hostname || !servname)  return -1;
 
         state->status = RESOLVER_BUSY;
 
@@ -50,6 +52,8 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
             pthread_mutex_destroy(&state->mutex);
         }
 
+        free(state->servname);
+        free(state->hostname);
         free(state);
         *statep = NULL;
         *resp = NULL;
@@ -75,6 +79,8 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
                     *statep = NULL;
                     pthread_join(state->thread, NULL);
                     pthread_mutex_destroy(&state->mutex);
+                    free(state->servname);
+                    free(state->hostname);
                     free(state);
                     return 0;
 
@@ -85,6 +91,8 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
                     *statep = NULL;
                     pthread_join(state->thread, NULL);
                     pthread_mutex_destroy(&state->mutex);
+                    free(state->servname);
+                    free(state->hostname);
                     free(state);
                     return error;
             }
@@ -117,7 +125,7 @@ void *_resolver_thread(void *arg) {
     struct s_resolver_state *state = (struct s_resolver_state *) arg;
     struct addrinfo *res;
 
-    int r = getaddrinfo(state->hostname, NULL, NULL, &res);
+    int r = getaddrinfo(state->hostname, state->servname, NULL, &res);
 
     if (0 == pthread_mutex_lock(&state->mutex)) {
         if (state->status == RESOLVER_CANCELLED) {
@@ -127,6 +135,8 @@ void *_resolver_thread(void *arg) {
             if (res)  freeaddrinfo(res);
             pthread_mutex_unlock(&state->mutex);
             pthread_mutex_destroy(&state->mutex);
+            free(state->servname);
+            free(state->hostname);
             free(state);
             return NULL;
         }
