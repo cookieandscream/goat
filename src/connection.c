@@ -296,9 +296,9 @@ int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state) {
         };
 
         goat_message_t *message;
-        if (NULL != (message = message_new(":goat.connection", "state", params))) {
+        if (NULL != (message = goat_message_new(":goat.connection", "state", params))) {
             _conn_enqueue_message(&conn->m_read_queue, message);
-            message_delete(message);
+            goat_message_delete(message);
         }
 
         if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
@@ -438,11 +438,13 @@ int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message
     // FIXME assert is valid message
 
     char *tmp;
+    size_t len;
     str_queue_entry_t *entry;
 
-    if (NULL != (tmp = message_strdup(message))) {
-        if (NULL != (entry = malloc(sizeof(str_queue_entry_t) + message->m_len + 1))) {
-            entry->len = message->m_len;
+    if (NULL != (tmp = goat_message_strdup(message))) {
+        len = strlen(tmp);
+        if (NULL != (entry = malloc(sizeof(str_queue_entry_t) + len + 1))) {
+            entry->len = len;
             entry->has_eol = 1;
             strcpy(entry->str, tmp);
             STAILQ_INSERT_TAIL(queue, entry, entries);
@@ -466,7 +468,7 @@ goat_message_t *_conn_dequeue_message(str_queue_head_t *queue) {
 
     str_queue_entry_t *node = STAILQ_FIRST(queue);
     if (node != NULL && node->has_eol) {
-        if (NULL != (message = message_new_from_string(node->str, node->len))) {
+        if (NULL != (message = goat_message_new_from_string(node->str, node->len))) {
             STAILQ_REMOVE_HEAD(queue, entries);
             free(node);
         }

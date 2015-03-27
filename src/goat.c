@@ -291,7 +291,7 @@ int goat_dispatch_events(goat_context_t *context) {
                     goat_message_t *message;
                     while ((message = conn_recv_message(conn))) {
                         event_process(context, i, message);
-                        message_delete(message);
+                        goat_message_delete(message);
                     }
                 }
             }
