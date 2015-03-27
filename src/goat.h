@@ -293,8 +293,8 @@ const char *goat_message_get_param(const goat_message_t *message, size_t index);
 size_t goat_message_get_nparams(const goat_message_t *message);
 
 size_t goat_message_has_tags(const goat_message_t *message);
-int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
 int goat_message_has_tag(const goat_message_t *message, const char *key);
+int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
 int goat_message_get_tag(const goat_message_t *message, const char *key, char *value, size_t *size);
 int goat_message_unset_tag(goat_message_t *message, const char *key);
 
