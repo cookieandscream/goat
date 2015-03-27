@@ -189,3 +189,29 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len
 
     return NULL;
 }
+
+const char *goat_message_get_prefix(const goat_message_t *message) {
+    assert(message != NULL);
+    return message->m_prefix;
+}
+
+const char *goat_message_get_command(const goat_message_t *message) {
+    assert(message != NULL);
+    return message->m_command;
+}
+
+const char *goat_message_get_param(const goat_message_t *message, size_t index) {
+    assert(message != NULL);
+    assert(index <= 16);  // FIXME
+
+    return message->m_params[index];
+}
+
+size_t goat_message_get_nparams(const goat_message_t *message) {
+    size_t i;
+
+    for (i = 0; i <= 16 && message->m_params[i]; i++)
+        ;
+
+    return i;
+}
