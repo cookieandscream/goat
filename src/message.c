@@ -333,6 +333,33 @@ cleanup:
     return NULL;
 }
 
+goat_message_t *goat_message_clone(const goat_message_t *orig) {
+    assert(orig != NULL);
+
+    goat_message_t *clone = calloc(1, sizeof(goat_message_t));
+    if (NULL == clone) return NULL;
+
+    memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);
+    clone->m_len = orig->m_len;
+
+    clone->m_prefix = clone->m_bytes + (orig->m_prefix - orig->m_bytes);
+
+    if (orig->m_command >= orig->m_bytes && orig->m_command < orig->m_bytes + orig->m_len) {
+        clone->m_command = clone->m_bytes + (orig->m_command - orig->m_bytes);
+    }
+    else {
+        clone->m_command = (char *) goat_message_static_command(orig->m_command);
+    }
+
+    for (int i = 0; i < 16; i++) {
+        if (orig->m_params[i]) {
+            clone->m_params[i] = clone->m_bytes + (orig->m_params[i] - orig->m_bytes);
+        }
+    }
+
+    return clone;
+}
+
 void goat_message_delete(goat_message_t *message) {
     if (message->m_tags) free(message->m_tags);
     free(message);
