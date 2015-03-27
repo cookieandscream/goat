@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,6 +11,7 @@
 static const char *_next_tag(const char *str);
 static const char *_find_tag(const char *str, const char *key);
 static const char *_find_value(const char *str);
+static char *_escape_value(const char *value, char *buf, size_t *size);
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
@@ -263,12 +265,48 @@ int goat_message_get_tag_value(
     end = (end ? end - 1 : &tags->m_bytes[tags->m_len]);
     *size = end - v;
 
+    // FIXME unescape
     strncpy(value, v, *size);
 
     return 1;
 }
 
-int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
+int goat_message_set_tag(goat_message_t *message, const char *key, const char *value) {
+    assert(message != NULL);
+    assert(key != NULL);
+
+    char escaped_value[GOAT_MESSAGE_MAX_TAGS];
+    size_t escaped_value_len = sizeof(escaped_value);
+
+    goat_message_tags_t *tags = message->m_tags;
+
+    size_t tag_len = 1 + strlen(key);
+    if (value) {
+        _escape_value(value, escaped_value, &escaped_value_len);
+        tag_len += 1 + escaped_value_len;
+    }
+
+    if (tags->m_len + tag_len > GOAT_MESSAGE_MAX_TAGS) return -1;
+
+    char *p, kvbuf[GOAT_MESSAGE_MAX_TAGS], tmp[GOAT_MESSAGE_MAX_TAGS] = {0};
+    const size_t key_len = strlen(key);
+
+    p = tags->m_bytes;
+    while (p && *p) {
+        if (strncmp(p, key, key_len) >= 0) break;
+
+        p = (char *) _next_tag(p);
+    }
+
+    if (p) strcpy(tmp, p);
+    else   p = &tags->m_bytes[tags->m_len];
+
+    snprintf(kvbuf, sizeof(kvbuf), "%s=%s;", key, escaped_value);
+    p = stpcpy(p, kvbuf);
+    if (tmp[0] != '\0') strcpy(p, tmp);
+
+    return 0;
+}
 
 int goat_message_unset_tag(goat_message_t *message, const char *key) {
     assert(message != NULL);
@@ -345,4 +383,63 @@ const char *_find_value(const char *str) {
     if (*p == '=' && *(p + 1) != '\0') return p + 1;
 
     return NULL;
+}
+
+char *_escape_value(const char *value, char *buf, size_t *size) {
+    assert(value != NULL);
+    assert(buf != NULL);
+    assert(size != NULL);
+
+    char *dest = buf;
+
+    for (size_t i = 0; i < *size; i++) {
+        switch(value[i]) {
+            case ';':
+                dest[0] = '\\';
+                dest[1] = ':';
+                dest += 2;
+                break;
+
+            case ' ':
+                dest[0] = '\\';
+                dest[1] = 's';
+                dest += 2;
+                break;
+
+            case '\0':
+                dest[0] = '\\';
+                dest[1] = '0';
+                dest += 2;
+                break;
+
+            case '\\':
+                // FIXME spec says just single '\', is that a typo?
+                // https://github.com/ircv3/ircv3-specifications/blob/master/specification/message-tags-3.2.md
+                dest[0] = '\\';
+                dest[1] = '\\';
+                dest += 2;
+                break;
+
+            case '\r':
+                dest[0] = '\\';
+                dest[1] = 'r';
+                dest += 2;
+                break;
+
+            case '\n':
+                dest[0] = '\\';
+                dest[1] = 'n';
+                dest += 2;
+                break;
+
+            default:
+                *dest++ = value[i];
+                break;
+        }
+    }
+
+    *dest = '\0';
+    *size = dest - buf;
+
+    return buf;
 }
