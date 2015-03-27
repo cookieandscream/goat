@@ -6,6 +6,20 @@
 
 #include "message.h"
 
+typedef struct s_goat_message_tags {
+    size_t m_len;
+    char m_bytes[516];
+} goat_message_tags_t;
+
+struct s_goat_message {
+    goat_message_tags_t *m_tags;
+    char *m_prefix;
+    char *m_command;
+    char *m_params[16];
+    size_t m_len;
+    char m_bytes[516];
+};
+
 const char *const message_commands[GOAT_IRC_LAST] = {
     [GOAT_IRC_RPL_WELCOME]              = "001",
     [GOAT_IRC_RPL_YOURHOST]             = "002",
@@ -217,7 +231,7 @@ const char *const message_commands[GOAT_IRC_LAST] = {
 
 static int _message_commands_cmp(const void *a, const void *b);
 
-goat_message_t *message_new(const char *prefix, const char *command, const char **params) {
+goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
     size_t len = 0, n_params = 0;
 
@@ -234,7 +248,7 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
     }
     if (len > 510)  return NULL;
 
-    goat_message_t *message = calloc(1, sizeof(goat_message_t) + len + 1);
+    goat_message_t *message = calloc(1, sizeof(goat_message_t));
     if (message == NULL)  return NULL;
 
     char *position = message->m_bytes;
@@ -248,7 +262,7 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
 
     message->m_command = position;
     position = stpcpy(position, command);
-    message->m_command = (char *) message_static_command(message->m_command);
+    message->m_command = (char *) goat_message_static_command(message->m_command);
 
     if (params) {
         size_t i;
@@ -267,7 +281,7 @@ goat_message_t *message_new(const char *prefix, const char *command, const char 
     return message;
 }
 
-goat_message_t *message_new_from_string(const char *str, size_t len) {
+goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     assert(str != NULL);
     assert(len > 0);
     assert(len == strnlen(str, len + 5));
@@ -278,7 +292,7 @@ goat_message_t *message_new_from_string(const char *str, size_t len) {
         if (str[len - 1] == '\x0d')  -- len;
     }
 
-    goat_message_t *message = calloc(1, sizeof(goat_message_t) + len + 1);
+    goat_message_t *message = calloc(1, sizeof(goat_message_t));
     if (message == NULL)  return NULL;
 
     message->m_len = len;
@@ -298,7 +312,7 @@ goat_message_t *message_new_from_string(const char *str, size_t len) {
     // command
     token = strsep(&position, " ");
     if (token == NULL || token[0] == '\0')  goto cleanup;
-    message->m_command = (char *) message_static_command(token);
+    message->m_command = (char *) goat_message_static_command(token);
 
     // *14( SPACE middle ) [ SPACE ":" trailing ]
     // 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
@@ -319,12 +333,12 @@ cleanup:
     return NULL;
 }
 
-int message_delete(goat_message_t *message) {
+void goat_message_delete(goat_message_t *message) {
+    if (message->m_tags) free(message->m_tags);
     free(message);
-    return 0;
 }
 
-char *message_strdup(const goat_message_t *message) {
+char *goat_message_strdup(const goat_message_t *message) {
     assert(message != NULL);
 
     char *str = malloc(message->m_len + 1);
@@ -340,7 +354,7 @@ char *message_strdup(const goat_message_t *message) {
     return str;
 }
 
-const char *message_static_command(const char *command) {
+const char *const goat_message_static_command(const char *command) {
     static const size_t width = sizeof(message_commands[0]);
     static const size_t nel = sizeof(message_commands) / sizeof(message_commands[0]);
 

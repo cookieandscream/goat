@@ -4,18 +4,12 @@
 #include <sys/time.h> /* struct timeval */
 
 typedef struct s_goat_context goat_context_t;
-
-typedef struct s_goat_callback_msg {
-    char *prefix;
-    char *command;
-    char *params[16];
-    size_t nparams;
-} goat_callback_msg_t;
+typedef struct s_goat_message goat_message_t;
 
 typedef void (*goat_callback_t)(
-    goat_context_t          *context,
-    int                     connection,
-    const goat_callback_msg_t *message
+    goat_context_t       *context,
+    int                  connection,
+    const goat_message_t *message
 );
 
 typedef enum {
