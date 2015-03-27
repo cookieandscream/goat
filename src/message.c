@@ -202,3 +202,25 @@ size_t goat_message_get_nparams(const goat_message_t *message) {
 
     return i;
 }
+
+size_t goat_message_has_tags(const goat_message_t *message) {
+    assert(message != NULL);
+
+    const goat_message_tags_t *tags = message->m_tags;
+
+    if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
+
+    size_t count = 0;
+    const char *p = tags->m_bytes;
+    while (*p != '\0') {
+        if (*p == ';') count++;
+        p++;
+    }
+
+    return count;
+}
+
+int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
+int goat_message_has_tag(const goat_message_t *message, const char *key);
+int goat_message_get_tag(const goat_message_t *message, const char *key, char *value, size_t *size);
+int goat_message_unset_tag(goat_message_t *message, const char *key);
