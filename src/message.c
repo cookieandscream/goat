@@ -269,7 +269,36 @@ int goat_message_get_tag_value(
 }
 
 int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
-int goat_message_unset_tag(goat_message_t *message, const char *key);
+
+int goat_message_unset_tag(goat_message_t *message, const char *key) {
+    assert(message != NULL);
+    assert(key != NULL);
+
+    goat_message_tags_t *tags = message->m_tags;
+
+    if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
+
+    char *p1, *p2, *end;
+
+    p1 = (char *) _find_tag(tags->m_bytes, key);
+    if (NULL == p1) return 0;
+
+    end = &tags->m_bytes[tags->m_len];
+
+    p2 = (char *) _next_tag(p1);
+
+    if (p2) {
+        memmove(p1, p2, end - p2);
+        tags->m_len -= (p2 - p1);
+        memset(&tags->m_bytes[tags->m_len], 0, sizeof(tags->m_bytes) - tags->m_len);
+    }
+    else {
+        tags->m_len = p1 - tags->m_bytes;
+        memset(p1, 0, sizeof(tags->m_bytes) - tags->m_len);
+    }
+
+    return 1;
+}
 
 const char *_next_tag(const char *str) {
     assert(str != NULL);
