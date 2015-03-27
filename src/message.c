@@ -157,16 +157,35 @@ void goat_message_delete(goat_message_t *message) {
 char *goat_message_strdup(const goat_message_t *message) {
     assert(message != NULL);
 
-    char *str = malloc(message->m_len + 1);
+    size_t len = message->m_len + 1;
+    char *str = malloc(len);
     if (str == NULL)  return NULL;
 
-    memcpy(str, message->m_bytes, message->m_len);
-    str[message->m_len] = '\0';
-
-    for (unsigned i = 0; i < message->m_len; i++) {
-        if (str[i] == '\0')  str[i] = ' ';
+    if (goat_message_cstring(message, str, &len)) {
+        return str;
     }
 
-    return str;
+    free(str);
+    return NULL;
 }
 
+char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len) {
+    assert(message != NULL);
+    assert(buf != NULL);
+    assert(*len > message->m_len);
+    assert(*len >= GOAT_MESSAGE_BUF_SZ);
+
+    if (*len > message->m_len) {
+        memcpy(buf, message->m_bytes, message->m_len);
+        memset(buf + message->m_len, 0, *len - message->m_len);
+        *len = message->m_len;
+
+        for (unsigned i = 0; i < message->m_len; i++) {
+            if (buf[i] == '\0') buf[i] = ' ';
+        }
+
+        return buf;
+    }
+
+    return NULL;
+}
