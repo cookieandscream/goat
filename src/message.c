@@ -8,6 +8,8 @@
 #include "message.h"
 
 static const char *_next_tag(const char *str);
+static const char *_find_tag(const char *str, const char *key);
+static const char *_find_value(const char *str);
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
@@ -229,25 +231,44 @@ int goat_message_has_tag(const goat_message_t *message, const char *key) {
 
     if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
 
-    const char *p = tags->m_bytes;
-    const size_t key_len = strlen(key);
+    return _find_tag(tags->m_bytes, key) ? 1 : 0;
+}
 
-    while (p) {
-        if (0 == strncmp(p, key, key_len)) {
-            switch (*(p + key_len)) {
-                case '\0':
-                case '=':
-                case ';':
-                    return 1;
-            }
-        }
+int goat_message_get_tag_value(
+    const goat_message_t *message, const char *key, char *value, size_t *size
+) {
+    assert(message != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
+    assert(size != NULL);
 
-        p = _next_tag(p);
+    const goat_message_tags_t *tags = message->m_tags;
+    memset(value, 0, *size);
+
+    if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
+
+    const char *p, *v, *end;
+
+    if (NULL == (p = _find_tag(tags->m_bytes, key))) {
+        *size = 0;
+        return 0;
     }
+
+    if (NULL == (v = _find_value(p))) {
+        *size = 0;
+        return 0;
+    }
+
+    end = _next_tag(v);
+    end = (end ? end - 1 : &tags->m_bytes[tags->m_len]);
+    *size = end - v;
+
+    strncpy(value, v, *size);
+
+    return 1;
 }
 
 int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
-int goat_message_get_tag(const goat_message_t *message, const char *key, char *value, size_t *size);
 int goat_message_unset_tag(goat_message_t *message, const char *key);
 
 const char *_next_tag(const char *str) {
@@ -258,6 +279,41 @@ const char *_next_tag(const char *str) {
     while (*p != '\0' && *p != ';') p++;
 
     if (*p == ';' && *(p + 1) != '\0') return p + 1;
+
+    return NULL;
+}
+
+const char *_find_tag(const char *str, const char *key) {
+    assert(str != NULL);
+    assert(key != NULL);
+
+    const char *p = str;
+    const size_t key_len = strlen(key);
+
+    while (p) {
+        if (0 == strncmp(p, key, key_len)) {
+            switch (*(p + key_len)) {
+                case '\0':
+                case '=':
+                case ';':
+                    return p;
+            }
+        }
+
+        p = _next_tag(p);
+    }
+
+    return NULL;
+}
+
+const char *_find_value(const char *str) {
+    assert(str != NULL);
+
+    const char *p = str;
+
+    while (*p != '\0' && *p != ';' && *p != '=') p++;
+
+    if (*p == '=' && *(p + 1) != '\0') return p + 1;
 
     return NULL;
 }
