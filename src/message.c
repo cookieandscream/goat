@@ -5,20 +5,7 @@
 #include "goat.h"
 
 #include "commands.h"
-
-typedef struct s_goat_message_tags {
-    size_t m_len;
-    char m_bytes[516];
-} goat_message_tags_t;
-
-struct s_goat_message {
-    goat_message_tags_t *m_tags;
-    char *m_prefix;
-    char *m_command;
-    char *m_params[16];
-    size_t m_len;
-    char m_bytes[516];
-};
+#include "message.h"
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
