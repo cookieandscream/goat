@@ -292,14 +292,29 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
     const size_t key_len = strlen(key);
 
     p = tags->m_bytes;
+    int cmp;
     while (p && *p) {
-        if (strncmp(p, key, key_len) >= 0) break;
+        if ((cmp = strncmp(p, key, key_len)) >= 0) break;
 
         p = (char *) _next_tag(p);
     }
 
-    if (p) strcpy(tmp, p);
-    else   p = &tags->m_bytes[tags->m_len];
+    // FIXME this could probably be tidier
+    if (p) {
+        if (cmp) {
+            // found existing tag, save from the following tag on
+            const char *next = _next_tag(p);
+            if (next)  strcpy(tmp, next);
+            else       p = &tags->m_bytes[tags->m_len];
+        }
+        else {
+            // tag doesn't already exist, just save the rest
+            strcpy(tmp, p);
+        }
+    }
+    else {
+        p = &tags->m_bytes[tags->m_len];
+    }
 
     snprintf(kvbuf, sizeof(kvbuf), "%s=%s;", key, escaped_value);
     p = stpcpy(p, kvbuf);
