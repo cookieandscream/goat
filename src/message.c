@@ -84,6 +84,8 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     char *position = message->m_bytes;
     char *token;
 
+    // FIXME tags
+
     // [ ':' prefix SPACE ]
     if (position[0] == ':') {
         ++ position;
@@ -121,6 +123,8 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
 
     goat_message_t *clone = calloc(1, sizeof(goat_message_t));
     if (NULL == clone) return NULL;
+
+    // FIXME tags
 
     memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);
     clone->m_len = orig->m_len;
@@ -168,6 +172,8 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len
     assert(buf != NULL);
     assert(*len > message->m_len);
     assert(*len >= GOAT_MESSAGE_BUF_SZ);
+
+    // FIXME tags
 
     if (*len > message->m_len) {
         memcpy(buf, message->m_bytes, message->m_len);
