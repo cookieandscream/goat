@@ -262,7 +262,7 @@ int goat_message_get_tag_value(
     }
 
     end = _next_tag(v);
-    end = (end ? end - 1 : &tags->m_bytes[tags->m_len]);
+    if (*end) end--;
     *size = end - v;
 
     // FIXME unescape
@@ -300,20 +300,17 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
     }
 
     // FIXME this could probably be tidier
-    if (p) {
+    if (*p) {
         if (cmp) {
             // found existing tag, save from the following tag on
             const char *next = _next_tag(p);
-            if (next)  strcpy(tmp, next);
-            else       p = &tags->m_bytes[tags->m_len];
+            if (*next) strcpy(tmp, next);
+            else       p = (char *) next;
         }
         else {
             // tag doesn't already exist, just save the rest
             strcpy(tmp, p);
         }
-    }
-    else {
-        p = &tags->m_bytes[tags->m_len];
     }
 
     snprintf(kvbuf, sizeof(kvbuf), "%s=%s;", key, escaped_value);
@@ -334,13 +331,13 @@ int goat_message_unset_tag(goat_message_t *message, const char *key) {
     char *p1, *p2, *end;
 
     p1 = (char *) _find_tag(tags->m_bytes, key);
-    if (NULL == p1) return 0;
+    if (!*p1) return 0;
 
     end = &tags->m_bytes[tags->m_len];
 
     p2 = (char *) _next_tag(p1);
 
-    if (p2) {
+    if (*p2) {
         memmove(p1, p2, end - p2);
         tags->m_len -= (p2 - p1);
         memset(&tags->m_bytes[tags->m_len], 0, sizeof(tags->m_bytes) - tags->m_len);
@@ -360,9 +357,9 @@ const char *_next_tag(const char *str) {
 
     while (*p != '\0' && *p != ';') p++;
 
-    if (*p == ';' && *(p + 1) != '\0') return p + 1;
+    if (*p == ';') return p + 1;
 
-    return NULL;
+    return p;
 }
 
 const char *_find_tag(const char *str, const char *key) {
@@ -372,7 +369,7 @@ const char *_find_tag(const char *str, const char *key) {
     const char *p = str;
     const size_t key_len = strlen(key);
 
-    while (p) {
+    while (*p) {
         if (0 == strncmp(p, key, key_len)) {
             switch (*(p + key_len)) {
                 case '\0':
