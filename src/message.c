@@ -11,7 +11,8 @@
 static const char *_next_tag(const char *str);
 static const char *_find_tag(const char *str, const char *key);
 static const char *_find_value(const char *str);
-static char *_escape_value(const char *value, char *buf, size_t *size);
+static const char *_escape_value(const char *value, char *buf, size_t *size);
+static const char *_unescape_value(const char *value, char *buf, size_t *size);
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
@@ -244,6 +245,8 @@ int goat_message_get_tag_value(
     assert(value != NULL);
     assert(size != NULL);
 
+    // FIXME make sure buffer is big enough...
+
     const goat_message_tags_t *tags = message->m_tags;
     memset(value, 0, *size);
 
@@ -265,8 +268,11 @@ int goat_message_get_tag_value(
     if (*end) end--;
     *size = end - v;
 
-    // FIXME unescape
-    strncpy(value, v, *size);
+    char unescaped[GOAT_MESSAGE_MAX_TAGS];
+    size_t unescaped_len = sizeof(unescaped);
+    _unescape_value(v, unescaped, &unescaped_len);
+    strncpy(value, unescaped, *size);
+    // FIXME sort out *size properly
 
     return 1;
 }
@@ -387,7 +393,7 @@ const char *_find_value(const char *str) {
     return NULL;
 }
 
-char *_escape_value(const char *value, char *buf, size_t *size) {
+const char *_escape_value(const char *value, char *buf, size_t *size) {
     assert(value != NULL);
     assert(buf != NULL);
     assert(size != NULL);
@@ -443,5 +449,39 @@ char *_escape_value(const char *value, char *buf, size_t *size) {
     *dest = '\0';
     *size = dest - buf;
 
+    return buf;
+}
+
+const char *_unescape_value(const char *value, char *buf, size_t *size) {
+    assert(value != NULL);
+    assert(buf != NULL);
+    assert(size != NULL);
+
+    char *dest = buf;
+
+    size_t value_len = strlen(value);
+    assert(value_len > *size);
+
+    for (size_t i = 0; i < value_len; i++) {
+        if (value[i] == '\\') {
+            char c = value[i + 1];
+            switch (c) {
+                case ':':  c = ';';          break;
+                case 's':  c = ' ';          break;
+                case '0':  c = '\0';         break;
+                case '\\': c = '\\';         break;
+                case 'r':  c = '\r';         break;
+                case 'n':  c = '\n';         break;
+            }
+            *dest++ = c;
+            i++;
+        }
+        else {
+            *dest++ = value[i];
+        }
+    }
+    memset(dest, 0, *size - (dest - buf));
+
+    *size = dest - buf;
     return buf;
 }
