@@ -299,23 +299,13 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
         p = (char *) _next_tag(p);
     }
 
-    // FIXME this could probably be tidier
-    if (*p) {
-        if (cmp) {
-            // found existing tag, save from the following tag on
-            const char *next = _next_tag(p);
-            if (*next) strcpy(tmp, next);
-            else       p = (char *) next;
-        }
-        else {
-            // tag doesn't already exist, just save the rest
-            strcpy(tmp, p);
-        }
-    }
+    const char *rest = (0 == cmp ? _next_tag(p) : p);
+    strcpy(tmp, rest);
 
     snprintf(kvbuf, sizeof(kvbuf), "%s=%s;", key, escaped_value);
+
     p = stpcpy(p, kvbuf);
-    if (tmp[0] != '\0') strcpy(p, tmp);
+    strcpy(p, tmp);
 
     return 0;
 }
