@@ -8,10 +8,10 @@ int main (int argc, char **argv) {
     CU_ErrorCode err;
 
     err = CU_initialize_registry();
-    if (err != CUE_SUCCESS) return err;
+    if (err != CUE_SUCCESS) goto cleanup;
 
     err = CU_register_suites(cunit_suite_info);
-    if (err != CUE_SUCCESS) return err;
+    if (err != CUE_SUCCESS) goto cleanup;
 
     // TODO option to control mode?
     CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -19,6 +19,12 @@ int main (int argc, char **argv) {
 
     if (err != CUE_SUCCESS) {
         CU_basic_show_failures(CU_get_failure_list());
+    }
+
+
+cleanup:
+    if (err != CUE_SUCCESS) {
+        puts(CU_get_error_msg());
     }
 
     CU_cleanup_registry();
