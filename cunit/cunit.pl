@@ -33,8 +33,8 @@ foreach my $dir (@suite_dirs) {
         { name => $name, func => $func };
     } @test_funcs;
 
-    my $suite_init = "${dir}_suite_init";
-    my $suite_cleanup = "${dir}_suite_cleanup";
+    my $suite_init = "${suite_name}_suite_init";
+    my $suite_cleanup = "${suite_name}_suite_cleanup";
 
     push @suites, {
         name => $suite_name,
@@ -45,15 +45,32 @@ foreach my $dir (@suite_dirs) {
 }
 
 # generate c file
+print "#include <CUnit/CUnit.h>\n";
 print '#include <CUnit/TestDB.h>', "\n\n";
 
-# pre-declare the test functions
+# pre-declare the init/cleanup/test functions
 foreach my $suite (@suites) {
+    print "int $suite->{init}(void);\n";
+    print "int $suite->{cleanup}(void);\n";
     foreach my $test (@{$suite->{tests}}) {
         print "void $test->{func}(void);\n";
     }
+    print "\n";
 }
-print "\n";
+
+# the tests
+foreach my $suite (@suites) {
+    print "CU_TestInfo $suite->{name}_tests[] = {\n";
+
+    foreach my $test(@{$suite->{tests}}) {
+        print "\t{ ";
+        print qq{"$test->{name}", };
+        print qq{$test->{func} };
+        print "},\n";
+    }
+    print "\tCU_TEST_INFO_NULL,\n";
+    print "};\n\n";
+}
 
 # the suites themselves
 print 'CU_SuiteInfo cunit_suite_info[] = {', "\n";
@@ -65,17 +82,9 @@ foreach my $suite (@suites) {
     print qq{"$suite->{name}", };
     print qq{$suite->{init}, };
     print qq{$suite->{cleanup}, };
-    print '{ ', "\n";
-
-    foreach my $test (@{$suite->{tests}}) {
-        print "\t\t{ ";
-        print qq{"$test->{name}", };
-        print qq{$test->{func} };
-        print "},\n";
-    }
-    print "\t\tCU_TEST_INFO_NULL,\n";
-
-    print "\t},\n";
+    print qq{NULL, NULL, };
+    print qq{$suite->{name}_tests, };
+    print "},\n";
 }
 
 print "\tCU_SUITE_INFO_NULL,\n";
