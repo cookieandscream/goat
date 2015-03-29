@@ -24,7 +24,7 @@ AC_PROG_MAKE_SET
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([sys/socket.h sys/time.h fcntl.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([sys/socket.h sys/time.h fcntl.h netdb.h stdlib.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_RESTRICT
@@ -34,7 +34,7 @@ AC_TYPE_SSIZE_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_STRNLEN
-AC_CHECK_FUNCS([memset select strchr])
+AC_CHECK_FUNCS([memmove memset select socket stpcpy strchr strdup strerror])
 
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects -Wall -Werror])
 LT_INIT
