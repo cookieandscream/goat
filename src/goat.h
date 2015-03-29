@@ -68,7 +68,7 @@ typedef enum {
     GOAT_IRC_RPL_STATSUPTIME,       /* 242 */
     GOAT_IRC_RPL_STATSOLINE,        /* 243 */
     GOAT_IRC_RPL_STATSHLINE,        /* 244 */
-    GOAT_IRC_RPL_STATSSLINE,        /* 244 */
+    GOAT_IRC_RPL_STATSSLINE,        /* 245 */
     GOAT_IRC_RPL_STATSPING,         /* 246 */
     GOAT_IRC_RPL_STATSBLINE,        /* 247 */
     GOAT_IRC_RPL_STATSDLINE,        /* 250 */
