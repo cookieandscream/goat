@@ -24,6 +24,7 @@ static void _assert_message_params(const goat_message_t *msg, ...) {
     s = va_arg(ap, const char *);
     while (s && i < 16) {
         CU_ASSERT_PTR_NOT_NULL(msg->m_params[i]);
+        _ptr_in_range(msg->m_params[i], msg->m_bytes, msg->m_len);
         CU_ASSERT_STRING_EQUAL(msg->m_params[i], s);
         s = va_arg(ap, const char *);
         i++;
