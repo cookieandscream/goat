@@ -212,16 +212,16 @@ const char *const message_commands[GOAT_IRC_LAST] = {
     [GOAT_IRC_WHOWAS]   = "WHOWAS",
 };
 
-static int _message_commands_cmp(const void *a, const void *b) {
-    return strcmp((const char *) a, (const char *)b);
+static int _message_commands_cmp(const void *key, const void *iter) {
+    return strcmp((const char *) key, *(const char **) iter);
 }
 
 const char *const goat_message_static_command(const char *command) {
     static const size_t width = sizeof(message_commands[0]);
     static const size_t nel = sizeof(message_commands) / sizeof(message_commands[0]);
 
-    const char *ptr = bsearch(command, message_commands, nel, width, _message_commands_cmp);
+    const char **ptr = bsearch(command, message_commands, nel, width, _message_commands_cmp);
 
-    if (ptr)  return ptr;
+    if (ptr) return *ptr;
     return command;
 }
