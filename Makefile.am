@@ -29,5 +29,5 @@ cunit_basic_SOURCES =               \
 
 cunit_basic_LDADD = -lcunit -lgoat
 
-cunit/suite-info.c:
+cunit/suite-info.c: $(cunit_basic_SOURCES)
 	perl cunit/gen-suite-info.pl > $@
