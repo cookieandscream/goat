@@ -36,7 +36,7 @@ AC_FUNC_MALLOC
 AC_FUNC_STRNLEN
 AC_CHECK_FUNCS([memmove memset select socket stpcpy strchr strdup strerror])
 
-AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign serial-tests silent-rules subdir-objects -Wall -Werror])
 LT_INIT
 
 AC_CONFIG_HEADERS([config.h])

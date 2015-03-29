@@ -16,3 +16,18 @@ libgoat_la_SOURCES =                    \
 libgoat_la_LDFLAGS = -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
+
+TESTS = cunit/cunit
+
+check_PROGRAMS = cunit/cunit
+
+cunit_cunit_SOURCES =               \
+    cunit/message/suite.c           \
+    cunit/message/constructor.c     \
+    cunit/cunit.c                   \
+    cunit/cunit-suites-init.c
+
+cunit_cunit_LDADD = -lcunit -lgoat
+
+cunit/cunit-suites-init.c:
+	perl cunit/cunit.pl > $@
