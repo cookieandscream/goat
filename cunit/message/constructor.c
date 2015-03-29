@@ -112,3 +112,34 @@ void test_goat_message_new_from_string(void) {
 
     goat_message_delete(message);
 }
+
+void test_goat_message_clone(void) {
+    const char *prefix = "prefix";
+    const char *command = "command";
+    const char *params[] = { "param1", "param2", "param3", NULL };
+    const size_t nparams = sizeof(params) / sizeof(params[0]);
+    goat_message_t *msg1, *msg2;
+
+    msg1 = goat_message_new(prefix, command, params);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+
+    msg2 = goat_message_clone(msg1);
+    CU_ASSERT_PTR_NOT_NULL(msg2);
+
+    // FIXME tags
+
+    CU_ASSERT_PTR_NOT_NULL(msg2->m_prefix);
+    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_prefix, msg1->m_prefix);
+    _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
+    CU_ASSERT_STRING_EQUAL(msg2->m_prefix, prefix);
+
+    CU_ASSERT_PTR_NOT_NULL(msg2->m_command);
+    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_command, msg1->m_command);
+    _ptr_in_range(msg2->m_command, msg2->m_bytes, msg2->m_len);
+    CU_ASSERT_STRING_EQUAL(msg2->m_command, command);
+
+    _assert_message_params(msg2, "param1", "param2", "param3", NULL);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
