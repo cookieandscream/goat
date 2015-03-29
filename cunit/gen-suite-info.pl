@@ -5,7 +5,7 @@ use strict;
 
 use Data::Dumper;
 
-# generates cunit-suite-info.c
+# generates suite-info.c
 
 use File::Basename;
 my $dirname = dirname __FILE__;
