@@ -39,6 +39,8 @@ static void _assert_message_params(const goat_message_t *msg, ...) {
 void test_goat_message_new(void) {
     const char *prefix = "prefix";
     const char *command = "command";
+    const char *privmsg = "PRIVMSG";
+    const char *privmsg_static = goat_message_static_command("PRIVMSG");
     const char *params[] = { "these", "are", "some", "params", NULL };
     const size_t nparams = sizeof(params) / sizeof(params[0]);
 
@@ -72,7 +74,15 @@ void test_goat_message_new(void) {
     }
 
     goat_message_delete(message);
-    // FIXME assert that m_command points into m_bytes or the big commands array
+
+    message = goat_message_new(NULL, privmsg, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+    CU_ASSERT_PTR_NULL(message->m_prefix);
+    CU_ASSERT_PTR_EQUAL(message->m_command, privmsg_static);
+    _assert_message_params(message, NULL);
+
+    goat_message_delete(message);
 }
 
 void test_goat_message_new_from_string(void) {
