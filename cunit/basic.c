@@ -6,27 +6,35 @@ extern CU_SuiteInfo cunit_suite_info[];
 
 int main (int argc, char **argv) {
     CU_ErrorCode err;
+    const char *state;
 
+    state = "CU_initialize_registry()";
     err = CU_initialize_registry();
     if (err != CUE_SUCCESS) goto cleanup;
 
+    state = "CU_register_suites()";
     err = CU_register_suites(cunit_suite_info);
     if (err != CUE_SUCCESS) goto cleanup;
 
     // TODO option to control mode?
     CU_basic_set_mode(CU_BRM_VERBOSE);
+
+    state = "CU_basic_run_tests()";
     err = CU_basic_run_tests();
+    if (err != CUE_SUCCESS) goto cleanup;
 
-    if (err != CUE_SUCCESS) {
-        CU_basic_show_failures(CU_get_failure_list());
-    }
+    state = "CU_basic_run_tests()";
+    CU_basic_show_failures(CU_get_failure_list());
 
+    state = "done";
 
 cleanup:
     if (err != CUE_SUCCESS) {
-        puts(CU_get_error_msg());
+        printf("%s: %s\n", state, CU_get_error_msg());
     }
 
+    int failures = CU_get_number_of_failure_records();
+
     CU_cleanup_registry();
-    return 0;
+    return failures;
 }
