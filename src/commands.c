@@ -213,7 +213,7 @@ const char *const message_commands[GOAT_IRC_LAST] = {
 };
 
 static int _message_commands_cmp(const void *a, const void *b) {
-    return strcmp(*(const char **) a, *(const char **)b);
+    return strcmp((const char *) a, (const char *)b);
 }
 
 const char *const goat_message_static_command(const char *command) {
