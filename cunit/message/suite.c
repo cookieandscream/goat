@@ -1,5 +1,5 @@
-#include "CUnit/CUnit.h"
-#include "CUnit/Basic.h"
+#include <CUnit/CUnit.h>
+#include <CUnit/Basic.h>
 
 int message_suite_init(void) {
     return 0;

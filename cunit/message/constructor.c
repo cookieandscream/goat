@@ -1,7 +1,8 @@
-#include "CUnit/CUnit.h"
-#include "CUnit/Basic.h"
+#include <CUnit/CUnit.h>
+#include <CUnit/Basic.h>
 
-#include "src/message.h"
+#include "goat.h"
+#include "message.h"
 
 void test_goat_message_new(void) {
     const char *prefix = "prefix";
