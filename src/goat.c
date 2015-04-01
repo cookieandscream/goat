@@ -328,9 +328,15 @@ int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_ca
     assert(event < GOAT_EVENT_LAST);
 
     if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        context->m_callbacks[event] = NULL;
+        int status = 0;
+
+        if (context->m_callbacks[event] == callback) {
+            context->m_callbacks[event] = NULL;
+            status = 1;
+        }
+
         pthread_rwlock_unlock(&context->m_rwlock);
-        return 0;
+        return status;
     }
     else {
         return -1;
