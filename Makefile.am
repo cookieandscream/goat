@@ -14,7 +14,9 @@ libgoat_la_SOURCES =                    \
     src/sm.h                            \
     src/goat.c
 
-libgoat_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols-regex '^goat_'
+libgoat_la_CPPFLAGS = $(AM_CPPFLAGS) $(TLS_CPPFLAGS)
+
+libgoat_la_LDFLAGS = $(AM_LDFLAGS) $(TLS_LDFLAGS) -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
 
