@@ -1,6 +1,8 @@
 #ifndef GOAT_SM_H
 #define GOAT_SM_H
 
+#define ST_UNUSED(expr)         do { (void)(expr); } while (0)
+
 #define ST_ENTER_NAME(name)      _state_##name##_enter
 #define ST_EXECUTE_NAME(name)    _state_##name##_execute
 #define ST_EXIT_NAME(name)       _state_##name##_exit

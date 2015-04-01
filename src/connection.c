@@ -496,7 +496,7 @@ int _conn_start_connect(goat_connection_t *conn) {
 }
 
 
-CONN_STATE_ENTER(DISCONNECTED) { }
+CONN_STATE_ENTER(DISCONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_EXECUTE(DISCONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTED);
@@ -504,7 +504,7 @@ CONN_STATE_EXECUTE(DISCONNECTED) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(DISCONNECTED) { }
+CONN_STATE_EXIT(DISCONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(RESOLVING) {
     assert(conn != NULL);
@@ -608,7 +608,7 @@ CONN_STATE_EXECUTE(CONNECTING) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(CONNECTING) { }
+CONN_STATE_EXIT(CONNECTING) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(SSLHANDSHAKE) { }
 
@@ -616,7 +616,7 @@ CONN_STATE_EXECUTE(SSLHANDSHAKE) { }
 
 CONN_STATE_EXIT(SSLHANDSHAKE) { }
 
-CONN_STATE_ENTER(CONNECTED) { }
+CONN_STATE_ENTER(CONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
@@ -635,7 +635,7 @@ CONN_STATE_EXECUTE(CONNECTED) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(CONNECTED) { }
+CONN_STATE_EXIT(CONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
@@ -683,9 +683,9 @@ queue_wait:
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(DISCONNECTING) { }
+CONN_STATE_EXIT(DISCONNECTING) { ST_UNUSED(conn); }
 
-CONN_STATE_ENTER(ERROR) { }
+CONN_STATE_ENTER(ERROR) { ST_UNUSED(conn); }
 
 CONN_STATE_EXECUTE(ERROR) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_ERROR);
