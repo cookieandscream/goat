@@ -1,4 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
+AM_CFLAGS = -Wall -Wextra
 
 lib_LTLIBRARIES = libgoat.la
 
@@ -13,7 +14,7 @@ libgoat_la_SOURCES =                    \
     src/sm.h                            \
     src/goat.c
 
-libgoat_la_LDFLAGS = -export-symbols-regex '^goat_'
+libgoat_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
 
