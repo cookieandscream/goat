@@ -6,8 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/err.h>
-
 #include "connection.h"
 #include "message.h"
 #include "sm.h"
@@ -81,24 +79,29 @@ static const state_exit_function state_exit[] = {
     ST_EXIT_NAME(ERROR),
 };
 
-//       The OpenSSL ssl library implements the Secure Sockets Layer (SSL v2/v3) and
-//       Transport Layer Security (TLS v1) protocols. It provides a rich API which is
-//       documented here.
-//
-//       At first the library must be initialized; see SSL_library_init(3).
-//
-//       Then an SSL_CTX object is created as a framework to establish TLS/SSL enabled
-//       connections (see SSL_CTX_new(3)).  Various options regarding certificates,
-//       algorithms etc. can be set in this object.
-//
-//       When a network connection has been created, it can be assigned to an SSL object.
-//       After the SSL object has been created using SSL_new(3), SSL_set_fd(3) or
-//       SSL_set_bio(3) can be used to associate the network connection with the object.
-//
-//       Then the TLS/SSL handshake is performed using SSL_accept(3) or SSL_connect(3)
-//       respectively.  SSL_read(3) and SSL_write(3) are used to read and write data on the
-//       TLS/SSL connection.  SSL_shutdown(3) can be used to shut down the TLS/SSL
-//       connection.
+// A tls connection is represented as a context. A new context is created by
+// either the tls_client() or tls_server() functions. The context can then be
+// configured with the function tls_configure(). The same tls_config object
+// can be used to configure multiple contexts.
+
+// A client connection is initiated after configuration by calling
+// tls_connect(). This function will create a new socket, connect to the
+// specified host and port, and then establish a secure connection. The
+// tls_connect_servername() function has the same behaviour, however the name
+// to use for verification is explicitly provided, rather than being inferred
+// from the host value. An already existing socket can be upgraded to a secure
+// connection by calling tls_connect_socket(). Alternatively, a secure
+// connection can be established over a pair of existing file descriptors by
+// calling tls_connect_fds().
+
+// A server can accept a new client connection by calling tls_accept_socket()
+// on an already established socket connection.
+
+// Two functions are provided for input and output, tls_read() and tls_write().
+
+// After use, a tls context should be closed with tls_close(), and then freed
+// by calling tls_free(). When no more contexts are to be created, the
+// tls_config object should be freed by calling tls_config_free().
 
 int conn_init(goat_connection_t *conn, int handle) {
     assert(conn != NULL);
@@ -655,17 +658,17 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
 
     if (conn->m_use_ssl) {
-        int ret = SSL_shutdown(conn->m_network.ssl);
-        int err = SSL_get_error(conn->m_network.ssl, ret);
+        int ret = tls_close(conn->m_network.tls);
 
-        if (ret == 1)  goto queue_wait;
+        if (ret == 0)  goto queue_wait;
 
-        if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-            // need to call shutdown again to finish handshake
-            return conn->m_state.state;
-        }
+        // FIXME deal with case where multiple shutdown calls are needed
+//        if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+//            // need to call shutdown again to finish handshake
+//            return conn->m_state.state;
+//        }
 
-        conn->m_state.change_reason = strdup(ERR_error_string(err, NULL));
+        conn->m_state.change_reason = strdup(tls_error(conn->m_network.tls));
         return GOAT_CONN_ERROR;
     }
     else {

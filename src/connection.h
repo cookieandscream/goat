@@ -10,7 +10,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#include <openssl/ssl.h>
+#include <tls.h>
 
 #include "goat.h"
 #include "message.h"
@@ -47,7 +47,7 @@ typedef struct {
         char                *hostname;
         char                * servname;
         struct addrinfo     *ai0;
-        SSL                 *ssl;
+        struct tls          *tls;
     } m_network;
     struct {
         goat_conn_state_t   state;

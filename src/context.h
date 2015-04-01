@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#include <openssl/ssl.h>
+#include <tls.h>
 
 #include "goat.h"
 
@@ -17,7 +17,7 @@ struct s_goat_context {
     size_t              m_connections_count;
     goat_callback_t     *m_callbacks;
     goat_error_t        m_error;
-    SSL_CTX             *m_ssl_ctx;
+    struct tls_config   *m_tls_config;
 };
 
 #endif

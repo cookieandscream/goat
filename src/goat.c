@@ -18,14 +18,13 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
-static int _ssl_initialised = 0;
+static int _tls_initialised = 0;
 
 goat_context_t *goat_context_new() {
-    // initialise SSL library on first invocation
-    if (! _ssl_initialised) {
-        SSL_load_error_strings();
-        SSL_library_init();
-        _ssl_initialised = 1;
+    // initialise TLS library on first invocation
+    if (! _tls_initialised) {
+        tls_init();
+        _tls_initialised = 1;
     }
 
     // we don't need to lock in here, because no other thread has a pointer to this context yet
@@ -46,7 +45,7 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    context->m_ssl_ctx = NULL;  // initialise this on use
+    context->m_tls_config = NULL;  // initialise this on use
 
     return context;
 
@@ -77,6 +76,8 @@ int goat_context_delete(goat_context_t *context) {
         context->m_connections = NULL;
         context->m_connections_size = 0;
         assert(context->m_connections_count == 0);
+
+        if (context->m_tls_config) tls_config_free(context->m_tls_config);
 
         pthread_rwlock_unlock(&context->m_rwlock);
         pthread_rwlock_destroy(&context->m_rwlock);
