@@ -75,7 +75,7 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
                     return 0;
 
                 case RESOLVER_DONE:
-                    *resp = state->res;
+                    *resp = res;
                     *statep = NULL;
                     pthread_join(state->thread, NULL);
                     pthread_mutex_destroy(&state->mutex);
