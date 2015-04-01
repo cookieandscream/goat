@@ -94,7 +94,7 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
 
     if (context == NULL)  return GOAT_E_ERRORINV;
     if (connection < 0)   return context->m_error;
-    if (connection >= context->m_connections_size)  return GOAT_E_ERRORINV;
+    if ((size_t) connection >= context->m_connections_size)  return GOAT_E_ERRORINV;
     if (context->m_connections[connection] == NULL)  return GOAT_E_ERRORINV;
 
     return context->m_connections[connection]->m_state.error;
@@ -119,7 +119,7 @@ int goat_reset_error(goat_context_t *context, int connection) {
 
     if (context == NULL)  return -1;
     if (connection < 0)  context->m_error = GOAT_E_NONE;
-    if (connection >= context->m_connections_size)  return -1;
+    if ((size_t) connection >= context->m_connections_size)  return -1;
     if (context->m_connections[connection] == NULL)  return -1;
 
     return conn_reset_error(context->m_connections[connection]);
@@ -167,7 +167,7 @@ int goat_connection_new(goat_context_t *context) {
 int goat_connection_delete(goat_context_t *context, int connection) {
     assert(context != NULL);
     assert(connection >= 0);
-    assert(connection < context->m_connections_size);
+    assert((size_t) connection < context->m_connections_size);
 
     if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
         if (context->m_connections[connection] != NULL) {
