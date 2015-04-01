@@ -338,7 +338,7 @@ ssize_t _conn_send_data(goat_connection_t *conn) {
             // socket has been disconnected
             return total_bytes_sent ? total_bytes_sent : 0;
         }
-        else if (wrote < node->len) {
+        else if ((size_t) wrote < node->len) {
             // partial write - reinsert the remainder at the queue head for next
             // time the socket is writeable
             STAILQ_REMOVE_HEAD(&conn->m_write_queue, entries);

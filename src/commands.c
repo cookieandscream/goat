@@ -217,7 +217,7 @@ static int _message_commands_cmp(const void *key, const void *iter) {
     return strcmp((const char *) key, *(const char **) iter);
 }
 
-const char *const goat_message_static_command(const char *command) {
+const char *goat_message_static_command(const char *command) {
     static const size_t width = sizeof(message_commands[0]);
     static const size_t nel = sizeof(message_commands) / sizeof(message_commands[0]);
 

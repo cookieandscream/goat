@@ -285,7 +285,7 @@ void goat_message_delete(goat_message_t *message);
 
 char *goat_message_strdup(const goat_message_t *message);
 char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *size);
-const char *const goat_message_static_command(const char *command);
+const char *goat_message_static_command(const char *command);
 
 const char *goat_message_get_prefix(const goat_message_t *message);
 const char *goat_message_get_command(const goat_message_t *message);
