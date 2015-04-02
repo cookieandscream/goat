@@ -16,7 +16,7 @@ static ssize_t _conn_send_data(goat_connection_t *);
 static int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message);
 static goat_message_t *_conn_dequeue_message(str_queue_head_t *queue);
 static int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state);
-static int _conn_start_connect(goat_connection_t *conn);
+static int _conn_start_connect(goat_connection_t *conn, const struct addrinfo *ai);
 
 static const char *const _conn_state_names[] = {
     [GOAT_CONN_DISCONNECTED]    = "disconnected",
@@ -480,11 +480,9 @@ goat_message_t *_conn_dequeue_message(str_queue_head_t *queue) {
     return message;
 }
 
-int _conn_start_connect(goat_connection_t *conn) {
+int _conn_start_connect(goat_connection_t *conn, const struct addrinfo *ai) {
     assert(conn != NULL);
-    assert(conn->m_state.ai != NULL);
-
-    struct addrinfo *ai = conn->m_state.ai;
+    assert(ai != NULL);
 
     conn->m_network.socket = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
@@ -518,7 +516,6 @@ CONN_STATE_ENTER(RESOLVING) {
     if (conn->m_network.ai0) {
         freeaddrinfo(conn->m_network.ai0);
         conn->m_network.ai0 = NULL;
-        conn->m_state.ai = NULL;
     }
 }
 
@@ -559,11 +556,17 @@ CONN_STATE_EXIT(RESOLVING) {
 CONN_STATE_ENTER(CONNECTING) {
     // start up a connection attempt
     assert(conn != NULL);
+    assert(conn->m_state.data.raw == NULL);
     assert(conn->m_network.ai0 != NULL);
 
-    if (conn->m_state.ai == NULL)  conn->m_state.ai = conn->m_network.ai0;
+    conn->m_state.data.connecting = calloc(1, sizeof(connecting_state_data_t));
+    // FIXME what if this fails
+    // FIXME generally, what if something fails in a state _enter or _exit?
+    assert(NULL != conn->m_state.data.connecting);
 
-    _conn_start_connect(conn); // FIXME what if this errors
+    conn->m_state.data.connecting->ai = conn->m_network.ai0;
+
+    _conn_start_connect(conn, conn->m_state.data.connecting->ai); // FIXME what if this errors
 }
 
 CONN_STATE_EXECUTE(CONNECTING) {
@@ -585,12 +588,14 @@ CONN_STATE_EXECUTE(CONNECTING) {
                 }
 
                 // connect failed -- try the next address if there is one
-                if (conn->m_state.ai->ai_next != NULL) {
-                    conn->m_state.ai = conn->m_state.ai->ai_next;
+                if (conn->m_state.data.connecting->ai->ai_next != NULL) {
+                    conn->m_state.data.connecting->ai =
+                        conn->m_state.data.connecting->ai->ai_next;
 
                     // FIXME send a message about trying again
 
-                    _conn_start_connect(conn);  // FIXME what if this fails
+                    // FIXME what if this fails
+                    _conn_start_connect(conn, conn->m_state.data.connecting->ai);
                     return conn->m_state.state;
                 }
 
@@ -611,7 +616,13 @@ CONN_STATE_EXECUTE(CONNECTING) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(CONNECTING) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(CONNECTING) {
+    assert(conn != NULL);
+    assert(conn->m_state.state == GOAT_CONN_CONNECTING);
+    assert(conn->m_state.data.raw != NULL);
+    free(conn->m_state.data.connecting);
+    conn->m_state.data.connecting = NULL;
+}
 
 CONN_STATE_ENTER(SSLHANDSHAKE) { }
 

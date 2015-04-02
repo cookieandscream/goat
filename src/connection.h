@@ -38,6 +38,10 @@ typedef struct s_str_queue_entry {
 typedef STAILQ_HEAD(s_str_queue_head, s_str_queue_entry) str_queue_head_t;
 
 typedef struct {
+    struct addrinfo *ai;
+} connecting_state_data_t;
+
+typedef struct {
     int                 m_handle;
     pthread_mutex_t     m_mutex;
     struct {
@@ -45,19 +49,21 @@ typedef struct {
         struct sockaddr     *address;
         socklen_t           address_len;
         char                *hostname;
-        char                * servname;
+        char                *servname;
         struct addrinfo     *ai0;
         struct tls          *tls;
     } m_network;
     struct {
         goat_conn_state_t   state;
-        void                *data;
+        union {
+            void                    *raw;
+            connecting_state_data_t *connecting;
+        } data;
         int                 socket_is_readable;
         int                 socket_is_writeable;
         goat_error_t        error;
         char                *change_reason;
         resolver_state_t    *res_state;
-        struct addrinfo     *ai;
     } m_state;
     int                 m_use_ssl;
     str_queue_head_t    m_write_queue;
