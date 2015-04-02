@@ -729,6 +729,4 @@ CONN_STATE_EXECUTE(ERROR) {
     return GOAT_CONN_ERROR;
 }
 
-CONN_STATE_EXIT(ERROR) {
-    // FIXME recover to newly-initialised state
-}
+CONN_STATE_EXIT(ERROR) { ST_UNUSED(conn); }
