@@ -509,9 +509,9 @@ CONN_STATE_EXIT(DISCONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(RESOLVING) {
     assert(conn != NULL);
-    assert(conn->m_state.res_state == NULL);
+    assert(conn->m_state.data.raw == NULL);
 
-    conn->m_state.res_state = NULL;
+    conn->m_state.data.resolving = NULL;
 
     if (conn->m_network.ai0) {
         freeaddrinfo(conn->m_network.ai0);
@@ -523,7 +523,7 @@ CONN_STATE_EXECUTE(RESOLVING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_RESOLVING);
 
     int r = resolver_getaddrinfo(
-        &conn->m_state.res_state,
+        &conn->m_state.data.resolving,
         conn->m_network.hostname,
         conn->m_network.servname,
         &conn->m_network.ai0
@@ -543,13 +543,13 @@ CONN_STATE_EXECUTE(RESOLVING) {
 }
 
 CONN_STATE_EXIT(RESOLVING) {
-    // clean up resolver
+    assert(conn->m_state.state == GOAT_CONN_RESOLVING);
 
-    if (conn->m_state.res_state) {
+    if (conn->m_state.data.resolving) {
         // if there's still resolve state around, then we're exiting this state for
         // some reason other than completion of the resolve request, so explicitly
         // cancel it
-        resolver_cancel(&conn->m_state.res_state);
+        resolver_cancel(&conn->m_state.data.resolving);
     }
 }
 

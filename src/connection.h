@@ -58,12 +58,12 @@ typedef struct {
         union {
             void                    *raw;
             connecting_state_data_t *connecting;
+            resolver_state_t        *resolving;
         } data;
         int                 socket_is_readable;
         int                 socket_is_writeable;
         goat_error_t        error;
         char                *change_reason;
-        resolver_state_t    *res_state;
     } m_state;
     int                 m_use_ssl;
     str_queue_head_t    m_write_queue;
