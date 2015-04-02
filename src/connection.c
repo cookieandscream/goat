@@ -660,13 +660,19 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
     if (conn->m_use_ssl) {
         int ret = tls_close(conn->m_network.tls);
 
-        if (ret == 0)  goto queue_wait;
+        // FIXME depends on non-blocking tls_close
+        switch(ret) {
+            case 0:
+                goto queue_wait;
 
-        // FIXME deal with case where multiple shutdown calls are needed
-//        if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-//            // need to call shutdown again to finish handshake
-//            return conn->m_state.state;
-//        }
+            case TLS_READ_AGAIN:
+            case TLS_WRITE_AGAIN:
+                // need to call close again to finish handshake
+                return conn->m_state.state;
+
+            default:
+                break;
+        }
 
         conn->m_state.change_reason = strdup(tls_error(conn->m_network.tls));
         return GOAT_CONN_ERROR;
