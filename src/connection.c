@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "connection.h"
+#include "context.h"
 #include "message.h"
 #include "sm.h"
 #include "tresolver.h"
@@ -638,11 +639,46 @@ CONN_STATE_EXIT(CONNECTING) {
     conn->m_state.data.connecting = NULL;
 }
 
-CONN_STATE_ENTER(SSLHANDSHAKE) { }
+CONN_STATE_ENTER(SSLHANDSHAKE) {
+    assert(conn != NULL && conn->m_state.state == GOAT_CONN_SSLHANDSHAKE);
 
-CONN_STATE_EXECUTE(SSLHANDSHAKE) { }
+    assert(conn->m_network.tls == NULL);
 
-CONN_STATE_EXIT(SSLHANDSHAKE) { }
+    struct tls *tls = tls_client();
+    tls = tls_client();
+    if (NULL == tls) {
+        longjmp(*env, 1);
+    }
+
+    if (0 != tls_configure(tls, conn->m_context->m_tls_config)) {
+        tls_free(tls);
+        longjmp(*env, 1);
+    }
+
+    conn->m_network.tls = tls;
+}
+
+CONN_STATE_EXECUTE(SSLHANDSHAKE) {
+    assert(conn != NULL && conn->m_state.state == GOAT_CONN_SSLHANDSHAKE);
+    assert(conn->m_network.tls != NULL);
+
+    int ret = tls_connect_socket(conn->m_network.tls,
+        conn->m_network.socket, conn->m_network.hostname);
+
+    switch (ret) {
+        case 0:
+            return GOAT_CONN_CONNECTED;
+
+        case TLS_READ_AGAIN:
+        case TLS_WRITE_AGAIN:
+            return conn->m_state.state;
+    }
+
+    conn->m_state.change_reason = strdup(tls_error(conn->m_network.tls));
+    return GOAT_CONN_ERROR;
+}
+
+CONN_STATE_EXIT(SSLHANDSHAKE) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(CONNECTED) { ST_UNUSED(conn); ST_UNUSED(env); }
 

@@ -44,6 +44,7 @@ typedef struct {
 typedef struct {
     int                 m_handle;
     pthread_mutex_t     m_mutex;
+    goat_context_t      *m_context;
     struct {
         int                 socket;
         struct sockaddr     *address;

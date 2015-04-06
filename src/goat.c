@@ -45,7 +45,7 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    context->m_tls_config = NULL;  // initialise this on use
+    context->m_tls_config = NULL;  // FIXME initialise this here
 
     return context;
 
