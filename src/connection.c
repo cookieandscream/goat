@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,7 +29,7 @@ static const char *const _conn_state_names[] = {
     [GOAT_CONN_ERROR]           = "error"
 };
 
-#define CONN_STATE_ENTER(name)   ST_ENTER(name, void, goat_connection_t *conn, jmp_buf *env)
+#define CONN_STATE_ENTER(name)   ST_ENTER(name, int, goat_connection_t *conn)
 #define CONN_STATE_EXIT(name)    ST_EXIT(name, void, goat_connection_t *conn)
 #define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, goat_conn_state_t, goat_connection_t *conn)
 
@@ -47,7 +46,7 @@ CONN_STATE_DECL(CONNECTED);
 CONN_STATE_DECL(DISCONNECTING);
 CONN_STATE_DECL(ERROR);
 
-typedef void (*state_enter_function)(goat_connection_t *, jmp_buf *);
+typedef int (*state_enter_function)(goat_connection_t *);
 typedef goat_conn_state_t (*state_execute_function)(goat_connection_t *);
 typedef void (*state_exit_function)(goat_connection_t *);
 
@@ -222,8 +221,7 @@ int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable
             default:
                 assert(0 == "shouldn't get here");
                 conn->m_state.error = GOAT_E_STATE;
-                conn->m_state.state = GOAT_CONN_ERROR;
-                state_enter[conn->m_state.state](conn, NULL);
+                _conn_set_state(conn, GOAT_CONN_ERROR);
                 break;
         }
         pthread_mutex_unlock(&conn->m_mutex);
@@ -284,7 +282,6 @@ goat_message_t *conn_recv_message(goat_connection_t *conn) {
 
 int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state) {
     assert(conn != NULL);
-    jmp_buf env;
 
     if (conn->m_state.state != new_state) {
         state_exit[conn->m_state.state](conn);
@@ -299,6 +296,7 @@ int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state) {
             NULL
         };
 
+        // FIXME don't report state change until we know it succeeded
         goat_message_t *message;
         if (NULL != (message = goat_message_new(":goat.connection", "state", params))) {
             _conn_enqueue_message(&conn->m_read_queue, message);
@@ -308,13 +306,12 @@ int _conn_set_state(goat_connection_t *conn, goat_conn_state_t new_state) {
         if (conn->m_state.change_reason)  free(conn->m_state.change_reason);
         conn->m_state.change_reason = NULL;
 
-        if (!setjmp(env)) {
-            conn->m_state.state = new_state;
-            state_enter[conn->m_state.state](conn, &env);
-        }
-        else {
+        conn->m_state.state = new_state;
+        int ret = state_enter[conn->m_state.state](conn);
+
+        if (ret != 0) {
             conn->m_state.state = GOAT_CONN_ERROR;
-            state_enter[conn->m_state.state](conn, NULL);
+            state_enter[conn->m_state.state](conn);
         }
     }
 
@@ -504,7 +501,7 @@ int _conn_start_connect(goat_connection_t *conn, const struct addrinfo *ai) {
 }
 
 
-CONN_STATE_ENTER(DISCONNECTED) { ST_UNUSED(conn); ST_UNUSED(env); }
+CONN_STATE_ENTER(DISCONNECTED) { ST_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(DISCONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTED);
@@ -515,8 +512,6 @@ CONN_STATE_EXECUTE(DISCONNECTED) {
 CONN_STATE_EXIT(DISCONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(RESOLVING) {
-    ST_UNUSED(env);
-
     assert(conn != NULL);
     assert(conn->m_state.data.raw == NULL);
 
@@ -526,6 +521,8 @@ CONN_STATE_ENTER(RESOLVING) {
         freeaddrinfo(conn->m_network.ai0);
         conn->m_network.ai0 = NULL;
     }
+
+    return 0;
 }
 
 CONN_STATE_EXECUTE(RESOLVING) {
@@ -570,7 +567,7 @@ CONN_STATE_ENTER(CONNECTING) {
 
     conn->m_state.data.connecting = calloc(1, sizeof(connecting_state_data_t));
     if (NULL == conn->m_state.data.connecting) {
-        longjmp(*env, 1);
+        return -1;
     }
 
     conn->m_state.data.connecting->ai = conn->m_network.ai0;
@@ -580,8 +577,10 @@ CONN_STATE_ENTER(CONNECTING) {
     if (0 != ret) {
         free(conn->m_state.data.connecting);
         conn->m_state.data.connecting = NULL;
-        longjmp(*env, ret);
+        return ret;
     }
+
+    return 0;
 }
 
 CONN_STATE_EXECUTE(CONNECTING) {
@@ -647,15 +646,16 @@ CONN_STATE_ENTER(SSLHANDSHAKE) {
     struct tls *tls = tls_client();
     tls = tls_client();
     if (NULL == tls) {
-        longjmp(*env, 1);
+        return -1;
     }
 
     if (0 != tls_configure(tls, conn->m_context->m_tls_config)) {
         tls_free(tls);
-        longjmp(*env, 1);
+        return -1;
     }
 
     conn->m_network.tls = tls;
+    return 0;
 }
 
 CONN_STATE_EXECUTE(SSLHANDSHAKE) {
@@ -680,7 +680,7 @@ CONN_STATE_EXECUTE(SSLHANDSHAKE) {
 
 CONN_STATE_EXIT(SSLHANDSHAKE) { ST_UNUSED(conn); }
 
-CONN_STATE_ENTER(CONNECTED) { ST_UNUSED(conn); ST_UNUSED(env); }
+CONN_STATE_ENTER(CONNECTED) { ST_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
@@ -702,7 +702,6 @@ CONN_STATE_EXECUTE(CONNECTED) {
 CONN_STATE_EXIT(CONNECTED) { ST_UNUSED(conn); }
 
 CONN_STATE_ENTER(DISCONNECTING) {
-    ST_UNUSED(env);
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
 
     // clear out the write queue, we're not going to send it
@@ -714,6 +713,8 @@ CONN_STATE_ENTER(DISCONNECTING) {
         n1 = n2;
     }
     STAILQ_INIT(&conn->m_write_queue);
+
+    return 0;
 }
 
 CONN_STATE_EXECUTE(DISCONNECTING) {
@@ -760,7 +761,7 @@ queue_wait:
 
 CONN_STATE_EXIT(DISCONNECTING) { ST_UNUSED(conn); }
 
-CONN_STATE_ENTER(ERROR) { ST_UNUSED(conn); ST_UNUSED(env); }
+CONN_STATE_ENTER(ERROR) { ST_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(ERROR) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_ERROR);
