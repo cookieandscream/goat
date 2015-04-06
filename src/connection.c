@@ -684,11 +684,15 @@ CONN_STATE_EXECUTE(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
 
     if (conn->m_use_ssl) {
+        if (NULL == conn->m_network.tls)  goto queue_wait;
+
         int ret = tls_close(conn->m_network.tls);
 
         // FIXME depends on non-blocking tls_close
         switch(ret) {
             case 0:
+                tls_free(conn->m_network.tls);
+                conn->m_network.tls = NULL;
                 goto queue_wait;
 
             case TLS_READ_AGAIN:
