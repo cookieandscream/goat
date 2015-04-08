@@ -525,7 +525,7 @@ int _conn_start_connect(goat_connection_t *conn, const struct addrinfo *ai) {
 
     conn->m_network.socket = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
-    if (conn->m_network.socket < 0)  return -1; // FIXME report error
+    if (conn->m_network.socket < 0) return errno;
 
     int ret = connect(conn->m_network.socket, ai->ai_addr, ai->ai_addrlen);
     int err = errno;
@@ -643,9 +643,8 @@ CONN_STATE_EXECUTE(CONNECTING) {
 
                     // FIXME send a message about trying again
 
-                    // FIXME what if this fails
-                    _conn_start_connect(conn, conn->m_state.data.connecting->ai);
-                    return conn->m_state.state;
+                    err = _conn_start_connect(conn, conn->m_state.data.connecting->ai);
+                    if (0 == err) return conn->m_state.state;
                 }
 
                 conn->m_state.change_reason = strdup(strerror(err));
