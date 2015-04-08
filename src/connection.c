@@ -685,7 +685,7 @@ CONN_STATE_ENTER(SSLHANDSHAKE) {
         return -1;
     }
 
-    if (0 != tls_configure(tls, conn->m_context->m_tls_config)) {
+    if (0 != tls_configure(tls, NULL)) {
         tls_free(tls);
         return -1;
     }

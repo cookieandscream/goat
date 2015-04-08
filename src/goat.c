@@ -52,8 +52,6 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    context->m_tls_config = NULL;  // FIXME initialise this here
-
     return context;
 
 cleanup:
