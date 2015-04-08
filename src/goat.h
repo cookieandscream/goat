@@ -29,6 +29,7 @@ typedef enum {
     GOAT_E_LAST /* don't use; keep last */
 } goat_error_t;
 
+#define GOAT_IRC_FIRST (GOAT_IRC_RPL_WELCOME) /* must match first */
 typedef enum {
     /* these must be in alphabetic (ascii) order according to what appears on the wire */
 

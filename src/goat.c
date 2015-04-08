@@ -118,9 +118,9 @@ const char *goat_strerror(goat_error_t error) {
 }
 
 const char *goat_strcommand(goat_command_t command) {
-    assert(command >= GOAT_IRC_PASS);
+    assert(command >= GOAT_IRC_FIRST);
     assert(command < GOAT_IRC_LAST);
-    if (command >= GOAT_IRC_PASS && command < GOAT_IRC_LAST)  return irc_strings[command];
+    if (command >= GOAT_IRC_FIRST && command < GOAT_IRC_LAST)  return irc_strings[command];
     return NULL;
 }
 
