@@ -42,9 +42,7 @@ typedef struct {
 } connecting_state_data_t;
 
 typedef struct {
-    int                     m_handle;
     pthread_mutex_t         m_mutex;
-    const goat_context_t    *m_context;
     struct {
         int                 socket;
         char                *hostname;
@@ -69,7 +67,7 @@ typedef struct {
     str_queue_head_t    m_read_queue;
 } goat_connection_t;
 
-int conn_init(goat_connection_t *conn, const goat_context_t *context, int handle);
+int conn_init(goat_connection_t *conn);
 int conn_destroy(goat_connection_t *conn);
 
 int conn_connect(goat_connection_t *conn, const char *hostname, const char *servname, int ssl);

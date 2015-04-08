@@ -161,7 +161,7 @@ int goat_connection_new(goat_context_t *context) {
         }
 
         if (NULL != (conn = malloc(sizeof(goat_connection_t)))) {
-            if (0 == conn_init(conn, context, context->m_connections_count)) {
+            if (0 == conn_init(conn)) {
                 handle = context->m_connections_count ++;
                 context->m_connections[handle] = conn;
             }

@@ -104,13 +104,11 @@ static const state_exit_function state_exit[] = {
 // by calling tls_free(). When no more contexts are to be created, the
 // tls_config object should be freed by calling tls_config_free().
 
-int conn_init(goat_connection_t *conn, const goat_context_t *context, int handle) {
+int conn_init(goat_connection_t *conn) {
     assert(conn != NULL);
 
     memset(conn, 0, sizeof(goat_connection_t));
 
-    conn->m_handle = handle;
-    conn->m_context = context;
     conn->m_network.socket = -1;
 
     STAILQ_INIT(&conn->m_write_queue);
