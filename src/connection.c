@@ -161,6 +161,7 @@ int conn_connect(goat_connection_t *conn, const char *hostname, const char *serv
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
         conn->m_network.hostname = strdup(hostname);
         conn->m_network.servname = strdup(servname);
+        conn->m_use_ssl = ssl;
 
         conn->m_state.change_reason = strdup("connect requested by client");
         _conn_set_state(conn, GOAT_CONN_RESOLVING);
