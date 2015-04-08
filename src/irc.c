@@ -3,7 +3,7 @@
 
 #include "goat.h"
 
-const char *const message_commands[GOAT_IRC_LAST] = {
+const char *const irc_strings[GOAT_IRC_LAST] = {
     [GOAT_IRC_RPL_WELCOME]              = "001",
     [GOAT_IRC_RPL_YOURHOST]             = "002",
     [GOAT_IRC_RPL_CREATED]              = "003",
@@ -213,15 +213,15 @@ const char *const message_commands[GOAT_IRC_LAST] = {
     [GOAT_IRC_WHOWAS]   = "WHOWAS",
 };
 
-static int _message_commands_cmp(const void *key, const void *iter) {
+static int _irc_strings_cmp(const void *key, const void *iter) {
     return strcmp((const char *) key, *(const char **) iter);
 }
 
 const char *goat_message_static_command(const char *command) {
-    static const size_t width = sizeof(message_commands[0]);
-    static const size_t nel = sizeof(message_commands) / sizeof(message_commands[0]);
+    static const size_t width = sizeof(irc_strings[0]);
+    static const size_t nel = sizeof(irc_strings) / sizeof(irc_strings[0]);
 
-    const char **ptr = bsearch(command, message_commands, nel, width, _message_commands_cmp);
+    const char **ptr = bsearch(command, irc_strings, nel, width, _irc_strings_cmp);
 
     if (ptr) return *ptr;
     return command;
