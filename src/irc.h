@@ -1,5 +1,5 @@
-#ifndef GOAT_COMMANDS_H
-#define GOAT_COMMANDS_H
+#ifndef GOAT_IRC_H
+#define GOAT_IRC_H
 
 extern const char *const message_commands[];
 

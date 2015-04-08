@@ -5,7 +5,7 @@
 
 #include "goat.h"
 
-#include "commands.h"
+#include "irc.h"
 #include "message.h"
 
 static const char *_next_tag(const char *str);

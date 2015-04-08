@@ -10,11 +10,11 @@
 
 #include "goat.h"
 
-#include "commands.h"
 #include "connection.h"
 #include "context.h"
 #include "error.h"
 #include "event.h"
+#include "irc.h"
 
 const size_t CONN_ALLOC_INCR = 16;
 
