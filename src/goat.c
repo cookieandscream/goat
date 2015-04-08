@@ -18,18 +18,21 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
-static pthread_mutex_t _tls_init_mutex = PTHREAD_MUTEX_INITIALIZER;
-static int _tls_initialised = 0;
+static int _tls_init() {
+    static pthread_mutex_t _tls_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+    int ret;
+
+    if (0 == (ret = pthread_mutex_lock(&_tls_init_mutex))) {
+        ret = tls_init();
+        pthread_mutex_unlock(&_tls_init_mutex);
+    }
+
+    return ret;
+}
 
 goat_context_t *goat_context_new() {
-    // initialise TLS library on first invocation
-    // FIXME what if tls_init fails
-    if (0 == _tls_initialised) {
-        if (0 == pthread_mutex_lock(&_tls_init_mutex)) {
-            if (0 == _tls_initialised++) tls_init();
-            pthread_mutex_unlock(&_tls_init_mutex);
-        }
-    }
+    // make sure TLS library is initialised
+    if (0 != _tls_init()) return NULL;
 
     // we don't need to lock in here, because no other thread has a pointer to this context yet
     goat_context_t *context = calloc(1, sizeof(goat_context_t));
