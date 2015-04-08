@@ -67,9 +67,13 @@ int goat_context_delete(goat_context_t *context) {
 
         for (size_t i = 0; i < context->m_connections_size; i++) {
             if (context->m_connections[i] != NULL) {
-                conn_destroy(context->m_connections[i]);
+                goat_connection_t *conn = context->m_connections[i];
                 context->m_connections[i] = NULL;
                 -- context->m_connections_count;
+
+                conn_destroy(conn);
+                memset(conn, 0, sizeof(goat_connection_t));
+                free(conn);
             }
         }
         free(context->m_connections);

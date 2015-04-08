@@ -122,12 +122,38 @@ int conn_init(goat_connection_t *conn, const goat_context_t *context, int handle
 int conn_destroy(goat_connection_t *conn) {
     assert(conn != NULL);
 
-    if (conn->m_network.hostname) {
-        free(conn->m_network.hostname);
-        conn->m_network.hostname = NULL;
+    int ret;
+
+    if (0 == (ret = pthread_mutex_lock(&conn->m_mutex))) {
+        state_exit[conn->m_state.state](conn);
+        if (conn->m_state.change_reason) free(conn->m_state.change_reason);
+
+        if (conn->m_network.hostname) free(conn->m_network.hostname);
+        if (conn->m_network.servname) free(conn->m_network.servname);
+        if (conn->m_network.ai0) freeaddrinfo(conn->m_network.ai0);
+        if (conn->m_network.tls) tls_free(conn->m_network.tls);
+
+        str_queue_entry_t *node = STAILQ_FIRST(&conn->m_write_queue);
+        while (NULL != node) {
+            str_queue_entry_t *next = STAILQ_NEXT(node, entries);
+            free(node);
+            node = next;
+        }
+        STAILQ_INIT(&conn->m_write_queue);
+
+        node = STAILQ_FIRST(&conn->m_read_queue);
+        while (NULL != node) {
+            str_queue_entry_t *next = STAILQ_NEXT(node, entries);
+            free(node);
+            node = next;
+        }
+        STAILQ_INIT(&conn->m_read_queue);
+
+        pthread_mutex_unlock(&conn->m_mutex);
+        ret = pthread_mutex_destroy(&conn->m_mutex);
     }
 
-    return -1; // FIXME
+    return ret;
 }
 
 int conn_connect(goat_connection_t *conn, const char *hostname, const char *servname, int ssl) {

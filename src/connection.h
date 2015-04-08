@@ -47,8 +47,6 @@ typedef struct {
     const goat_context_t    *m_context;
     struct {
         int                 socket;
-        struct sockaddr     *address;
-        socklen_t           address_len;
         char                *hostname;
         char                *servname;
         struct addrinfo     *ai0;
