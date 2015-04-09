@@ -355,17 +355,6 @@ int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_ca
     }
 }
 
-#if 0
-int goat_send_message(
-        goat_handle handle,
-        const char *restrict prefix,
-        const char *restrict command,
-        const char **restrict params
-) {
-    // validate:
-    //   prefix/command cannot contain spaces
-    //   if a param contains spaces it must be the last param
-    //   sum of lengths must be <= 510... long line handling?
-    return -1;
+int goat_send_message(goat_context_t *context, int connection, const goat_message_t *message) {
+    return -1; // FIXME
 }
-#endif
