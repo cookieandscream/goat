@@ -228,6 +228,28 @@ int goat_connect(goat_context_t *context, int connection,
     return ret;
 }
 
+int goat_disconnect(goat_context_t *context, int connection) {
+    assert(context != NULL);
+
+    goat_connection_t *conn = NULL;
+    int ret = -1;
+
+    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
+        if (connection >= 0
+            && connection < (int) context->m_connections_size
+            && context->m_connections[connection] != NULL
+        ) {
+            conn = context->m_connections[connection];
+        }
+
+        pthread_rwlock_unlock(&context->m_rwlock);
+    }
+
+    if (NULL != conn) ret = conn_disconnect(conn);
+
+    return ret;
+}
+
 // use this to get fdsets to select on from your app, if you have your own
 // fds to block on as well
 int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
