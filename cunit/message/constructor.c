@@ -128,7 +128,6 @@ void test_goat_message_clone(void) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
-    const size_t nparams = sizeof(params) / sizeof(params[0]);
     goat_message_t *msg1, *msg2;
 
     msg1 = goat_message_new(prefix, command, params);
