@@ -256,7 +256,8 @@ const char *goat_strcommand(goat_command_t command);
 int goat_connection_new(goat_context_t *context);
 int goat_connection_delete(goat_context_t *context, int connection);
 
-int goat_connect(goat_context_t *context, int connection, const char *hostname, int port, int ssl);
+int goat_connect(goat_context_t *context, int connection,
+    const char *hostname, const char *servname, int ssl);
 int goat_disconnect(goat_context_t *connect, int connection);
 int goat_is_connected(goat_context_t *connect, int connection);
 int goat_get_hostname(goat_context_t *connect, int connection, char **hostname);
