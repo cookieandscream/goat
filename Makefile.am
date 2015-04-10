@@ -24,13 +24,16 @@ TESTS = cunit/basic
 
 check_PROGRAMS = cunit/basic
 
-cunit_basic_SOURCES =               \
-    cunit/message/suite.c           \
-    cunit/message/constructor.c     \
-    cunit/basic.c                   \
-    cunit/suite-info.c
+CUNIT_TESTFILES =                \
+    cunit/message/suite.c        \
+    cunit/message/constructor.c
+
+cunit_basic_SOURCES =   \
+    cunit/basic.c       \
+    cunit/suite-info.c  \
+    $(CUNIT_TESTFILES)
 
 cunit_basic_LDADD = -lcunit -lgoat
 
-cunit/suite-info.c: $(cunit_basic_SOURCES)
+cunit/suite-info.c: $(CUNIT_TESTFILES)
 	perl cunit/gen-suite-info.pl > $@
