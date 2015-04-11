@@ -29,10 +29,11 @@ typedef enum {
     GOAT_E_LAST /* don't use; keep last */
 } goat_error_t;
 
-#define GOAT_IRC_FIRST (GOAT_IRC_RPL_WELCOME) /* must match first */
+#define GOAT_IRC_FIRST (0) /* must match first */
 typedef enum {
     /* these must be in alphabetic (ascii) order according to what appears on the wire */
 
+#define GOAT_IRC_RPL_FIRST (GOAT_IRC_RPL_WELCOME)
     GOAT_IRC_RPL_WELCOME = 0,       /* 001 */
     GOAT_IRC_RPL_YOURHOST,          /* 002 */
     GOAT_IRC_RPL_CREATED,           /* 003 */
@@ -140,6 +141,9 @@ typedef enum {
     GOAT_IRC_RPL_USERS,             /* 393 */
     GOAT_IRC_RPL_ENDOFUSERS,        /* 394 */
     GOAT_IRC_RPL_NOUSERS,           /* 395 */
+#define GOAT_IRC_RPL_LAST (GOAT_IRC_RPL_NOUSERS + 1)
+
+#define GOAT_IRC_ERR_FIRST (GOAT_IRC_ERR_NOSUCHNICK)
     GOAT_IRC_ERR_NOSUCHNICK,        /* 401 */
     GOAT_IRC_ERR_NOSUCHSERVER,      /* 402 */
     GOAT_IRC_ERR_NOSUCHCHANNEL,     /* 403 */
@@ -194,7 +198,9 @@ typedef enum {
     GOAT_IRC_ERR_NOSERVICEHOST,     /* 492 */
     GOAT_IRC_ERR_UMODEUNKNOWNFLAG,  /* 501 */
     GOAT_IRC_ERR_USERSDONTMATCH,    /* 502 */
+#define GOAT_IRC_ERR_LAST (GOAT_IRC_ERR_USERSDONTMATCH + 1)
 
+#define GOAT_IRC_STR_FIRST (GOAT_IRC_ADMIN)
     GOAT_IRC_ADMIN,
     GOAT_IRC_AWAY,
     GOAT_IRC_CONNECT,
@@ -240,6 +246,7 @@ typedef enum {
     GOAT_IRC_WHO,
     GOAT_IRC_WHOIS,
     GOAT_IRC_WHOWAS,
+#define GOAT_IRC_STR_LAST (GOAT_IRC_WHOWAS + 1)
 
     GOAT_IRC_LAST /* don't use; keep last */
 } goat_command_t;
