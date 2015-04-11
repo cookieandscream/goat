@@ -200,47 +200,23 @@ int goat_connection_delete(goat_context_t *context, int connection) {
 int goat_connect(goat_context_t *context, int connection,
     const char *hostname, const char *servname, int ssl
 ) {
-    assert(context != NULL);
+    if (NULL == context) return -1;
 
-    goat_connection_t *conn = NULL;
-    int ret = -1;
+    goat_connection_t *conn = context_get_connection(context, connection);
 
-    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
-        if (connection >= 0
-            && connection < (int) context->m_connections_size
-            && context->m_connections[connection] != NULL
-        ) {
-            conn = context->m_connections[connection];
-        }
+    if (NULL == conn) return -1;
 
-        pthread_rwlock_unlock(&context->m_rwlock);
-    }
-
-    if (NULL != conn) ret = conn_connect(conn, hostname, servname, ssl);
-
-    return ret;
+    return conn_connect(conn, hostname, servname, ssl);
 }
 
 int goat_disconnect(goat_context_t *context, int connection) {
-    assert(context != NULL);
+    if (NULL == context) return -1;
 
-    goat_connection_t *conn = NULL;
-    int ret = -1;
+    goat_connection_t *conn = context_get_connection(context, connection);
 
-    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
-        if (connection >= 0
-            && connection < (int) context->m_connections_size
-            && context->m_connections[connection] != NULL
-        ) {
-            conn = context->m_connections[connection];
-        }
+    if (NULL == conn) return -1;
 
-        pthread_rwlock_unlock(&context->m_rwlock);
-    }
-
-    if (NULL != conn) ret = conn_disconnect(conn);
-
-    return ret;
+    return conn_disconnect(conn);
 }
 
 // use this to get fdsets to select on from your app, if you have your own
