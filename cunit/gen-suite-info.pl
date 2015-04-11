@@ -10,6 +10,8 @@ use Data::Dumper;
 use File::Basename;
 my $dirname = dirname __FILE__;
 
+sub demangle;
+
 # find the suite directories
 opendir my $dh, $dirname or die "opendir $dirname: $!";
 my @suite_dirs = map { "$dirname/$_" } grep { -d "$dirname/$_" && m/^[^\.]/ } readdir $dh;
@@ -28,9 +30,7 @@ foreach my $dir (@suite_dirs) {
     } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $dir/*.c };
 
     my @tests = map {
-        my $func = $_;
-        my ($name) = m/^test_(.*)$/;
-        { name => $name, func => $func };
+        { name => demangle($_), func => $_ };
     } @test_funcs;
 
     my $suite_init = "${suite_name}_suite_init";
@@ -89,3 +89,20 @@ foreach my $suite (@suites) {
 
 print "\tCU_SUITE_INFO_NULL,\n";
 print '};', "\n";
+
+##############
+
+sub demangle {
+    my ($str) = @_;
+
+    # throw away 'test_' prefix
+    $str =~ s/^test_//;
+
+    # replace single underscores with spaces
+    $str =~ s/(?<!_)_(?!_)/ /g;
+
+    # replace double underscores with singles
+    $str =~ s/__/_/g;
+
+    return $str;
+}
