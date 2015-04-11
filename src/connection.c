@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -484,11 +485,11 @@ int _conn_enqueue_message(str_queue_head_t *queue, const goat_message_t *message
     str_queue_entry_t *entry;
 
     if (NULL != (tmp = goat_message_strdup(message))) {
-        len = strlen(tmp);
+        len = strlen(tmp) + 2;  // crlf
         if (NULL != (entry = malloc(sizeof(str_queue_entry_t) + len + 1))) {
             entry->len = len;
             entry->has_eol = 1;
-            strcpy(entry->str, tmp);
+            snprintf(entry->str, len + 1, "%s\x0d\x0a", tmp);
             STAILQ_INSERT_TAIL(queue, entry, entries);
             free(tmp);
             return 0;
