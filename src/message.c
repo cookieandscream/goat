@@ -21,11 +21,16 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
     if (prefix != NULL)  len += strlen(prefix) + 2;
     len += strlen(command);
     if (params) {
+        int have_space_param = 0;
+
         for (const char **p = params; *p; p++) {
+            // further parameters after one containing a space are invalid
+            if (have_space_param) return NULL;
+            if (NULL != strchr(*p, ' ')) have_space_param = 1;
+
             len += strlen(*p) + 1;
             ++ n_params;
             if (n_params == 15)  break;
-            if (strchr(*p, ' ') != NULL)  break;
         }
         len += 1;
     }
