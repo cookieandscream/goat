@@ -223,6 +223,12 @@ size_t goat_message_get_nparams(const goat_message_t *message) {
     return i;
 }
 
+goat_command_t goat_message_get_command(const goat_message_t *message) {
+    assert(message != NULL);
+
+    return message->m_command;
+}
+
 size_t goat_message_has_tags(const goat_message_t *message) {
     assert(message != NULL);
 
