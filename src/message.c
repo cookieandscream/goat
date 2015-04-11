@@ -43,9 +43,9 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
         ++ position;
     }
 
-    message->m_command = position;
+    message->m_command_string = position;
     position = stpcpy(position, command);
-    message->m_command = (char *) goat_message_static_command(message->m_command);
+    message->m_command_string = (char *) goat_message_static_command(message->m_command_string);
 
     if (params) {
         size_t i;
@@ -97,7 +97,7 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     // command
     token = strsep(&position, " ");
     if (token == NULL || token[0] == '\0')  goto cleanup;
-    message->m_command = (char *) goat_message_static_command(token);
+    message->m_command_string = (char *) goat_message_static_command(token);
 
     // *14( SPACE middle ) [ SPACE ":" trailing ]
     // 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
@@ -131,11 +131,11 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
 
     clone->m_prefix = clone->m_bytes + (orig->m_prefix - orig->m_bytes);
 
-    if (orig->m_command >= orig->m_bytes && orig->m_command < orig->m_bytes + orig->m_len) {
-        clone->m_command = clone->m_bytes + (orig->m_command - orig->m_bytes);
+    if (orig->m_command_string >= orig->m_bytes && orig->m_command_string < orig->m_bytes + orig->m_len) {
+        clone->m_command_string = clone->m_bytes + (orig->m_command_string - orig->m_bytes);
     }
     else {
-        clone->m_command = (char *) goat_message_static_command(orig->m_command);
+        clone->m_command_string = (char *) goat_message_static_command(orig->m_command_string);
     }
 
     for (int i = 0; i < 16; i++) {
@@ -195,9 +195,9 @@ const char *goat_message_get_prefix(const goat_message_t *message) {
     return message->m_prefix;
 }
 
-const char *goat_message_get_command(const goat_message_t *message) {
+const char *goat_message_get_command_string(const goat_message_t *message) {
     assert(message != NULL);
-    return message->m_command;
+    return message->m_command_string;
 }
 
 const char *goat_message_get_param(const goat_message_t *message, size_t index) {

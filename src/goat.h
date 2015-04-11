@@ -284,7 +284,7 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *siz
 const char *goat_message_static_command(const char *command);
 
 const char *goat_message_get_prefix(const goat_message_t *message);
-const char *goat_message_get_command(const goat_message_t *message);
+const char *goat_message_get_command_string(const goat_message_t *message);
 const char *goat_message_get_param(const goat_message_t *message, size_t index);
 size_t goat_message_get_nparams(const goat_message_t *message);
 

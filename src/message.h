@@ -9,7 +9,7 @@ typedef struct s_goat_message_tags {
 struct s_goat_message {
     goat_message_tags_t *m_tags;
     char *m_prefix;
-    char *m_command;
+    char *m_command_string;
     char *m_params[16];
     size_t m_len;
     char m_bytes[512];
