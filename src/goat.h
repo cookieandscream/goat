@@ -288,7 +288,7 @@ const char *goat_message_get_command_string(const goat_message_t *message);
 const char *goat_message_get_param(const goat_message_t *message, size_t index);
 size_t goat_message_get_nparams(const goat_message_t *message);
 
-goat_command_t goat_message_get_command(const goat_message_t *message);
+int goat_message_get_command(const goat_message_t *message, goat_command_t *command);
 
 size_t goat_message_has_tags(const goat_message_t *message);
 int goat_message_has_tag(const goat_message_t *message, const char *key);
