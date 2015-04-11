@@ -59,6 +59,15 @@ void test_goat__message__new___with_prefix(void) {
     goat_message_delete(message);
 }
 
+void test_goat__message__new__with_invalid_prefix(void) {
+    const char *prefix = "invalid prefix";
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(prefix, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
 void test_goat__message__new___without_prefix(void) {
     const char *command = "command";
 
@@ -101,6 +110,14 @@ void test_goat__message__new___with_recognised_command(void) {
     CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
 
     goat_message_delete(message);
+}
+
+void test_goat__message__new__with_invalid_command(void) {
+    const char *command = "invalid command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
 }
 
 void test_goat__message__new___without_params(void) {

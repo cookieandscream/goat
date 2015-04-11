@@ -18,8 +18,14 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
     assert(command != NULL);
     size_t len = 0, n_params = 0;
 
-    if (prefix != NULL)  len += strlen(prefix) + 2;
+    if (prefix != NULL) {
+        if (NULL != strchr(prefix, ' ')) return NULL;
+        len += strlen(prefix) + 2;
+    }
+
+    if (NULL != strchr(command, ' ')) return NULL;
     len += strlen(command);
+
     if (params) {
         int have_space_param = 0;
 
