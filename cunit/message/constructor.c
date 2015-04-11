@@ -36,7 +36,7 @@ static void _assert_message_params(const goat_message_t *msg, ...) {
     }
 }
 
-void test_goat_message_new(void) {
+void test_goat__message__new(void) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *privmsg = "PRIVMSG";
@@ -86,7 +86,7 @@ void test_goat_message_new(void) {
     goat_message_delete(message);
 }
 
-void test_goat_message_new_from_string(void) {
+void test_goat__message__new__from__string(void) {
     goat_message_t *message;
 
     const char *without_prefix = "command param1 param2";
@@ -141,7 +141,7 @@ void test_goat_message_new_from_string(void) {
     goat_message_delete(message);
 }
 
-void test_goat_message_clone(void) {
+void test_goat__message__clone(void) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
