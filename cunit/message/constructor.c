@@ -36,52 +36,110 @@ static void _assert_message_params(const goat_message_t *msg, ...) {
     }
 }
 
-void test_goat__message__new(void) {
+void test_goat__message__new_with_prefix(void) {
     const char *prefix = "prefix";
     const char *command = "command";
-    const char *privmsg = "PRIVMSG";
-    const char *privmsg_static = goat_command_string(GOAT_IRC_PRIVMSG);
-    const char *params[] = { "these", "are", "some", "params", NULL };
-    const size_t nparams = sizeof(params) / sizeof(params[0]);
+
+    goat_message_t *message = goat_message_new(prefix, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message->m_prefix);
+    CU_ASSERT_STRING_EQUAL(message->m_prefix, prefix);
+
+    _ptr_in_range(message->m_prefix, message->m_bytes, message->m_len);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_without_prefix(void) {
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+    CU_ASSERT_PTR_NULL(message->m_prefix);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_with_unrecognised_command(void) {
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+
+    CU_ASSERT_FALSE(message->m_have_recognised_command);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message->m_command_string);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
+
+    _ptr_in_range(message->m_command_string, message->m_bytes, message->m_len);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_with_recognised_command(void) {
+    const char *command = "PRIVMSG";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+
+    CU_ASSERT_TRUE(message->m_have_recognised_command);
+    CU_ASSERT_EQUAL(message->m_command, GOAT_IRC_PRIVMSG);
+
+    CU_ASSERT_PTR_EQUAL(message->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_without_params(void) {
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+
+    _assert_message_params(message, NULL);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_with_params(void) {
+    const char *command = "command";
+    const char *params[] = { "param1", "param2", "param3", NULL };
+
+    goat_message_t *message = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+
+    _assert_message_params(message, "param1", "param2", "param3", NULL);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_with_the_works(void) {
+    const char *prefix = "prefix";
+    const char *command = "PRIVMSG";
+    const char *params[] = { "#goat", "hello there", NULL };
 
     goat_message_t *message = goat_message_new(prefix, command, params);
 
     CU_ASSERT_PTR_NOT_NULL_FATAL(message);
-    CU_ASSERT_STRING_EQUAL(message->m_prefix, prefix);
-    CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
 
-    // check that m_prefix points inside m_bytes
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message->m_prefix);
+    CU_ASSERT_STRING_EQUAL(message->m_prefix, prefix);
     _ptr_in_range(message->m_prefix, message->m_bytes, message->m_len);
 
-    // check that m_prefix points inside m_bytes
-    // (n.b. "command" is not a valid irc command, so it won't be staticked)
-    _ptr_in_range(message->m_command_string, message->m_bytes, message->m_len);
-
-    // check the params we passed
-    for (size_t i = 0; i < nparams; i++) {
-        if (params[i] != NULL) {
-            CU_ASSERT_STRING_EQUAL(message->m_params[i], params[i]);
-            _ptr_in_range(message->m_params[i], message->m_bytes, message->m_len);
-        }
-        else {
-            CU_ASSERT_PTR_NULL(message->m_params[i]);
-        }
-    }
-
-    // check the params we didn't pass
-    for (size_t i = nparams; i < 16; i++) {
-        CU_ASSERT_PTR_NULL(message->m_params[i]);
-    }
-
-    goat_message_delete(message);
-
-    message = goat_message_new(NULL, privmsg, NULL);
-
-    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
-    CU_ASSERT_PTR_NULL(message->m_prefix);
+    CU_ASSERT_TRUE(message->m_have_recognised_command);
     CU_ASSERT_EQUAL(message->m_command, GOAT_IRC_PRIVMSG);
-    CU_ASSERT_PTR_EQUAL(message->m_command_string, privmsg_static);
-    _assert_message_params(message, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message->m_command_string);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
+    CU_ASSERT_PTR_EQUAL(message->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
+
+    _assert_message_params(message, "#goat", "hello there", NULL);
 
     goat_message_delete(message);
 }
