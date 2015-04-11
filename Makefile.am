@@ -9,6 +9,7 @@ libgoat_la_SOURCES =                    \
     src/event.c src/event.h             \
     src/irc.c src/irc.h                 \
     src/message.c src/message.h         \
+    src/tags.c src/tags.h               \
     src/tresolver.c src/tresolver.h     \
     src/context.h                       \
     src/sm.h                            \
