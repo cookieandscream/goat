@@ -102,7 +102,10 @@ sub demangle {
     $str =~ s/(?<!_)_(?!_)/ /g;
 
     # replace double underscores with singles
-    $str =~ s/__/_/g;
+    $str =~ s/(?<!_)__(?!_)/_/g;
+
+    # replace triple underscores with spaced hyphen
+    $str =~ s/(?<!_)___(?!_)/ - /g;
 
     return $str;
 }
