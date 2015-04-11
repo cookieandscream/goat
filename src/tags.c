@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "goat.h"
 
 #include "message.h"
 #include "tags.h"
+#include "util.h"
 
 static const char *_next_tag(const char *str);
 static const char *_find_tag(const char *str, const char *key);
@@ -147,6 +149,34 @@ int goat_message_unset_tag(goat_message_t *message, const char *key) {
     }
 
     return 1;
+}
+
+size_t tags_parse(const char *str, goat_message_tags_t **tagsp) {
+    if (NULL == tagsp) return 0;
+    if (str[0] != '@') return 0;
+
+    // populate our struct, skipping the @
+    char *end = strchr(&str[1], ' ');
+    size_t len = end - &str[1];
+
+    if (strn_has_crlf(&str[1], len)) return 0;
+    if (strn_has_sp(&str[1], len)) return 0;
+
+    if (len > 0) {
+        goat_message_tags_t *tags = calloc(1, sizeof(goat_message_tags_t));
+        if (NULL == tags) return 0;
+
+        tags->m_len = len;
+        strncpy(tags->m_bytes, &str[1], len);
+
+        *tagsp = tags;
+    }
+
+    // calculate consumed length (including @ and space)
+    if (*end != '\0') end ++;
+    size_t consumed = end - str;
+
+    return consumed;
 }
 
 const char *_next_tag(const char *str) {

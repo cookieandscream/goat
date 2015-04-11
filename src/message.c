@@ -7,6 +7,7 @@
 
 #include "irc.h"
 #include "message.h"
+#include "tags.h"
 #include "util.h"
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
@@ -96,6 +97,15 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     goat_message_t *message = calloc(1, sizeof(goat_message_t));
     if (message == NULL)  return NULL;
 
+    // [ '@' tags SPACE ]
+    if (str[0] == '@') {
+        size_t consumed = tags_parse(str, &message->m_tags);
+        if (consumed < 2) goto cleanup; // at least @ and space
+
+        len -= consumed;
+        str += consumed;
+    }
+
     message->m_len = len;
     strncpy(message->m_bytes, str, len);
 
@@ -103,8 +113,6 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
 
     char *position = message->m_bytes;
     char *token;
-
-    // FIXME tags
 
     // [ ':' prefix SPACE ]
     if (position[0] == ':') {
