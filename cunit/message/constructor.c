@@ -133,9 +133,27 @@ void test_goat__message__new___with_space_param_last(void) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_space_param_not_last(void) {
+void test_goat__message__new___with_space_param_2nd_last(void) {
     const char *command = "command";
     const char *params[] = { "param1", "param 2 with spaces", "param3", NULL };
+
+    goat_message_t *message = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_space_param_3nd_last(void) {
+    const char *command = "command";
+    const char *params[] = { "param1", "param 2 with spaces", "param3", "param4", NULL };
+
+    goat_message_t *message = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_space_param_not_last(void) {
+    const char *command = "command";
+    const char *params[] = { "p1", "p 2 with spaces", "p3", "p4", "p5", NULL };
 
     goat_message_t *message = goat_message_new(NULL, command, params);
 
