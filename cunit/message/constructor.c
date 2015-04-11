@@ -263,57 +263,152 @@ void test_goat__message__new__from__string_with_colon_param(void) {
     goat_message_delete(message);
 }
 
-void test_goat__message__clone(void) {
+void test_goat__message__clone_without_prefix(void) {
+    const char *command = "command";
+
+    goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_PTR_NULL(msg1->m_prefix);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    CU_ASSERT_PTR_NULL(msg2->m_prefix);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_with_prefix(void) {
     const char *prefix = "prefix";
     const char *command = "command";
+
+    goat_message_t *msg1 = goat_message_new(prefix, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1->m_prefix);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2->m_prefix);
+    CU_ASSERT_STRING_EQUAL(msg2->m_prefix, msg1->m_prefix);
+    _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_with_unrecognised_command(void) {
+    const char *command = "command";
+
+    goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_FALSE_FATAL(msg1->m_have_recognised_command);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1->m_command_string);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    CU_ASSERT_FALSE(msg2->m_have_recognised_command);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2->m_command_string);
+    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, command);
+    _ptr_in_range(msg2->m_command_string, msg2->m_bytes, msg2->m_len);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_with_recognised_command(void) {
+    const char *command = "PRIVMSG";
+
+    goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_TRUE_FATAL(msg1->m_have_recognised_command);
+    CU_ASSERT_EQUAL_FATAL(msg1->m_command, GOAT_IRC_PRIVMSG);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1->m_command_string);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    CU_ASSERT_TRUE(msg2->m_have_recognised_command);
+    CU_ASSERT_EQUAL(msg2->m_command, msg1->m_command);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2->m_command_string);
+    CU_ASSERT_PTR_EQUAL(msg2->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_without_params(void) {
+    const char *command = "command";
+
+    goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    _assert_message_params(msg2, NULL);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_with_params(void) {
+    const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
+
+    goat_message_t *msg1 = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+
+    goat_message_t *msg2 = goat_message_clone(msg1);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    _assert_message_params(msg2, "param1", "param2", "param3", NULL);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+}
+
+void test_goat__message__clone_with_the_works(void) {
+    const char *prefix = "prefix";
+    const char *command = "PRIVMSG";
+    const char *params[] = { "#goat", "hello there", NULL };
     goat_message_t *msg1, *msg2;
 
     msg1 = goat_message_new(prefix, command, params);
     CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_TRUE_FATAL(msg1->m_have_recognised_command);
+    CU_ASSERT_EQUAL_FATAL(msg1->m_command, GOAT_IRC_PRIVMSG);
 
     msg2 = goat_message_clone(msg1);
     CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
 
     // FIXME tags
 
-    CU_ASSERT_PTR_NOT_NULL(msg2->m_prefix);
-    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_prefix, msg1->m_prefix);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2->m_prefix);
     _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
     CU_ASSERT_STRING_EQUAL(msg2->m_prefix, prefix);
 
-    CU_ASSERT_PTR_NOT_NULL(msg2->m_command_string);
-    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_command_string, msg1->m_command_string);
-    _ptr_in_range(msg2->m_command_string, msg2->m_bytes, msg2->m_len);
-    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, command);
-
-    _assert_message_params(msg2, "param1", "param2", "param3", NULL);
-
-    goat_message_delete(msg2);
-    goat_message_delete(msg1);
-
-    const char *privmsg = "PRIVMSG";
-
-    msg1 = goat_message_new(prefix, privmsg, params);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
-    CU_ASSERT_TRUE_FATAL(msg1->m_have_recognised_command);
-
-    msg2 = goat_message_clone(msg1);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
-
-    CU_ASSERT_PTR_NOT_NULL(msg2->m_prefix);
-    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_prefix, msg1->m_prefix);
-    _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
-    CU_ASSERT_STRING_EQUAL(msg2->m_prefix, prefix);
-
-    CU_ASSERT_PTR_NOT_NULL(msg2->m_command_string);
-    CU_ASSERT_TRUE(msg2->m_have_recognised_command);
-    CU_ASSERT_EQUAL(msg2->m_command, GOAT_IRC_PRIVMSG);
+    CU_ASSERT_EQUAL(msg2->m_have_recognised_command, msg1->m_have_recognised_command);
+    CU_ASSERT_EQUAL(msg2->m_command, msg1->m_command);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2->m_command_string);
     CU_ASSERT_PTR_EQUAL(msg2->m_command_string, msg1->m_command_string);
     CU_ASSERT_PTR_EQUAL(msg2->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
-    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, privmsg);
+    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, command);
 
-    _assert_message_params(msg2, "param1", "param2", "param3", NULL);
+    _assert_message_params(msg2, "#goat", "hello there", NULL);
 
     goat_message_delete(msg2);
     goat_message_delete(msg1);
