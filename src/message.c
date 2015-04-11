@@ -43,9 +43,9 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
         ++ position;
     }
 
-    message->m_command_string = position;
+    if (0 != goat_command(command, &message->m_command)) goto cleanup;
     position = stpcpy(position, command);
-    message->m_command_string = (char *) goat_message_static_command(message->m_command_string);
+    message->m_command_string = goat_command_string(message->m_command);
 
     if (params) {
         size_t i;
@@ -62,6 +62,10 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
 
     message->m_len = position - message->m_bytes;
     return message;
+
+cleanup:
+    if (NULL != message) free(message);
+    return NULL;
 }
 
 goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
@@ -97,7 +101,8 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     // command
     token = strsep(&position, " ");
     if (token == NULL || token[0] == '\0')  goto cleanup;
-    message->m_command_string = (char *) goat_message_static_command(token);
+    if (0 != goat_command(token, &message->m_command))  goto cleanup;
+    message->m_command_string = goat_command_string(message->m_command);
 
     // *14( SPACE middle ) [ SPACE ":" trailing ]
     // 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
@@ -131,11 +136,13 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
 
     clone->m_prefix = clone->m_bytes + (orig->m_prefix - orig->m_bytes);
 
+    // FIXME does m_command_string never point into m_bytes anymore?
+    clone->m_command = orig->m_command;
     if (orig->m_command_string >= orig->m_bytes && orig->m_command_string < orig->m_bytes + orig->m_len) {
         clone->m_command_string = clone->m_bytes + (orig->m_command_string - orig->m_bytes);
     }
     else {
-        clone->m_command_string = (char *) goat_message_static_command(orig->m_command_string);
+        clone->m_command_string = goat_command_string(clone->m_command);
     }
 
     for (int i = 0; i < 16; i++) {

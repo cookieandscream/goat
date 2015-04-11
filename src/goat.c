@@ -117,13 +117,6 @@ const char *goat_strerror(goat_error_t error) {
     return NULL;
 }
 
-const char *goat_strcommand(goat_command_t command) {
-    assert(command >= GOAT_IRC_FIRST);
-    assert(command < GOAT_IRC_LAST);
-    if (command >= GOAT_IRC_FIRST && command < GOAT_IRC_LAST)  return irc_strings[command];
-    return NULL;
-}
-
 int goat_reset_error(goat_context_t *context, int connection) {
     assert(context != NULL);
 

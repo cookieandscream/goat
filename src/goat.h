@@ -251,7 +251,8 @@ goat_error_t goat_error(goat_context_t *context, int connection);
 const char *goat_strerror(goat_error_t error);
 int goat_reset_error(goat_context_t *context, int connection);
 
-const char *goat_strcommand(goat_command_t command);
+const char *goat_command_string(goat_command_t command);
+int goat_command(const char *command_string, goat_command_t *command);
 
 int goat_connection_new(goat_context_t *context);
 int goat_connection_delete(goat_context_t *context, int connection);
@@ -281,7 +282,6 @@ void goat_message_delete(goat_message_t *message);
 
 char *goat_message_strdup(const goat_message_t *message);
 char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *size);
-const char *goat_message_static_command(const char *command);
 
 const char *goat_message_get_prefix(const goat_message_t *message);
 const char *goat_message_get_command_string(const goat_message_t *message);

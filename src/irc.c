@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -217,12 +219,29 @@ static int _irc_strings_cmp(const void *key, const void *iter) {
     return strcmp((const char *) key, *(const char **) iter);
 }
 
-const char *goat_message_static_command(const char *command) {
+const char *goat_command_string(goat_command_t command) {
+    assert(command >= GOAT_IRC_FIRST);
+    assert(command < GOAT_IRC_LAST);
+
+    if (command >= GOAT_IRC_FIRST && command < GOAT_IRC_LAST)  return irc_strings[command];
+
+    return NULL;
+}
+
+int goat_command(const char *command_string, goat_command_t *command) {
+    assert(command_string != NULL);
+    assert(command != NULL);
+
     static const size_t width = sizeof(irc_strings[0]);
     static const size_t nel = sizeof(irc_strings) / sizeof(irc_strings[0]);
 
-    const char **ptr = bsearch(command, irc_strings, nel, width, _irc_strings_cmp);
+    const char **ptr = bsearch(command_string, irc_strings, nel, width, _irc_strings_cmp);
 
-    if (ptr) return *ptr;
-    return command;
+    if (NULL == ptr) return -1;
+
+    ptrdiff_t elem = ptr - irc_strings;
+
+    if (NULL != command) *command = (goat_command_t) elem;
+
+    return 0;
 }
