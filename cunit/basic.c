@@ -25,6 +25,7 @@ int main (int argc __attribute__((unused)), char **argv __attribute__((unused)))
 
     state = "CU_basic_run_tests()";
     CU_basic_show_failures(CU_get_failure_list());
+    printf("\n");
 
     state = "done";
 
