@@ -8,6 +8,9 @@
 #include "irc.h"
 #include "message.h"
 
+#define _has_crlf(s)    (strcspn((s), "\r\n") < strlen((s)))
+#define _has_sp(s)      (NULL != strchr((s), ' '))
+
 static const char *_next_tag(const char *str);
 static const char *_find_tag(const char *str, const char *key);
 static const char *_find_value(const char *str);
@@ -19,20 +22,27 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
     size_t len = 0, n_params = 0;
 
     if (prefix != NULL) {
-        if (NULL != strchr(prefix, ' ')) return NULL;
+        if (_has_crlf(prefix)) return NULL;
+        if (_has_sp(prefix)) return NULL;
         len += strlen(prefix) + 2;
     }
 
-    if (NULL != strchr(command, ' ')) return NULL;
+    if (_has_crlf(command)) return NULL;
+    if (_has_sp(command)) return NULL;
     len += strlen(command);
 
     if (params) {
         int have_space_param = 0;
 
         for (const char **p = params; *p; p++) {
+            // a param may not start with :
+            if (**p == ':') return NULL;
+
+            if (_has_crlf(*p)) return NULL;
+
             // further parameters after one containing a space are invalid
             if (have_space_param) return NULL;
-            if (NULL != strchr(*p, ' ')) have_space_param = 1;
+            if (_has_sp(*p)) have_space_param = 1;
 
             len += strlen(*p) + 1;
             ++ n_params;
