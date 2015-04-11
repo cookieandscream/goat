@@ -59,8 +59,26 @@ void test_goat__message__new___with_prefix(void) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__with_invalid_prefix(void) {
+void test_goat__message__new___with_invalid_prefix_space(void) {
     const char *prefix = "invalid prefix";
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(prefix, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_invalid_prefix_cr(void) {
+    const char *prefix = "invalid\x0dprefix";
+    const char *command = "command";
+
+    goat_message_t *message = goat_message_new(prefix, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_invalid_prefix_lf(void) {
+    const char *prefix = "invalid\x0aprefix";
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(prefix, command, NULL);
@@ -112,8 +130,24 @@ void test_goat__message__new___with_recognised_command(void) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__with_invalid_command(void) {
+void test_goat__message__new___with_invalid_command_space(void) {
     const char *command = "invalid command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_invalid_command_cr(void) {
+    const char *command = "invalid" "\x0d" "command";
+
+    goat_message_t *message = goat_message_new(NULL, command, NULL);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
+void test_goat__message__new___with_invalid_command_lf(void) {
+    const char *command = "invalid" "\x0a" "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
 
@@ -307,7 +341,7 @@ void test_goat__message__new__from__string___with_colon_param(void) {
 }
 
 void test_goat__message__new__from__string___with_crlf(void) {
-    const char *str = "command\r\n";
+    const char *str = "command\x0d\x0a";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
 
@@ -319,7 +353,7 @@ void test_goat__message__new__from__string___with_crlf(void) {
 }
 
 void test_goat__message__new__from__string___with_the_works(void) {
-    const char *str = ":anne PRIVMSG #goat :hello there\r\n";
+    const char *str = ":anne PRIVMSG #goat :hello there\x0d\x0a";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
 
