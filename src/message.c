@@ -174,7 +174,7 @@ void goat_message_delete(goat_message_t *message) {
 }
 
 char *goat_message_strdup(const goat_message_t *message) {
-    assert(message != NULL);
+    if (NULL == message) return NULL;
 
     size_t len = message->m_len + 1;
     char *str = malloc(len);
@@ -189,10 +189,10 @@ char *goat_message_strdup(const goat_message_t *message) {
 }
 
 char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len) {
-    assert(message != NULL);
-    assert(buf != NULL);
+    if (NULL == message) return NULL;
+    if (NULL == buf) return NULL;
+    if (NULL == len) return NULL;
     assert(*len > message->m_len);
-    assert(*len >= GOAT_MESSAGE_BUF_SZ);
 
     // FIXME tags
 
