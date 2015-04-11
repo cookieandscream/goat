@@ -120,6 +120,28 @@ void test_goat__message__new_with_params(void) {
     goat_message_delete(message);
 }
 
+void test_goat__message__new_with_space_param_last(void) {
+    const char *command = "command";
+    const char *params[] = { "param1", "param2", "param 3 with spaces", NULL };
+
+    goat_message_t *message = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+
+    _assert_message_params(message, "param1", "param2", "param 3 with spaces", NULL);
+
+    goat_message_delete(message);
+}
+
+void test_goat__message__new_with_space_param_not_last(void) {
+    const char *command = "command";
+    const char *params[] = { "param1", "param 2 with spaces", "param3", NULL };
+
+    goat_message_t *message = goat_message_new(NULL, command, params);
+
+    CU_ASSERT_PTR_NULL(message);
+}
+
 void test_goat__message__new_with_the_works(void) {
     const char *prefix = "prefix";
     const char *command = "PRIVMSG";
