@@ -212,33 +212,38 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len
 }
 
 const char *goat_message_get_prefix(const goat_message_t *message) {
-    assert(message != NULL);
+    if (NULL == message) return NULL;
+
     return message->m_prefix;
 }
 
 const char *goat_message_get_command_string(const goat_message_t *message) {
-    assert(message != NULL);
+    if (NULL == message) return NULL;
+
     return message->m_command_string;
 }
 
 const char *goat_message_get_param(const goat_message_t *message, size_t index) {
-    assert(message != NULL);
-    assert(index <= 16);  // FIXME
+    if (NULL == message) return NULL;
+    if (index >= 16) return NULL;
 
     return message->m_params[index];
 }
 
 size_t goat_message_get_nparams(const goat_message_t *message) {
+    if (NULL == message) return 0;
+
     size_t i;
 
-    for (i = 0; i <= 16 && message->m_params[i]; i++)
+    for (i = 0; i < 16 && message->m_params[i]; i++)
         ;
 
     return i;
 }
 
 int goat_message_get_command(const goat_message_t *message, goat_command_t *command) {
-    assert(message != NULL);
+    if (NULL == message) return -1;
+    if (NULL == command) return -1;
 
     if (message->m_have_recognised_command) {
         *command = message->m_command;
