@@ -43,7 +43,7 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
         }
         len += 1;
     }
-    if (len > 510)  return NULL;
+    if (len > GOAT_MESSAGE_MAX_LEN)  return NULL;
 
     goat_message_t *message = calloc(1, sizeof(goat_message_t));
     if (message == NULL)  return NULL;
@@ -105,6 +105,8 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
         len -= consumed;
         str += consumed;
     }
+
+    if (len > GOAT_MESSAGE_MAX_LEN) goto cleanup;
 
     message->m_len = len;
     strncpy(message->m_bytes, str, len);

@@ -162,7 +162,7 @@ size_t tags_parse(const char *str, goat_message_tags_t **tagsp) {
     if (strn_has_crlf(&str[1], len)) return 0;
     if (strn_has_sp(&str[1], len)) return 0;
 
-    if (len > 0) {
+    if (len > 0 && len <= GOAT_MESSAGE_MAX_TAGS) {
         goat_message_tags_t *tags = calloc(1, sizeof(goat_message_tags_t));
         if (NULL == tags) return 0;
 
