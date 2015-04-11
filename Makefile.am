@@ -25,7 +25,6 @@ TESTS = cunit/basic
 check_PROGRAMS = cunit/basic
 
 CUNIT_TESTFILES =                \
-    cunit/message/suite.c        \
     cunit/message/constructor.c  \
     cunit/message/stringify.c
 

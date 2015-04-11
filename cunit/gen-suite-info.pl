@@ -20,28 +20,37 @@ closedir $dh;
 # find information about the suites
 my @suites;
 foreach my $dir (@suite_dirs) {
-    my $suite_name = basename $dir;
+    my $suite_base = basename $dir;
 
-    my @test_funcs = map {
-        chomp;
-        s/^\s*void\s*//;
-        s/\(\s*void\s*\)(?:\s*\{)?$//;
-        $_;
-    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $dir/*.c };
+    my @test_files = glob "$dir/*.c";
 
-    my @tests = map {
-        { name => demangle($_), func => $_ };
-    } @test_funcs;
+    foreach my $file (@test_files) {
+        my $suite_file = basename $file, '.c';
 
-    my $suite_init = "${suite_name}_suite_init";
-    my $suite_cleanup = "${suite_name}_suite_cleanup";
+        my @test_funcs = map {
+            chomp;
+            s/^\s*void\s*//;
+            s/\(\s*void\s*\)(?:\s*\{)?$//;
+            $_;
+        } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $file };
 
-    push @suites, {
-        name => $suite_name,
-        init => $suite_init,
-        cleanup => $suite_cleanup,
-        tests => \@tests,
-    };
+        my @tests = map {
+            { name => demangle($_), func => $_ };
+        } @test_funcs;
+
+        my $suite_pretty = "${suite_base} ${suite_file}";
+        my $suite_prefix = "${suite_base}_${suite_file}";
+        my $suite_init = "${suite_prefix}_suite_init";
+        my $suite_cleanup = "${suite_prefix}_suite_cleanup";
+
+        push @suites, {
+            name => $suite_pretty,
+            prefix => $suite_prefix,
+            init => $suite_init,
+            cleanup => $suite_cleanup,
+            tests => \@tests,
+        };
+    }
 }
 
 # generate c file
@@ -60,7 +69,7 @@ foreach my $suite (@suites) {
 
 # the tests
 foreach my $suite (@suites) {
-    print "CU_TestInfo $suite->{name}_tests[] = {\n";
+    print "CU_TestInfo $suite->{prefix}_tests[] = {\n";
 
     foreach my $test(@{$suite->{tests}}) {
         print "\t{ ";
@@ -72,7 +81,7 @@ foreach my $suite (@suites) {
     print "};\n\n";
 }
 
-# the suites themselves
+# the suites
 print 'CU_SuiteInfo cunit_suite_info[] = {', "\n";
 
 foreach my $suite (@suites) {
@@ -83,7 +92,7 @@ foreach my $suite (@suites) {
     print qq{$suite->{init}, };
     print qq{$suite->{cleanup}, };
     print qq{NULL, NULL, };
-    print qq{$suite->{name}_tests, };
+    print qq{$suite->{prefix}_tests, };
     print "},\n";
 }
 

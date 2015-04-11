@@ -6,6 +6,14 @@
 #include "src/goat.h"
 #include "src/message.h"
 
+int message_constructor_suite_init(void) {
+    return 0;
+}
+
+int message_constructor_suite_cleanup(void) {
+    return 0;
+}
+
 static void _ptr_in_range(const void *ptr, const void *start, size_t len) {
     CU_ASSERT_PTR_NOT_NULL(ptr);
     CU_ASSERT_PTR_NOT_NULL_FATAL(start);
