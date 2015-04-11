@@ -145,7 +145,9 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
     memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);
     clone->m_len = orig->m_len;
 
-    clone->m_prefix = clone->m_bytes + (orig->m_prefix - orig->m_bytes);
+    if (orig->m_prefix) {
+        clone->m_prefix = clone->m_bytes + (orig->m_prefix - orig->m_bytes);
+    }
 
     if (orig->m_have_recognised_command) {
         clone->m_have_recognised_command = orig->m_have_recognised_command;
