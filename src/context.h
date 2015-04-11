@@ -20,4 +20,6 @@ struct s_goat_context {
     struct tls_config   *m_tls_config;
 };
 
+goat_connection_t *context_get_connection(goat_context_t *context, int index);
+
 #endif

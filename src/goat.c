@@ -395,5 +395,10 @@ int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_ca
 }
 
 int goat_send_message(goat_context_t *context, int connection, const goat_message_t *message) {
-    return -1; // FIXME
+    if (NULL == context) return -1;
+
+    goat_connection_t *conn = context_get_connection(context, connection);
+    if (NULL == conn) return -1;
+
+    return conn_send_message(conn, message);
 }

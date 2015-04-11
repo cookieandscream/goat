@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libgoat.la
 
 libgoat_la_SOURCES =                    \
     src/connection.c src/connection.h   \
+    src/context.c src/context.h         \
     src/error.c src/error.h             \
     src/event.c src/event.h             \
     src/irc.c src/irc.h                 \
@@ -12,7 +13,6 @@ libgoat_la_SOURCES =                    \
     src/tags.c src/tags.h               \
     src/tresolver.c src/tresolver.h     \
     src/util.c src/util.h               \
-    src/context.h                       \
     src/sm.h                            \
     src/goat.c
 
