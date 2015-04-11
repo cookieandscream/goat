@@ -36,4 +36,4 @@ cunit_basic_SOURCES =   \
 cunit_basic_LDADD = -lcunit -lgoat
 
 cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
-	perl cunit/gen-suite-info.pl > $@
+	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@

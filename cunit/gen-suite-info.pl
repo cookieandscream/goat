@@ -8,49 +8,42 @@ use Data::Dumper;
 # generates suite-info.c
 
 use File::Basename;
-my $dirname = dirname __FILE__;
 
 sub demangle;
 
-# find the suite directories
-opendir my $dh, $dirname or die "opendir $dirname: $!";
-my @suite_dirs = map { "$dirname/$_" } grep { -d "$dirname/$_" && m/^[^\.]/ } readdir $dh;
-closedir $dh;
-
-# find information about the suites
+# scan input files for test suite info
 my @suites;
-foreach my $dir (@suite_dirs) {
-    my $suite_base = basename $dir;
+my @test_files = @ARGV;
 
-    my @test_files = glob "$dir/*.c";
+die "no test files" if not scalar @test_files;
 
-    foreach my $file (@test_files) {
-        my $suite_file = basename $file, '.c';
+foreach my $file (@test_files) {
+    my ($suite_file, $suite_dir) = fileparse $file, qr/\.[^\.]*/;
+    my $suite_base = basename $suite_dir;
 
-        my @test_funcs = map {
-            chomp;
-            s/^\s*void\s*//;
-            s/\(\s*void\s*\)(?:\s*\{)?$//;
-            $_;
-        } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $file };
+    my @test_funcs = map {
+        chomp;
+        s/^\s*void\s*//;
+        s/\(\s*void\s*\)(?:\s*\{)?$//;
+        $_;
+    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $file };
 
-        my @tests = map {
-            { name => demangle($_), func => $_ };
-        } @test_funcs;
+    my @tests = map {
+        { name => demangle($_), func => $_ };
+    } @test_funcs;
 
-        my $suite_pretty = "${suite_base} ${suite_file}";
-        my $suite_prefix = "${suite_base}_${suite_file}";
-        my $suite_init = "${suite_prefix}_suite_init";
-        my $suite_cleanup = "${suite_prefix}_suite_cleanup";
+    my $suite_pretty = "${suite_base} ${suite_file}";
+    my $suite_prefix = "${suite_base}_${suite_file}";
+    my $suite_init = "${suite_prefix}_suite_init";
+    my $suite_cleanup = "${suite_prefix}_suite_cleanup";
 
-        push @suites, {
-            name => $suite_pretty,
-            prefix => $suite_prefix,
-            init => $suite_init,
-            cleanup => $suite_cleanup,
-            tests => \@tests,
-        };
-    }
+    push @suites, {
+        name => $suite_pretty,
+        prefix => $suite_prefix,
+        init => $suite_init,
+        cleanup => $suite_cleanup,
+        tests => \@tests,
+    };
 }
 
 # generate c file
