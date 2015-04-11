@@ -107,6 +107,8 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     message->m_len = len;
     strncpy(message->m_bytes, str, len);
 
+    if (_has_crlf(message->m_bytes)) goto cleanup;
+
     char *position = message->m_bytes;
     char *token;
 
