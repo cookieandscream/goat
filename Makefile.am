@@ -11,6 +11,7 @@ libgoat_la_SOURCES =                    \
     src/message.c src/message.h         \
     src/tags.c src/tags.h               \
     src/tresolver.c src/tresolver.h     \
+    src/util.c src/util.h               \
     src/context.h                       \
     src/sm.h                            \
     src/goat.c

@@ -7,22 +7,20 @@
 
 #include "irc.h"
 #include "message.h"
-
-#define _has_crlf(s)    (strcspn((s), "\r\n") < strlen((s)))
-#define _has_sp(s)      (NULL != strchr((s), ' '))
+#include "util.h"
 
 goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
     size_t len = 0, n_params = 0;
 
     if (prefix != NULL) {
-        if (_has_crlf(prefix)) return NULL;
-        if (_has_sp(prefix)) return NULL;
+        if (str_has_crlf(prefix)) return NULL;
+        if (str_has_sp(prefix)) return NULL;
         len += strlen(prefix) + 2;
     }
 
-    if (_has_crlf(command)) return NULL;
-    if (_has_sp(command)) return NULL;
+    if (str_has_crlf(command)) return NULL;
+    if (str_has_sp(command)) return NULL;
     len += strlen(command);
 
     if (params) {
@@ -32,11 +30,11 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
             // a param may not start with :
             if (**p == ':') return NULL;
 
-            if (_has_crlf(*p)) return NULL;
+            if (str_has_crlf(*p)) return NULL;
 
             // further parameters after one containing a space are invalid
             if (have_space_param) return NULL;
-            if (_has_sp(*p)) have_space_param = 1;
+            if (str_has_sp(*p)) have_space_param = 1;
 
             len += strlen(*p) + 1;
             ++ n_params;
@@ -101,7 +99,7 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
     message->m_len = len;
     strncpy(message->m_bytes, str, len);
 
-    if (_has_crlf(message->m_bytes)) goto cleanup;
+    if (str_has_crlf(message->m_bytes)) goto cleanup;
 
     char *position = message->m_bytes;
     char *token;
