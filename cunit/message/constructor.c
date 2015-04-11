@@ -40,22 +40,22 @@ void test_goat_message_new(void) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *privmsg = "PRIVMSG";
-    const char *privmsg_static = goat_message_static_command("PRIVMSG");
+    const char *privmsg_static = goat_command_string(GOAT_IRC_PRIVMSG);
     const char *params[] = { "these", "are", "some", "params", NULL };
     const size_t nparams = sizeof(params) / sizeof(params[0]);
 
     goat_message_t *message = goat_message_new(prefix, command, params);
 
-    CU_ASSERT_PTR_NOT_NULL(message);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
     CU_ASSERT_STRING_EQUAL(message->m_prefix, prefix);
-    CU_ASSERT_STRING_EQUAL(message->m_command, command);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, command);
 
     // check that m_prefix points inside m_bytes
     _ptr_in_range(message->m_prefix, message->m_bytes, message->m_len);
 
     // check that m_prefix points inside m_bytes
     // (n.b. "command" is not a valid irc command, so it won't be staticked)
-    _ptr_in_range(message->m_command, message->m_bytes, message->m_len);
+    _ptr_in_range(message->m_command_string, message->m_bytes, message->m_len);
 
     // check the params we passed
     for (size_t i = 0; i < nparams; i++) {
@@ -79,47 +79,64 @@ void test_goat_message_new(void) {
 
     CU_ASSERT_PTR_NOT_NULL_FATAL(message);
     CU_ASSERT_PTR_NULL(message->m_prefix);
-    CU_ASSERT_PTR_EQUAL(message->m_command, privmsg_static);
+    CU_ASSERT_EQUAL(message->m_command, GOAT_IRC_PRIVMSG);
+    CU_ASSERT_PTR_EQUAL(message->m_command_string, privmsg_static);
     _assert_message_params(message, NULL);
 
     goat_message_delete(message);
 }
 
 void test_goat_message_new_from_string(void) {
-    const char *without_prefix = "command param1 param2";
-    const char *with_prefix = ":prefix command param1 param2";
-    const char *with_colon_param = ":pfx cmd p1 p2 :p3 a b c d";
+    goat_message_t *message;
 
-    goat_message_t *message = goat_message_new_from_string(without_prefix,
+    const char *without_prefix = "command param1 param2";
+    message = goat_message_new_from_string(without_prefix,
         strlen(without_prefix));
 
-    CU_ASSERT_PTR_NOT_NULL(message);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
     CU_ASSERT_PTR_NULL(message->m_prefix);
-    CU_ASSERT_PTR_NOT_NULL(message->m_command);
-    CU_ASSERT_STRING_EQUAL(message->m_command, "command");
+    CU_ASSERT_PTR_NOT_NULL(message->m_command_string);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, "command");
     _assert_message_params(message, "param1", "param2", NULL);
 
     goat_message_delete(message);
 
-    goat_message_new_from_string(with_prefix, strlen(with_prefix));
+    const char *with_prefix = ":prefix command param1 param2";
+    message = goat_message_new_from_string(with_prefix, strlen(with_prefix));
 
-    CU_ASSERT_PTR_NOT_NULL(message);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
     CU_ASSERT_PTR_NOT_NULL(message->m_prefix);
     CU_ASSERT_STRING_EQUAL(message->m_prefix, "prefix");
-    CU_ASSERT_PTR_NOT_NULL(message->m_command);
-    CU_ASSERT_STRING_EQUAL(message->m_command, "command");
+    CU_ASSERT_PTR_NOT_NULL(message->m_command_string);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, "command");
     _assert_message_params(message, "param1", "param2", NULL);
 
     goat_message_delete(message);
 
+    const char *with_colon_param = ":pfx cmd p1 p2 :p3 a b c d";
     message = goat_message_new_from_string(with_colon_param, strlen(with_colon_param));
 
-    CU_ASSERT_PTR_NOT_NULL(message);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
     CU_ASSERT_PTR_NOT_NULL(message->m_prefix);
     CU_ASSERT_STRING_EQUAL(message->m_prefix, "pfx");
-    CU_ASSERT_PTR_NOT_NULL(message->m_command);
-    CU_ASSERT_STRING_EQUAL(message->m_command, "cmd");
+    CU_ASSERT_PTR_NOT_NULL(message->m_command_string);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, "cmd");
     _assert_message_params(message, "p1", "p2", "p3 a b c d", NULL);
+
+    goat_message_delete(message);
+
+    const char *with_recognised_cmd = ":pfx PRIVMSG #goat :hello there";
+    message = goat_message_new_from_string(with_recognised_cmd, strlen(with_recognised_cmd));
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(message);
+    CU_ASSERT_PTR_NOT_NULL(message->m_prefix);
+    CU_ASSERT_STRING_EQUAL(message->m_prefix, "pfx");
+    CU_ASSERT_PTR_NOT_NULL(message->m_command_string);
+    CU_ASSERT_TRUE(message->m_have_recognised_command);
+    CU_ASSERT_EQUAL(message->m_command, GOAT_IRC_PRIVMSG);
+    CU_ASSERT_STRING_EQUAL(message->m_command_string, "PRIVMSG");
+    CU_ASSERT_EQUAL(message->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
+    _assert_message_params(message, "#goat", "hello there", NULL);
 
     goat_message_delete(message);
 }
@@ -134,7 +151,7 @@ void test_goat_message_clone(void) {
     CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
 
     msg2 = goat_message_clone(msg1);
-    CU_ASSERT_PTR_NOT_NULL(msg2);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
 
     // FIXME tags
 
@@ -143,10 +160,36 @@ void test_goat_message_clone(void) {
     _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
     CU_ASSERT_STRING_EQUAL(msg2->m_prefix, prefix);
 
-    CU_ASSERT_PTR_NOT_NULL(msg2->m_command);
-    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_command, msg1->m_command);
-    _ptr_in_range(msg2->m_command, msg2->m_bytes, msg2->m_len);
-    CU_ASSERT_STRING_EQUAL(msg2->m_command, command);
+    CU_ASSERT_PTR_NOT_NULL(msg2->m_command_string);
+    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_command_string, msg1->m_command_string);
+    _ptr_in_range(msg2->m_command_string, msg2->m_bytes, msg2->m_len);
+    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, command);
+
+    _assert_message_params(msg2, "param1", "param2", "param3", NULL);
+
+    goat_message_delete(msg2);
+    goat_message_delete(msg1);
+
+    const char *privmsg = "PRIVMSG";
+
+    msg1 = goat_message_new(prefix, privmsg, params);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg1);
+    CU_ASSERT_TRUE_FATAL(msg1->m_have_recognised_command);
+
+    msg2 = goat_message_clone(msg1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(msg2);
+
+    CU_ASSERT_PTR_NOT_NULL(msg2->m_prefix);
+    CU_ASSERT_PTR_NOT_EQUAL(msg2->m_prefix, msg1->m_prefix);
+    _ptr_in_range(msg2->m_prefix, msg2->m_bytes, msg2->m_len);
+    CU_ASSERT_STRING_EQUAL(msg2->m_prefix, prefix);
+
+    CU_ASSERT_PTR_NOT_NULL(msg2->m_command_string);
+    CU_ASSERT_TRUE(msg2->m_have_recognised_command);
+    CU_ASSERT_EQUAL(msg2->m_command, GOAT_IRC_PRIVMSG);
+    CU_ASSERT_PTR_EQUAL(msg2->m_command_string, msg1->m_command_string);
+    CU_ASSERT_PTR_EQUAL(msg2->m_command_string, goat_command_string(GOAT_IRC_PRIVMSG));
+    CU_ASSERT_STRING_EQUAL(msg2->m_command_string, privmsg);
 
     _assert_message_params(msg2, "param1", "param2", "param3", NULL);
 
