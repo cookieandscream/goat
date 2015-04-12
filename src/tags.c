@@ -15,6 +15,32 @@ static const char *_find_value(const char *str);
 static const char *_escape_value(const char *value, char *buf, size_t *size);
 static const char *_unescape_value(const char *value, char *buf, size_t *size);
 
+int tags_init(goat_message_tags_t **tagsp, const char *key, const char *value) {
+    char escaped_value[GOAT_MESSAGE_MAX_TAGS];
+    size_t escaped_value_len = sizeof(escaped_value);
+
+    size_t len = 1 + strlen(key);  // key and trailing semicolon
+    if (value) {
+        _escape_value(value, escaped_value, &escaped_value_len);
+        len += 1 + escaped_value_len;  // = and value
+    }
+
+    goat_message_tags_t *tags = calloc(1, sizeof(*tags));
+    if (NULL == tags) return -1;
+
+    if (len > GOAT_MESSAGE_MAX_TAGS) return -1;
+
+    if (value) {
+        snprintf(tags->m_bytes, len + 1, "%s=%s;", key, escaped_value);
+    }
+    else {
+        snprintf(tags->m_bytes, len + 1, "%s;", key);
+    }
+
+    *tagsp = tags;
+    return 0;
+}
+
 size_t goat_message_has_tags(const goat_message_t *message) {
     assert(message != NULL);
 
@@ -85,6 +111,8 @@ int goat_message_get_tag_value(
 int goat_message_set_tag(goat_message_t *message, const char *key, const char *value) {
     assert(message != NULL);
     assert(key != NULL);
+
+    if (NULL == message->m_tags) return tags_init(&message->m_tags, key, value);
 
     char escaped_value[GOAT_MESSAGE_MAX_TAGS];
     size_t escaped_value_len = sizeof(escaped_value);
@@ -226,6 +254,7 @@ const char *_find_value(const char *str) {
     return NULL;
 }
 
+// FIXME value can contain nulls, so we need a length argument for it
 const char *_escape_value(const char *value, char *buf, size_t *size) {
     assert(value != NULL);
     assert(buf != NULL);
