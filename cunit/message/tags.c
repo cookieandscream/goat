@@ -155,6 +155,14 @@ void test_goat__message__set__tag___replace_no_value_with_value(void) {
     CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b=bat;c=cat");
 }
 
+void test_goat__message__set__tag___escape_special_values(void) {
+    _set_tags(msg, NULL);
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "oh", ";| |\\|\r|\n"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "oh=\\:|\\s|\\\\|\\r|\\n");
+}
+
 //int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
 //int goat_message_unset_tag(goat_message_t *message, const char *key);
 
