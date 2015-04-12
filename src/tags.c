@@ -19,7 +19,7 @@ int tags_init(goat_message_tags_t **tagsp, const char *key, const char *value) {
     char escaped_value[GOAT_MESSAGE_MAX_TAGS];
     size_t escaped_value_len = sizeof(escaped_value);
 
-    size_t len = 1 + strlen(key);  // key and trailing semicolon
+    size_t len = strlen(key);
     if (value) {
         _escape_value(value, escaped_value, &escaped_value_len);
         len += 1 + escaped_value_len;  // = and value
@@ -31,10 +31,10 @@ int tags_init(goat_message_tags_t **tagsp, const char *key, const char *value) {
     if (len > GOAT_MESSAGE_MAX_TAGS) return -1;
 
     if (value) {
-        snprintf(tags->m_bytes, len + 1, "%s=%s;", key, escaped_value);
+        snprintf(tags->m_bytes, len + 1, "%s=%s", key, escaped_value);
     }
     else {
-        snprintf(tags->m_bytes, len + 1, "%s;", key);
+        snprintf(tags->m_bytes, len + 1, "%s", key);
     }
 
     *tagsp = tags;
@@ -115,7 +115,7 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
 
     if (NULL == message->m_tags) return tags_init(&message->m_tags, key, value);
 
-    char escaped_value[GOAT_MESSAGE_MAX_TAGS];
+    char escaped_value[GOAT_MESSAGE_MAX_TAGS] = {0};
     size_t escaped_value_len = sizeof(escaped_value);
 
     goat_message_tags_t *tags = message->m_tags;
@@ -126,9 +126,10 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
         tag_len += 1 + escaped_value_len;
     }
 
+    // FIXME bug at limit: will wrongly refuse to replace a tag with equal or shorter val
     if (tags->m_len + tag_len > GOAT_MESSAGE_MAX_TAGS) return -1;
 
-    char *p, kvbuf[GOAT_MESSAGE_MAX_TAGS], tmp[GOAT_MESSAGE_MAX_TAGS] = {0};
+    char *p, kvbuf[GOAT_MESSAGE_MAX_TAGS], rest[GOAT_MESSAGE_MAX_TAGS] = {0};
     const size_t key_len = strlen(key);
 
     p = tags->m_bytes;
@@ -138,14 +139,20 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
 
         p = (char *) _next_tag(p);
     }
+    // => cmp is 0 if the tag already exists and needs to be replaced
+    // => p is the position to insert at
 
-    const char *rest = (0 == cmp ? _next_tag(p) : p);
-    strcpy(tmp, rest);
+    strcpy(rest, (0 == cmp ? _next_tag(p) : p));
+    // => rest is the remainer of the current tags (which might be empty)
 
-    snprintf(kvbuf, sizeof(kvbuf), "%s=%s;", key, escaped_value);
+    const char *delim = (value != NULL ? "=" : "");
+    const char *presep = (p != tags->m_bytes && p[0] == '\0' ? ";" : "");
+    const char *postsep = (rest[0] != '\0' ? ";" : "");
+
+    snprintf(kvbuf, sizeof(kvbuf), "%s%s%s%s%s", presep, key, delim, escaped_value, postsep);
 
     p = stpcpy(p, kvbuf);
-    strcpy(p, tmp);
+    strcpy(p, rest);
 
     return 0;
 }
