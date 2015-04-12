@@ -80,7 +80,6 @@ int goat_message_get_tag_value(
     // FIXME make sure buffer is big enough...
 
     const goat_message_tags_t *tags = message->m_tags;
-    memset(value, 0, *size);
 
     if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
 
@@ -103,8 +102,10 @@ int goat_message_get_tag_value(
     char unescaped[GOAT_MESSAGE_MAX_TAGS];
     size_t unescaped_len = sizeof(unescaped);
     _unescape_value(v, unescaped, &unescaped_len);
-    strncpy(value, unescaped, *size);
-    // FIXME sort out *size properly
+    assert(*size >= unescaped_len); // FIXME
+    memset(value, 0, *size);
+    strncpy(value, unescaped, unescaped_len);
+    *size = unescaped_len;
 
     return 1;
 }
