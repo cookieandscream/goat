@@ -160,7 +160,12 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
     goat_message_t *clone = calloc(1, sizeof(goat_message_t));
     if (NULL == clone) return NULL;
 
-    // FIXME tags
+    if (NULL != orig->m_tags) {
+        clone->m_tags = calloc(1, sizeof(goat_message_tags_t));
+        if (NULL == clone->m_tags) goto cleanup;
+
+        memcpy(clone->m_tags, orig->m_tags, sizeof(goat_message_tags_t));
+    }
 
     memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);
     clone->m_len = orig->m_len;
@@ -186,6 +191,11 @@ goat_message_t *goat_message_clone(const goat_message_t *orig) {
     }
 
     return clone;
+
+cleanup:
+    if (clone && clone->m_tags) free(clone->m_tags);
+    if (clone) free(clone);
+    return NULL;
 }
 
 void goat_message_delete(goat_message_t *message) {
