@@ -24,7 +24,7 @@ int message_tags_suite_cleanup(void) {
 }
 
 void test_goat__message__has__tags___without_message(void) {
-    CU_FAIL("not implemented yet");
+    CU_FAIL("FIXME not implemented yet");
 }
 
 void test_goat__message__has__tags___without_tags(void) {
@@ -79,7 +79,7 @@ void test_goat__message__has__tag___when_it_does(void) {
 }
 
 void test_goat__message__get__tag__value(void) {
-    CU_FAIL("not implemented");
+    CU_FAIL("FIXME not implemented yet");
 }
 
 void test_goat__message__set__tag___when_no_tags(void) {
@@ -163,8 +163,78 @@ void test_goat__message__set__tag___escape_special_values(void) {
     CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "oh=\\:|\\s|\\\\|\\r|\\n");
 }
 
-//int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
-//int goat_message_unset_tag(goat_message_t *message, const char *key);
+void test_goat__message__unset__tag___no_tags(void) {
+    if (msg->m_tags) free(msg->m_tags);
+    msg->m_tags = NULL;
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "somekey"), 0);
+
+    CU_ASSERT_PTR_NULL(msg->m_tags);
+}
+
+void test_goat__message__unset__tag___empty_tags(void) {
+    _set_tags(msg, NULL);
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "somekey"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "");
+}
+
+void test_goat__message__unset__tag___only_tag(void) {
+    _set_tags(msg, "a=ant");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "a"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "");
+}
+
+void test_goat__message__unset__tag___first_tag(void) {
+    _set_tags(msg, "a=ant;b=bat");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "a"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "b=bat");
+}
+
+void test_goat__message__unset__tag___last_tag(void) {
+    _set_tags(msg, "a=ant;b=bat");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "b"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant");
+}
+
+void test_goat__message__unset__tag___middle_tag(void) {
+    _set_tags(msg, "a=ant;b=bat;c=cat");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "b"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat");
+}
+
+void test_goat__message__unset__tag___first_tag_no_value(void) {
+    _set_tags(msg, "a;b=bat");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "a"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "b=bat");
+}
+
+void test_goat__message__unset__tag___last_tag_no_value(void) {
+    _set_tags(msg, "a=ant;b");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "b"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant");
+}
+
+void test_goat__message__unset__tag___middle_tag_no_value(void) {
+    _set_tags(msg, "a=ant;b;c=cat");
+
+    CU_ASSERT_EQUAL_FATAL(goat_message_unset_tag(msg, "b"), 0);
+
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat");
+}
 
 static void _set_tags(goat_message_t *message, const char *raw_tags) {
     assert(NULL != message);
