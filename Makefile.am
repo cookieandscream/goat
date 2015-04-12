@@ -29,7 +29,8 @@ check_PROGRAMS = cunit/basic
 CUNIT_TESTFILES =                \
     cunit/message/accessor.c     \
     cunit/message/constructor.c  \
-    cunit/message/stringify.c
+    cunit/message/stringify.c    \
+    cunit/message/tags.c
 
 cunit_basic_SOURCES =   \
     cunit/basic.c       \
