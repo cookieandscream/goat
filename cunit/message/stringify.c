@@ -6,14 +6,6 @@
 #include "src/goat.h"
 #include "src/message.h"
 
-int message_stringify_suite_init(void) {
-    return 0;
-}
-
-int message_stringify_suite_cleanup(void) {
-    return 0;
-}
-
 void test_goat__message__cstring___without_message(void) {
     char *str = goat_message_cstring(NULL, NULL, NULL);
 
