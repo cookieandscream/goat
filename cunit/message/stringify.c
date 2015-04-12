@@ -142,6 +142,10 @@ void test_goat__message__cstring___with_space_param(void) {
     goat_message_delete(message);
 }
 
+void test_goat__message__cstring___with_tags(void) {
+    CU_FAIL("FIXME not implemented yet");
+}
+
 void test_goat__message__cstring___with_the_works(void) {
     const char *prefix = "anne";
     const char *command = "PRIVMSG";

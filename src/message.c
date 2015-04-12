@@ -222,16 +222,30 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len
     if (NULL == message) return NULL;
     if (NULL == buf) return NULL;
     if (NULL == len) return NULL;
-    assert(*len > message->m_len);
 
-    // FIXME tags
+    size_t min_len = message->m_len;
+    if (message->m_tags) {
+        min_len += 2 + message->m_tags->m_len; // at, space
+    }
 
-    if (*len > message->m_len) {
-        memcpy(buf, message->m_bytes, message->m_len);
-        memset(buf + message->m_len, 0, *len - message->m_len);
-        *len = message->m_len;
+    if (*len > min_len) {
+        char *p = buf;
 
-        for (unsigned i = 0; i < message->m_len; i++) {
+        memset(p, 0, *len);
+
+        if (message->m_tags) {
+            *p++ = '@';
+            p = stpncpy(p, message->m_tags->m_bytes, message->m_tags->m_len);
+            *p++ = ' ';
+        }
+
+        // embedded nulls, so use memcpy rather than str funcs
+        memcpy(p, message->m_bytes, message->m_len);
+        p += message->m_len;
+        *len = p - buf;
+
+        // replace embedded nulls with spaces
+        for (size_t i = 0; i < *len; i++) {
             if (buf[i] == '\0') buf[i] = ' ';
         }
 
