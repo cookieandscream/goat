@@ -167,14 +167,16 @@ int goat_message_unset_tag(goat_message_t *message, const char *key) {
 
     char *p1, *p2, *end;
 
-    p1 = (char *) _find_tag(tags->m_bytes, key);
-    if (!*p1) return 0;
-
     end = &tags->m_bytes[tags->m_len];
 
-    p2 = (char *) _next_tag(p1);
+    p1 = (char *) _find_tag(tags->m_bytes, key);
+    if (p1[0] == '\0') return 0;
+    // => p1 is the start of the tag to be replaced
 
-    if (*p2) {
+    p2 = (char *) _next_tag(p1);
+    // => p2 is the start of the rest of the string (if any)
+
+    if (p2[0] != '\0') {
         memmove(p1, p2, end - p2);
         tags->m_len -= (p2 - p1);
         memset(&tags->m_bytes[tags->m_len], 0, sizeof(tags->m_bytes) - tags->m_len);
@@ -184,7 +186,12 @@ int goat_message_unset_tag(goat_message_t *message, const char *key) {
         memset(p1, 0, sizeof(tags->m_bytes) - tags->m_len);
     }
 
-    return 1;
+    // may be a trailing semicolon if tag removed from end, chomp it
+    if (tags->m_bytes[tags->m_len - 1] == ';') {
+        tags->m_bytes[-- tags->m_len] = '\0';
+    }
+
+    return 0;
 }
 
 size_t tags_parse(const char *str, goat_message_tags_t **tagsp) {
