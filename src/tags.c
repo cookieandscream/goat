@@ -114,46 +114,43 @@ int goat_message_set_tag(goat_message_t *message, const char *key, const char *v
     assert(message != NULL);
     assert(key != NULL);
 
-    if (NULL == message->m_tags) return tags_init(&message->m_tags, key, value);
+    if (NULL == message->m_tags) {
+        return tags_init(&message->m_tags, key, value);
+    }
 
-    char escaped_value[GOAT_MESSAGE_MAX_TAGS] = {0};
-    size_t escaped_value_len = sizeof(escaped_value);
+    if (_find_tag(message->m_tags->m_bytes, key)) {
+        // tag already exists, discard the old one
+        goat_message_unset_tag(message, key);
+    }
 
-    goat_message_tags_t *tags = message->m_tags;
+    char buf[GOAT_MESSAGE_MAX_TAGS] = {0};
+    char *p = buf;
 
-    size_t tag_len = 1 + strlen(key);
+    if (message->m_tags->m_len + strlen(key) + 1 > GOAT_MESSAGE_MAX_TAGS) return -1;
+
+    if (message->m_tags->m_len > 0) {
+        // separator if there's already tag data
+        *p++ = ';';
+    }
+
+    p = stpcpy(p, key);
+
     if (value) {
+        char escaped_value[GOAT_MESSAGE_MAX_TAGS] = {0};
+        size_t escaped_value_len = sizeof(escaped_value);
+
         _escape_value(value, escaped_value, &escaped_value_len);
-        tag_len += 1 + escaped_value_len;
+
+        if (message->m_tags->m_len + strlen(buf) + escaped_value_len + 1 > GOAT_MESSAGE_MAX_TAGS) {
+            return -1;
+        }
+
+        *p++ = '=';
+        p = stpcpy(p, escaped_value);
     }
 
-    // FIXME bug at limit: will wrongly refuse to replace a tag with equal or shorter val
-    if (tags->m_len + tag_len > GOAT_MESSAGE_MAX_TAGS) return -1;
-
-    char *p, kvbuf[GOAT_MESSAGE_MAX_TAGS], rest[GOAT_MESSAGE_MAX_TAGS] = {0};
-    const size_t key_len = strlen(key);
-
-    p = tags->m_bytes;
-    int cmp;
-    while (p && *p) {
-        if ((cmp = strncmp(p, key, key_len)) >= 0) break;
-
-        p = (char *) _next_tag(p);
-    }
-    // => cmp is 0 if the tag already exists and needs to be replaced
-    // => p is the position to insert at
-
-    strcpy(rest, (0 == cmp ? _next_tag(p) : p));
-    // => rest is the remainer of the current tags (which might be empty)
-
-    const char *delim = (value != NULL ? "=" : "");
-    const char *presep = (p != tags->m_bytes && p[0] == '\0' ? ";" : "");
-    const char *postsep = (rest[0] != '\0' ? ";" : "");
-
-    snprintf(kvbuf, sizeof(kvbuf), "%s%s%s%s%s", presep, key, delim, escaped_value, postsep);
-
-    p = stpcpy(p, kvbuf);
-    strcpy(p, rest);
+    strcat(message->m_tags->m_bytes, buf);
+    message->m_tags->m_len += strlen(buf);
 
     return 0;
 }

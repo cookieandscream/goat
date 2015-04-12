@@ -110,7 +110,7 @@ void test_goat__message__set__tag___when_already_a_tag(void) {
 
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "a", "ant"), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b=bat");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "b=bat;a=ant");
 }
 
 void test_goat__message__set__tag___when_already_many_tags(void) {
@@ -120,7 +120,7 @@ void test_goat__message__set__tag___when_already_many_tags(void) {
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "d", "dog"), 0);
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "f", "fig"), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b=bat;c=cat;d=dog;e=egg;f=fig");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat;e=egg;b=bat;d=dog;f=fig");
 }
 
 void test_goat__message__set__tag___when_tag_already_exists(void) {
@@ -128,7 +128,7 @@ void test_goat__message__set__tag___when_tag_already_exists(void) {
 
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "b", "bog"), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b=bog;c=cat");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat;b=bog");
 }
 
 void test_goat__message__set__tag___no_value(void) {
@@ -136,7 +136,7 @@ void test_goat__message__set__tag___no_value(void) {
 
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "b", NULL), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b;c=cat");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat;b");
 }
 
 void test_goat__message__set__tag___replace_with_no_value(void) {
@@ -144,7 +144,7 @@ void test_goat__message__set__tag___replace_with_no_value(void) {
 
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "b", NULL), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b;c=cat");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat;b");
 }
 
 void test_goat__message__set__tag___replace_no_value_with_value(void) {
@@ -152,7 +152,7 @@ void test_goat__message__set__tag___replace_no_value_with_value(void) {
 
     CU_ASSERT_EQUAL_FATAL(goat_message_set_tag(msg, "b", "bat"), 0);
 
-    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;b=bat;c=cat");
+    CU_ASSERT_STRING_EQUAL(msg->m_tags->m_bytes, "a=ant;c=cat;b=bat");
 }
 
 void test_goat__message__set__tag___escape_special_values(void) {
