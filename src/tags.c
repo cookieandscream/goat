@@ -263,6 +263,13 @@ const char *_escape_value(const char *value, char *buf, size_t *size) {
     char *dest = buf;
 
     for (size_t i = 0; i < *size; i++) {
+        // FIXME spec says nulls are to be escaped
+        // but that's a nuisance, so worry about it only if it becomes a problem
+        if ('\0' == value[i]) {
+            dest[0] = '\0';
+            break;
+        }
+
         switch(value[i]) {
             case ';':
                 dest[0] = '\\';
