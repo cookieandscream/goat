@@ -46,12 +46,13 @@ size_t goat_message_has_tags(const goat_message_t *message) {
 
     const goat_message_tags_t *tags = message->m_tags;
 
-    if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
+    if (NULL == tags) return 0;
+    if (tags->m_bytes[0] == '\0') return 0;
 
-    size_t count = 0;
+    size_t count = 1;
     const char *p = tags->m_bytes;
-    while (*p != '\0') {
-        if (*p == ';') count++;
+    while (p[0] != '\0') {
+        if (p[0] == ';' && p[1] != '\0') count++;
         p++;
     }
 
