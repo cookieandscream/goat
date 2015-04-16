@@ -39,21 +39,21 @@ cunit_basic_SOURCES =   \
 
 cunit_basic_LDADD = -lcunit -lgoat
 
-cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
-	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@
-
 CMOCKA_TESTFILES =                  \
     cmocka/message/accessor.c       \
     cmocka/message/constructor.c    \
     cmocka/message/stringify.c      \
     cmocka/message/tags.c
 
-cmocka_run_SOURCES =    \
-    cmocka/run.c         \
-    cmocka/test-db.c     \
+cmocka_run_SOURCES =        \
+    cmocka/run.c            \
+    cmocka/test-db.c        \
     $(CMOCKA_TESTFILES)
 
 cmocka_run_LDADD = -lcmocka -lgoat
 
+cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
+	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@
+
 cmocka/test-db.c: cmocka/gen-test-db.pl $(CMOCKA_TESTFILES)
-    perl cmocka/gen-test-db.pl $(CMOCKA_TESTFILES) > $@
+	perl cmocka/gen-test-db.pl $(CMOCKA_TESTFILES) > $@
