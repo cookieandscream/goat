@@ -22,9 +22,9 @@ libgoat_la_LDFLAGS = $(AM_LDFLAGS) $(TLS_LDFLAGS) -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
 
-TESTS = cunit/basic cmocka/run
+TESTS = cunit/basic
 
-check_PROGRAMS = cunit/basic cmocka/run
+check_PROGRAMS = cunit/basic
 
 CUNIT_TESTFILES =                \
     cunit/message/accessor.c     \
@@ -39,18 +39,25 @@ cunit_basic_SOURCES =   \
 
 cunit_basic_LDADD = -lcunit -lgoat
 
-CMOCKA_TESTFILES =                  \
-    cmocka/message/accessor.c       \
-    cmocka/message/constructor.c    \
-    cmocka/message/stringify.c      \
-    cmocka/message/tags.c
+if HAVE_CMOCKA
+    TESTS += cmocka/run
+    check_PROGRAMS += cmocka/run
 
-cmocka_run_SOURCES =        \
-    cmocka/run.c            \
-    cmocka/test-db.c        \
-    $(CMOCKA_TESTFILES)
+    CMOCKA_TESTFILES =                  \
+        cmocka/message/accessor.c       \
+        cmocka/message/constructor.c    \
+        cmocka/message/stringify.c      \
+        cmocka/message/tags.c
 
-cmocka_run_LDADD = -lcmocka -lgoat
+    cmocka_run_SOURCES =        \
+        cmocka/run.c            \
+        cmocka/test-db.c        \
+        $(CMOCKA_TESTFILES)
+
+    cmocka_run_CPPFLAGS = ${AM_CPPFLAGS} ${CMOCKA_CPPFLAGS}
+    cmocka_run_LDFLAGS = ${AM_LDFLAGS} ${CMOCKA_LDFLAGS}
+    cmocka_run_LDADD = -lgoat -lcmocka
+endif
 
 cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
 	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@

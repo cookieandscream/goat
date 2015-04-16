@@ -37,13 +37,44 @@ AS_IF(
 AC_SUBST([TLS_CPPFLAGS], [${TLS_CPPFLAGS}])
 AC_SUBST([TLS_LDFLAGS], [${TLS_LDFLAGS}])
 
+SAVED_LIBS=${LIBS}
 SAVED_CPPFLAGS=${CPPFLAGS}
 SAVED_LDFLAGS=${LDFLAGS}
+LIBS=
 CPPFLAGS=${TLS_CPPFLAGS} ${CPPFLAGS}
 LDFLAGS=${TLS_LDFLAGS} ${LDFLAGS}
 
 AC_SEARCH_LIBS([tls_init], [tls], [], AC_MSG_ERROR([libtls is required: libressl.org]))
 
+LIBS=${SAVED_LIBS}
+CPPFLAGS=${SAVED_CPPFLAGS}
+LDFLAGS=${SAVED_LDFLAGS}
+
+# Check for cmocka
+AC_ARG_WITH([cmocka], AS_HELP_STRING([--with-cmocka],[use cmocka [default=yes]]),[],[with_cmocka=yes])
+
+CMOCKA_CPPFLAGS=
+CMOCKA_LDFLAGS=
+AS_IF(
+    [test "x$with_cmocka" = xyes], [],
+    [test "x$with_cmocka" = xno], [],
+    [CMOCKA_CPPFLAGS="-I$with_cmocka/include"; CMOCKA_LDFLAGS="-L$with_cmocka/lib"]
+)
+
+AC_SUBST([CMOCKA_CPPFLAGS], [${CMOCKA_CPPFLAGS}])
+AC_SUBST([CMOCKA_LDFLAGS], [${CMOCKA_LDFLAGS}])
+
+SAVED_LIBS=${LIBS}
+SAVED_CPPFLAGS=${CPPFLAGS}
+SAVED_LDFLAGS=${LDFLAGS}
+LIBS=
+CPPFLAGS=${CMOCKA_CPPFLAGS} ${CPPFLAGS}
+LDFLAGS=${CMOCKA_LDFLAGS} ${LDFLAGS}
+
+AC_SEARCH_LIBS([_cmocka_run_group_tests], [cmocka], [have_cmocka=yes], AC_MSG_NOTICE([libcmocka not found: disabling unit tests]))
+AM_CONDITIONAL([HAVE_CMOCKA], [test "x$have_cmocka" = xyes -a "x$with_cmocka" != xno])
+
+LIBS=${SAVED_LIBS}
 CPPFLAGS=${SAVED_CPPFLAGS}
 LDFLAGS=${SAVED_LDFLAGS}
 
