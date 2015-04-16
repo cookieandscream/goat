@@ -40,7 +40,8 @@ cunit_basic_SOURCES =   \
 cunit_basic_LDADD = -lcunit -lgoat
 
 CMOCKA_TESTFILES =                  \
-    cmocka/message/constructor.c
+    cmocka/message/constructor.c    \
+    cmocka/message/stringify.c
 
 cmocka_run_SOURCES =        \
     cmocka/run.c            \
