@@ -24,7 +24,7 @@ foreach my $file (@test_files) {
 
     my @test_funcs = map {
         funcname $_, "void";
-    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\)' $file };
+    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
 
     my @tests = map {
         { name => demangle($_), func => $_ };
@@ -35,19 +35,19 @@ foreach my $file (@test_files) {
 
     my ($suite_init) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${suite_prefix}_suite_init *\\( *void *\\)' $file };
+    } qx{ grep -hE '^int ${suite_prefix}_suite_init *\\( *void *\\*\\*state\\)' $file };
 
     my ($suite_cleanup) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${suite_prefix}_suite_cleanup *\\( *void *\\)' $file };
+    } qx{ grep -hE '^int ${suite_prefix}_suite_cleanup *\\( *void *\\*\\*state\\)' $file };
 
     my ($suite_setup) = map {
         funcname $_, "void";
-    } qx{ grep -hE '^void ${suite_prefix}_test_setup *\\( *void *\\)' $file };
+    } qx{ grep -hE '^int ${suite_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
 
     my ($suite_teardown) = map {
         funcname $_, "void";
-    } qx{ grep -hE '^void ${suite_prefix}_test_teardown *\\( *void *\\)' $file };
+    } qx{ grep -hE '^int ${suite_prefix}_test_teardown *\\( *void *\\*\\*state\\)' $file };
 
     push @suites, {
         name => $suite_pretty,
@@ -65,6 +65,8 @@ print '#include "run.h"', "\n\n";
 
 # pre-declare the init/cleanup/test functions
 foreach my $suite (@suites) {
+    next if not scalar @{$suite->{tests}};
+
     print "int $suite->{init}(void **state);\n" if defined $suite->{init};
     print "int $suite->{cleanup}(void **state);\n" if defined $suite->{init};
     print "void $suite->{setup}(void **state);\n" if defined $suite->{setup};
@@ -77,6 +79,8 @@ foreach my $suite (@suites) {
 
 # the tests
 foreach my $suite (@suites) {
+    next if not scalar @{$suite->{tests}};
+
     print "const goat_test_group_t $suite->{prefix}_group = {\n";
     print qq{\t"$suite->{name}",\n};
     print $suite->{init} ? qq{\t$suite->{init},\n} : qq{\tNULL,\n};
@@ -104,6 +108,8 @@ foreach my $suite (@suites) {
 print 'const goat_test_group_t *test_groups[] = {', "\n";
 
 foreach my $suite (@suites) {
+    next if not scalar @{$suite->{tests}};
+
     print "\t&$suite->{prefix}_group,\n";
 }
 
