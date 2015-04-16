@@ -26,6 +26,14 @@ foreach my $file (@test_files) {
         funcname $_, "void";
     } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
 
+    my %setup_funcs = map {
+        ( demangle($_), funcname($_, "int") );
+    } qx{ grep -hE '^void setup_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
+
+    my %teardown_funcs = map {
+        ( demangle($_), funcname($_, "int") );
+    } qx{ grep -hE '^void teardown_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
+
     my @tests = map {
         { name => demangle($_), func => $_ };
     } @test_funcs;
@@ -33,29 +41,31 @@ foreach my $file (@test_files) {
     my $group_pretty = "${group_base} ${group_file}";
     my $group_prefix = "${group_base}_${group_file}";
 
-    my ($group_init) = map {
-        funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_group_init *\\( *void *\\*\\*state\\)' $file };
-
-    my ($group_cleanup) = map {
-        funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_group_cleanup *\\( *void *\\*\\*state\\)' $file };
-
     my ($group_setup) = map {
-        funcname $_, "void";
-    } qx{ grep -hE '^int ${group_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
+        funcname $_, "int";
+    } qx{ grep -hE '^int ${group_prefix}_group_setup *\\( *void *\\*\\*state\\)' $file };
 
     my ($group_teardown) = map {
-        funcname $_, "void";
+        funcname $_, "int";
+    } qx{ grep -hE '^int ${group_prefix}_group_teardown *\\( *void *\\*\\*state\\)' $file };
+
+    my ($test_setup) = map {
+        funcname $_, "int";
+    } qx{ grep -hE '^int ${group_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
+
+    my ($test_teardown) = map {
+        funcname $_, "int";
     } qx{ grep -hE '^int ${group_prefix}_test_teardown *\\( *void *\\*\\*state\\)' $file };
 
     push @groups, {
         name => $group_pretty,
         prefix => $group_prefix,
-        init => $group_init,
-        cleanup => $group_cleanup,
-        setup => $group_setup,
-        teardown => $group_teardown,
+        group_setup => $group_setup,
+        group_teardown => $group_teardown,
+        test_setup => $test_setup,
+        test_teardown => $test_teardown,
+        setup_funcs => \%setup_funcs,
+        teardown_funcs => \%teardown_funcs,
         tests => \@tests,
     };
 }
@@ -67,12 +77,15 @@ print '#include "run.h"', "\n\n";
 foreach my $group (@groups) {
     next if not scalar @{$group->{tests}};
 
-    print "int $group->{init}(void **state);\n" if defined $group->{init};
-    print "int $group->{cleanup}(void **state);\n" if defined $group->{init};
-    print "void $group->{setup}(void **state);\n" if defined $group->{setup};
-    print "void $group->{teardown}(void **state);\n" if defined $group->{teardown};
+    print "int $group->{group_setup}(void **state);\n" if defined $group->{group_setup};
+    print "int $group->{group_teardown}(void **state);\n" if defined $group->{group_teardown};
+    print "int $group->{test_setup}(void **state);\n" if defined $group->{test_setup};
+    print "int $group->{test_teardown}(void **state);\n" if defined $group->{test_teardown};
     foreach my $test (@{$group->{tests}}) {
         print "void $test->{func}(void **state);\n";
+    }
+    foreach my $fixture (values %{$group->{setup_funcs}}, values %{$group->{teardown_funcs}}) {
+        print "int $fixture(void **state);\n";
     }
     print "\n";
 }
@@ -83,8 +96,8 @@ foreach my $group (@groups) {
 
     print "const goat_test_group_t $group->{prefix}_group = {\n";
     print qq{\t"$group->{name}",\n};
-    print $group->{init} ? qq{\t$group->{init},\n} : qq{\tNULL,\n};
-    print $group->{cleanup} ? qq{\t$group->{cleanup},\n} : qq{\tNULL,\n};
+    print $group->{group_setup} ? qq{\t$group->{group_setup},\n} : qq{\tNULL,\n};
+    print $group->{group_teardown} ? qq{\t$group->{group_teardown},\n} : qq{\tNULL,\n};
     print qq{\t} . scalar @{$group->{tests}} . qq{,\n};
     print "\t{\n";
 
@@ -92,8 +105,27 @@ foreach my $group (@groups) {
         print "\t\t{ ";
         print qq{"$test->{name}", };
         print qq{$test->{func}, };
-        print $group->{setup} ? qq{$group->{setup}, } : q{NULL, };
-        print $group->{teardown} ? qq{$group->{teardown}, } : q{NULL, };
+
+        if ($group->{setup_funcs}->{$group->{name}}) {
+            print qq{$group->{setup_funcs}->{$group->{name}}, };
+        }
+        elsif ($group->{test_setup}) {
+            print qq{$group->{test_setup}, };
+        }
+        else {
+            print q{NULL, };
+        }
+
+        if ($group->{teardown_funcs}->{$group->{name}}) {
+            print qq{$group->{teardown_funcs}->{$group->{name}}, };
+        }
+        elsif ($group->{test_teardown}) {
+            print qq{$group->{test_teardown}, };
+        }
+        else {
+            print q{NULL, };
+        }
+
         print "},\n";
     }
     print "\t}\n";
