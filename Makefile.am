@@ -22,9 +22,9 @@ libgoat_la_LDFLAGS = $(AM_LDFLAGS) $(TLS_LDFLAGS) -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
 
-TESTS = cunit/basic
+TESTS = cunit/basic cmocka/run
 
-check_PROGRAMS = cunit/basic
+check_PROGRAMS = cunit/basic cmocka/run
 
 CUNIT_TESTFILES =                \
     cunit/message/accessor.c     \
@@ -41,3 +41,19 @@ cunit_basic_LDADD = -lcunit -lgoat
 
 cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
 	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@
+
+CMOCKA_TESTFILES =                  \
+    cmocka/message/accessor.c       \
+    cmocka/message/constructor.c    \
+    cmocka/message/stringify.c      \
+    cmocka/message/tags.c
+
+cmocka_run_SOURCES =    \
+    cmocka/run.c         \
+    cmocka/test-db.c     \
+    $(CMOCKA_TESTFILES)
+
+cmocka_run_LDADD = -lcmocka -lgoat
+
+cmocka/test-db.c: cmocka/gen-test-db.pl $(CMOCKA_TESTFILES)
+    perl cmocka/gen-test-db.pl $(CMOCKA_TESTFILES) > $@
