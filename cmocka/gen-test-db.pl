@@ -12,15 +12,15 @@ use File::Basename;
 sub demangle;
 sub funcname;
 
-# scan input files for test suite info
-my @suites;
+# scan input files for test group info
+my @groups;
 my @test_files = @ARGV;
 
 die "no test files" if not scalar @test_files;
 
 foreach my $file (@test_files) {
-    my ($suite_file, $suite_dir) = fileparse $file, qr/\.[^\.]*/;
-    my $suite_base = basename $suite_dir;
+    my ($group_file, $group_dir) = fileparse $file, qr/\.[^\.]*/;
+    my $group_base = basename $group_dir;
 
     my @test_funcs = map {
         funcname $_, "void";
@@ -30,32 +30,32 @@ foreach my $file (@test_files) {
         { name => demangle($_), func => $_ };
     } @test_funcs;
 
-    my $suite_pretty = "${suite_base} ${suite_file}";
-    my $suite_prefix = "${suite_base}_${suite_file}";
+    my $group_pretty = "${group_base} ${group_file}";
+    my $group_prefix = "${group_base}_${group_file}";
 
-    my ($suite_init) = map {
+    my ($group_init) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${suite_prefix}_suite_init *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_group_init *\\( *void *\\*\\*state\\)' $file };
 
-    my ($suite_cleanup) = map {
+    my ($group_cleanup) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${suite_prefix}_suite_cleanup *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_group_cleanup *\\( *void *\\*\\*state\\)' $file };
 
-    my ($suite_setup) = map {
+    my ($group_setup) = map {
         funcname $_, "void";
-    } qx{ grep -hE '^int ${suite_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
 
-    my ($suite_teardown) = map {
+    my ($group_teardown) = map {
         funcname $_, "void";
-    } qx{ grep -hE '^int ${suite_prefix}_test_teardown *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_test_teardown *\\( *void *\\*\\*state\\)' $file };
 
-    push @suites, {
-        name => $suite_pretty,
-        prefix => $suite_prefix,
-        init => $suite_init,
-        cleanup => $suite_cleanup,
-        setup => $suite_setup,
-        teardown => $suite_teardown,
+    push @groups, {
+        name => $group_pretty,
+        prefix => $group_prefix,
+        init => $group_init,
+        cleanup => $group_cleanup,
+        setup => $group_setup,
+        teardown => $group_teardown,
         tests => \@tests,
     };
 }
@@ -64,53 +64,53 @@ foreach my $file (@test_files) {
 print '#include "run.h"', "\n\n";
 
 # pre-declare the init/cleanup/test functions
-foreach my $suite (@suites) {
-    next if not scalar @{$suite->{tests}};
+foreach my $group (@groups) {
+    next if not scalar @{$group->{tests}};
 
-    print "int $suite->{init}(void **state);\n" if defined $suite->{init};
-    print "int $suite->{cleanup}(void **state);\n" if defined $suite->{init};
-    print "void $suite->{setup}(void **state);\n" if defined $suite->{setup};
-    print "void $suite->{teardown}(void **state);\n" if defined $suite->{teardown};
-    foreach my $test (@{$suite->{tests}}) {
+    print "int $group->{init}(void **state);\n" if defined $group->{init};
+    print "int $group->{cleanup}(void **state);\n" if defined $group->{init};
+    print "void $group->{setup}(void **state);\n" if defined $group->{setup};
+    print "void $group->{teardown}(void **state);\n" if defined $group->{teardown};
+    foreach my $test (@{$group->{tests}}) {
         print "void $test->{func}(void **state);\n";
     }
     print "\n";
 }
 
 # the tests
-foreach my $suite (@suites) {
-    next if not scalar @{$suite->{tests}};
+foreach my $group (@groups) {
+    next if not scalar @{$group->{tests}};
 
-    print "const goat_test_group_t $suite->{prefix}_group = {\n";
-    print qq{\t"$suite->{name}",\n};
-    print $suite->{init} ? qq{\t$suite->{init},\n} : qq{\tNULL,\n};
-    print $suite->{cleanup} ? qq{\t$suite->{cleanup},\n} : qq{\tNULL,\n};
-    print qq{\t} . scalar @{$suite->{tests}} . qq{,\n};
+    print "const goat_test_group_t $group->{prefix}_group = {\n";
+    print qq{\t"$group->{name}",\n};
+    print $group->{init} ? qq{\t$group->{init},\n} : qq{\tNULL,\n};
+    print $group->{cleanup} ? qq{\t$group->{cleanup},\n} : qq{\tNULL,\n};
+    print qq{\t} . scalar @{$group->{tests}} . qq{,\n};
     print "\t{\n";
 
-    foreach my $test(@{$suite->{tests}}) {
+    foreach my $test(@{$group->{tests}}) {
         print "\t\t{ ";
         print qq{"$test->{name}", };
         print qq{$test->{func}, };
-        print $suite->{setup} ? qq{$suite->{setup}, } : q{NULL, };
-        print $suite->{teardown} ? qq{$suite->{teardown}, } : q{NULL, };
+        print $group->{setup} ? qq{$group->{setup}, } : q{NULL, };
+        print $group->{teardown} ? qq{$group->{teardown}, } : q{NULL, };
         print "},\n";
     }
     print "\t}\n";
     print "};\n\n";
 }
 
-# the suites
+# the groups
 #const goat_test_group_t *test_groups[] = {
 #    &foo,
 #    NULL
 #};
 print 'const goat_test_group_t *test_groups[] = {', "\n";
 
-foreach my $suite (@suites) {
-    next if not scalar @{$suite->{tests}};
+foreach my $group (@groups) {
+    next if not scalar @{$group->{tests}};
 
-    print "\t&$suite->{prefix}_group,\n";
+    print "\t&$group->{prefix}_group,\n";
 }
 
 print "\tNULL,\n";

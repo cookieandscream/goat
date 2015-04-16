@@ -8,7 +8,7 @@ goat_message_t *msg_w_prefix;
 goat_message_t *msg_w_params;
 goat_message_t *msg_w_prefix_params;
 
-int message_accessor_suite_init(void **state) {
+int message_accessor_group_init(void **state) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
@@ -27,7 +27,7 @@ int message_accessor_suite_init(void **state) {
     return -1;
 }
 
-int message_accessor_suite_cleanup(void **state) {
+int message_accessor_group_cleanup(void **state) {
     goat_message_delete(msg);
     goat_message_delete(msg_w_prefix);
     goat_message_delete(msg_w_params);

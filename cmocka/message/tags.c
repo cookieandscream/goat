@@ -10,14 +10,14 @@ goat_message_t *msg;
 
 static void _set_tags(goat_message_t *message, const char *raw_tags);
 
-int message_tags_suite_init(void **state) {
+int message_tags_group_init(void **state) {
     msg = goat_message_new(NULL, "PRIVMSG", NULL);
     if (NULL == msg) return -1;
 
     return 0;
 }
 
-int message_tags_suite_cleanup(void **state) {
+int message_tags_group_cleanup(void **state) {
     if (msg) goat_message_delete(msg);
     return 0;
 }
