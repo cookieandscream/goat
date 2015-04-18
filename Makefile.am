@@ -22,22 +22,8 @@ libgoat_la_LDFLAGS = $(AM_LDFLAGS) $(TLS_LDFLAGS) -export-symbols-regex '^goat_'
 
 include_HEADERS = src/goat.h
 
-TESTS = cunit/basic
-
-check_PROGRAMS = cunit/basic
-
-CUNIT_TESTFILES =                \
-    cunit/message/accessor.c     \
-    cunit/message/constructor.c  \
-    cunit/message/stringify.c    \
-    cunit/message/tags.c
-
-cunit_basic_SOURCES =   \
-    cunit/basic.c       \
-    cunit/suite-info.c  \
-    $(CUNIT_TESTFILES)
-
-cunit_basic_LDADD = -lcunit -lgoat
+TESTS =
+check_PROGRAMS =
 
 if HAVE_CMOCKA
     TESTS += cmocka/run
@@ -58,9 +44,6 @@ if HAVE_CMOCKA
     cmocka_run_LDFLAGS = ${AM_LDFLAGS} ${CMOCKA_LDFLAGS}
     cmocka_run_LDADD = -lgoat -lcmocka
 endif
-
-cunit/suite-info.c: cunit/gen-suite-info.pl $(CUNIT_TESTFILES)
-	perl cunit/gen-suite-info.pl $(CUNIT_TESTFILES) > $@
 
 cmocka/test-db.c: cmocka/gen-test-db.pl $(CMOCKA_TESTFILES)
 	perl cmocka/gen-test-db.pl $(CMOCKA_TESTFILES) > $@
