@@ -8,6 +8,10 @@
 
 #include <cmocka.h>
 
+#ifndef UNUSED
+#define UNUSED __attribute__((unused))
+#endif
+
 typedef struct {
     const char *name;
     CMFixtureFunction setup;

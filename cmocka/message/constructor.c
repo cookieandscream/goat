@@ -36,7 +36,7 @@ static void _assert_message_params(const goat_message_t *msg, ...) {
     }
 }
 
-void test_goat__message__new___with_prefix(void **state) {
+void test_goat__message__new___with_prefix(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
 
@@ -51,7 +51,7 @@ void test_goat__message__new___with_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_invalid_prefix_space(void **state) {
+void test_goat__message__new___with_invalid_prefix_space(void **state UNUSED) {
     const char *prefix = "invalid prefix";
     const char *command = "command";
 
@@ -60,7 +60,7 @@ void test_goat__message__new___with_invalid_prefix_space(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_invalid_prefix_cr(void **state) {
+void test_goat__message__new___with_invalid_prefix_cr(void **state UNUSED) {
     const char *prefix = "invalid\x0dprefix";
     const char *command = "command";
 
@@ -69,7 +69,7 @@ void test_goat__message__new___with_invalid_prefix_cr(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_invalid_prefix_lf(void **state) {
+void test_goat__message__new___with_invalid_prefix_lf(void **state UNUSED) {
     const char *prefix = "invalid\x0aprefix";
     const char *command = "command";
 
@@ -78,7 +78,7 @@ void test_goat__message__new___with_invalid_prefix_lf(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___without_prefix(void **state) {
+void test_goat__message__new___without_prefix(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -89,7 +89,7 @@ void test_goat__message__new___without_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_unrecognised_command(void **state) {
+void test_goat__message__new___with_unrecognised_command(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -106,7 +106,7 @@ void test_goat__message__new___with_unrecognised_command(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_recognised_command(void **state) {
+void test_goat__message__new___with_recognised_command(void **state UNUSED) {
     const char *command = "PRIVMSG";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -122,7 +122,7 @@ void test_goat__message__new___with_recognised_command(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_invalid_command_space(void **state) {
+void test_goat__message__new___with_invalid_command_space(void **state UNUSED) {
     const char *command = "invalid command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -130,7 +130,7 @@ void test_goat__message__new___with_invalid_command_space(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_invalid_command_cr(void **state) {
+void test_goat__message__new___with_invalid_command_cr(void **state UNUSED) {
     const char *command = "invalid" "\x0d" "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -138,7 +138,7 @@ void test_goat__message__new___with_invalid_command_cr(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_invalid_command_lf(void **state) {
+void test_goat__message__new___with_invalid_command_lf(void **state UNUSED) {
     const char *command = "invalid" "\x0a" "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -146,7 +146,7 @@ void test_goat__message__new___with_invalid_command_lf(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___without_params(void **state) {
+void test_goat__message__new___without_params(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -158,7 +158,7 @@ void test_goat__message__new___without_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_params(void **state) {
+void test_goat__message__new___with_params(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
 
@@ -171,7 +171,7 @@ void test_goat__message__new___with_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_space_param_last(void **state) {
+void test_goat__message__new___with_space_param_last(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param 3 with spaces", NULL };
 
@@ -184,7 +184,7 @@ void test_goat__message__new___with_space_param_last(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new___with_space_param_2nd_last(void **state) {
+void test_goat__message__new___with_space_param_2nd_last(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param 2 with spaces", "param3", NULL };
 
@@ -193,7 +193,7 @@ void test_goat__message__new___with_space_param_2nd_last(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_space_param_3nd_last(void **state) {
+void test_goat__message__new___with_space_param_3nd_last(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param 2 with spaces", "param3", "param4", NULL };
 
@@ -202,7 +202,7 @@ void test_goat__message__new___with_space_param_3nd_last(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_space_param_not_last(void **state) {
+void test_goat__message__new___with_space_param_not_last(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "p1", "p 2 with spaces", "p3", "p4", "p5", NULL };
 
@@ -211,7 +211,7 @@ void test_goat__message__new___with_space_param_not_last(void **state) {
     assert_null(message);
 }
 
-void test_goat__message__new___with_the_works(void **state) {
+void test_goat__message__new___with_the_works(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
@@ -235,7 +235,7 @@ void test_goat__message__new___with_the_works(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___without_prefix(void **state) {
+void test_goat__message__new__from__string___without_prefix(void **state UNUSED) {
     const char *str = "command";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -247,7 +247,7 @@ void test_goat__message__new__from__string___without_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_prefix(void **state) {
+void test_goat__message__new__from__string___with_prefix(void **state UNUSED) {
     const char *str = ":prefix command";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -262,7 +262,7 @@ void test_goat__message__new__from__string___with_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_unrecognised_command(void **state) {
+void test_goat__message__new__from__string___with_unrecognised_command(void **state UNUSED) {
     const char *str = "command";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -278,7 +278,7 @@ void test_goat__message__new__from__string___with_unrecognised_command(void **st
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_recognised_command(void **state) {
+void test_goat__message__new__from__string___with_recognised_command(void **state UNUSED) {
     const char *str = "PRIVMSG";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -296,7 +296,7 @@ void test_goat__message__new__from__string___with_recognised_command(void **stat
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___without_params(void **state) {
+void test_goat__message__new__from__string___without_params(void **state UNUSED) {
     const char *str = "command";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -308,7 +308,7 @@ void test_goat__message__new__from__string___without_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_params(void **state) {
+void test_goat__message__new__from__string___with_params(void **state UNUSED) {
     const char *str = "command param1 param2 param3";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -320,7 +320,7 @@ void test_goat__message__new__from__string___with_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_colon_param(void **state) {
+void test_goat__message__new__from__string___with_colon_param(void **state UNUSED) {
     const char *str = "command param1 param2 :param3";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -332,7 +332,7 @@ void test_goat__message__new__from__string___with_colon_param(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_crlf(void **state) {
+void test_goat__message__new__from__string___with_crlf(void **state UNUSED) {
     const char *str = "command\x0d\x0a";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -344,7 +344,7 @@ void test_goat__message__new__from__string___with_crlf(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__new__from__string___with_the_works(void **state) {
+void test_goat__message__new__from__string___with_the_works(void **state UNUSED) {
     const char *str = ":anne PRIVMSG #goat :hello there\x0d\x0a";
 
     goat_message_t *message = goat_message_new_from_string(str, strlen(str));
@@ -364,7 +364,7 @@ void test_goat__message__new__from__string___with_the_works(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__clone___without_prefix(void **state) {
+void test_goat__message__clone___without_prefix(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
@@ -382,7 +382,7 @@ void test_goat__message__clone___without_prefix(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___with_prefix(void **state) {
+void test_goat__message__clone___with_prefix(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
 
@@ -402,7 +402,7 @@ void test_goat__message__clone___with_prefix(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___with_unrecognised_command(void **state) {
+void test_goat__message__clone___with_unrecognised_command(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
@@ -424,7 +424,7 @@ void test_goat__message__clone___with_unrecognised_command(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___with_recognised_command(void **state) {
+void test_goat__message__clone___with_recognised_command(void **state UNUSED) {
     const char *command = "PRIVMSG";
 
     goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
@@ -447,7 +447,7 @@ void test_goat__message__clone___with_recognised_command(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___without_params(void **state) {
+void test_goat__message__clone___without_params(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *msg1 = goat_message_new(NULL, command, NULL);
@@ -464,7 +464,7 @@ void test_goat__message__clone___without_params(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___with_params(void **state) {
+void test_goat__message__clone___with_params(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
 
@@ -482,7 +482,7 @@ void test_goat__message__clone___with_params(void **state) {
     goat_message_delete(msg1);
 }
 
-void test_goat__message__clone___with_the_works(void **state) {
+void test_goat__message__clone___with_the_works(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };

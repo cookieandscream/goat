@@ -1,17 +1,18 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "cmocka/run.h"
 
 #include "src/goat.h"
 #include "src/message.h"
 
-void test_goat__message__cstring___without_message(void **state) {
+void test_goat__message__cstring___without_message(void **state UNUSED) {
     char *str = goat_message_cstring(NULL, NULL, NULL);
 
     assert_null(str);
 }
 
-void test_goat__message__cstring___without_buf(void **state) {
+void test_goat__message__cstring___without_buf(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
@@ -25,7 +26,7 @@ void test_goat__message__cstring___without_buf(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_size(void **state) {
+void test_goat__message__cstring___without_size(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
@@ -40,7 +41,7 @@ void test_goat__message__cstring___without_size(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_prefix(void **state) {
+void test_goat__message__cstring___without_prefix(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -58,7 +59,7 @@ void test_goat__message__cstring___without_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_prefix(void **state) {
+void test_goat__message__cstring___with_prefix(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
 
@@ -77,7 +78,7 @@ void test_goat__message__cstring___with_prefix(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_params(void **state) {
+void test_goat__message__cstring___without_params(void **state UNUSED) {
     const char *command = "command";
 
     goat_message_t *message = goat_message_new(NULL, command, NULL);
@@ -95,7 +96,7 @@ void test_goat__message__cstring___without_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_params(void **state) {
+void test_goat__message__cstring___with_params(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
 
@@ -114,7 +115,7 @@ void test_goat__message__cstring___with_params(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_space_param(void **state) {
+void test_goat__message__cstring___with_space_param(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param 3 with spaces", NULL };
 
@@ -133,11 +134,11 @@ void test_goat__message__cstring___with_space_param(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_tags(void **state) {
+void test_goat__message__cstring___with_tags(void **state UNUSED) {
     skip(); // FIXME not implemented yet
 }
 
-void test_goat__message__cstring___with_the_works(void **state) {
+void test_goat__message__cstring___with_the_works(void **state UNUSED) {
     const char *prefix = "anne";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
@@ -157,13 +158,13 @@ void test_goat__message__cstring___with_the_works(void **state) {
     goat_message_delete(message);
 }
 
-void test_goat__message__strdup___without_message(void **state) {
+void test_goat__message__strdup___without_message(void **state UNUSED) {
     char *str = goat_message_strdup(NULL);
 
     assert_null(str);
 }
 
-void test_goat__message__strdup___with_the_works(void **state) {
+void test_goat__message__strdup___with_the_works(void **state UNUSED) {
     const char *prefix = "anne";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };

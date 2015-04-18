@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "cmocka/run.h"
 
@@ -22,7 +23,7 @@ int message_tags_test_teardown(void **state) {
     return 0;
 }
 
-void test_goat__message__has__tags___without_message(void **state) {
+void test_goat__message__has__tags___without_message(void **state UNUSED) {
     skip(); // FIXME not implemented yet
 }
 
@@ -88,7 +89,7 @@ void test_goat__message__has__tag___when_it_does(void **state) {
     assert_true(goat_message_has_tag(msg, "key5"));
 }
 
-void test_goat__message__get__tag__value(void **state) {
+void test_goat__message__get__tag__value(void **state UNUSED) {
     skip(); // FIXME not implemented yet
 }
 
