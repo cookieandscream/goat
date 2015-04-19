@@ -6,6 +6,7 @@
 typedef struct goat_context GoatContext;
 typedef struct goat_message GoatMessage;
 typedef int GoatConnection;
+typedef int GoatError;
 
 typedef void (*GoatCallback)(
     GoatContext       *context,
@@ -20,16 +21,18 @@ typedef enum {
     GOAT_EVENT_LAST /* don't use; keep last */
 } GoatEvent;
 
-typedef enum {
-    GOAT_E_NONE = 0,    // everything is fine
-    GOAT_E_INVCONTEXT,  // invalid context argument
+#define GOAT_E_FIRST (1024)
+enum {
+    GOAT_E_NONE = 0,
+
+    GOAT_E_INVCONTEXT = GOAT_E_FIRST,  // invalid context argument
     GOAT_E_INVCONN,     // invalid connection argument
     GOAT_E_STATE,       // invalid connection state
     GOAT_E_NOMEM,       // couldn't allocate memory
     GOAT_E_INVMSG,      // message is malformed
 
     GOAT_E_LAST /* don't use; keep last */
-} GoatError;
+};
 
 #define GOAT_IRC_FIRST (0) /* must match first */
 typedef enum {
@@ -257,7 +260,7 @@ GoatContext *goat_context_new();
 int goat_context_delete(GoatContext *context);
 
 GoatError goat_error(const GoatContext *context, int connection);
-const char *goat_strerror(GoatError error);
+const char *goat_strerror(int error);
 int goat_reset_error(GoatContext *context, int connection);
 
 const char *goat_command_string(GoatCommand command);

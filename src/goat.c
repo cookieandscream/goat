@@ -110,10 +110,9 @@ GoatError goat_error(const GoatContext *context, int connection) {
     return context->m_connections[connection]->m_state.error;
 }
 
-const char *goat_strerror(GoatError error) {
-    assert(error >= GOAT_E_NONE);
-    assert(error < GOAT_E_LAST);
-    if (error >= GOAT_E_NONE && error < GOAT_E_LAST)  return error_strings[error];
+const char *goat_strerror(int error) {
+    if (error >= GOAT_E_FIRST && error < GOAT_E_LAST)  return error_strings[error];
+    if (error < ELAST) return strerror(error);
     return NULL;
 }
 
