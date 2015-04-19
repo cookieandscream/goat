@@ -236,30 +236,29 @@ int goat_disconnect(GoatContext *context, int connection) {
 // fds to block on as well
 int goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds) {
     assert(context != NULL);
-    assert(readfds != NULL);
-    assert(writefds != NULL);
 
-    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
-        if (context->m_connections_count > 0) {
-            for (size_t i = 0; i < context->m_connections_size; i++) {
-                if (context->m_connections[i] != NULL) {
-                    Connection *const conn = context->m_connections[i];
-                    if (conn_wants_read(conn)) {
-                        FD_SET(conn->m_network.socket, readfds);
-                    }
-                    if (conn_wants_write(conn)) {
-                        FD_SET(conn->m_network.socket, writefds);
-                    }
+    if (NULL == context) return EINVAL;
+
+    int r = pthread_rwlock_rdlock(&context->m_rwlock);
+    if (r) return r;
+
+    if (context->m_connections_count > 0) {
+        for (size_t i = 0; i < context->m_connections_size; i++) {
+            if (context->m_connections[i] != NULL) {
+                Connection *const conn = context->m_connections[i];
+
+                if (NULL != readfds && conn_wants_read(conn)) {
+                    FD_SET(conn->m_network.socket, readfds);
+                }
+                if (NULL != writefds && conn_wants_write(conn)) {
+                    FD_SET(conn->m_network.socket, writefds);
                 }
             }
         }
+    }
 
-        pthread_rwlock_unlock(&context->m_rwlock);
-        return 0;
-    }
-    else {
-        return -1;
-    }
+    pthread_rwlock_unlock(&context->m_rwlock);
+    return 0;
 }
 
 int goat_tick(GoatContext *context, struct timeval *timeout) {
