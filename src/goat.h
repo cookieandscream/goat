@@ -272,7 +272,7 @@ int goat_disconnect(GoatContext *context, int connection);
 int goat_is_connected(GoatContext *connect, int connection);
 int goat_get_hostname(GoatContext *connect, int connection, char **hostname);
 
-int goat_send_message(GoatContext *context, int connection, const GoatMessage *message);
+int goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message);
 
 int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
 int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback);

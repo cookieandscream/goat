@@ -284,16 +284,14 @@ int conn_send_message(Connection *conn, const GoatMessage *message) {
     assert(conn != NULL);
     assert(message != NULL);
 
-    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
-        // now stick it on the connection's write queue
-        int ret = _conn_enqueue_message(&conn->m_write_queue, message);
+    int r = pthread_mutex_lock(&conn->m_mutex);
+    if (r) return r;
 
-        pthread_mutex_unlock(&conn->m_mutex);
-        return ret;
-    }
-    else {
-        return -1;
-    }
+    // now stick it on the connection's write queue
+    r = _conn_enqueue_message(&conn->m_write_queue, message);
+
+    pthread_mutex_unlock(&conn->m_mutex);
+    return r;
 }
 
 GoatMessage *conn_recv_message(Connection *conn) {
@@ -476,28 +474,26 @@ int _conn_enqueue_message(StrQueueHead *queue, const GoatMessage *message) {
     assert(message != NULL);
     // FIXME assert is valid message
 
-    char *tmp;
-    size_t len;
-    StrQueueEntry *entry;
+    char *tmp = goat_message_strdup(message);
+    if (NULL == tmp) return ENOMEM;
 
-    if (NULL != (tmp = goat_message_strdup(message))) {
-        len = strlen(tmp) + 2;  // crlf
-        if (NULL != (entry = malloc(sizeof(StrQueueEntry) + len + 1))) {
-            entry->len = len;
-            entry->has_eol = 1;
-            snprintf(entry->str, len + 1, "%s\x0d\x0a", tmp);
-            STAILQ_INSERT_TAIL(queue, entry, entries);
-            free(tmp);
-            return 0;
-        }
-        else {
-            free(tmp);
-            return -1;
-        }
+    size_t len = strlen(tmp) + 2;  // crlf
+    int r = 0;
+
+    StrQueueEntry *entry = malloc(sizeof(StrQueueEntry) + len + 1);
+    if (NULL == entry) {
+        r = ENOMEM;
+        goto cleanup;
     }
-    else {
-        return -1;
-    }
+
+    entry->len = len;
+    entry->has_eol = 1;
+    snprintf(entry->str, len + 1, "%s\x0d\x0a", tmp);
+    STAILQ_INSERT_TAIL(queue, entry, entries);
+
+cleanup:
+    if (tmp) free(tmp);
+    return r;
 }
 
 GoatMessage *_conn_dequeue_message(StrQueueHead *queue) {

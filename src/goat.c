@@ -385,11 +385,12 @@ int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback 
     return r;
 }
 
-int goat_send_message(GoatContext *context, int connection, const GoatMessage *message) {
-    if (NULL == context) return -1;
+int goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message) {
+    if (NULL == context) return EINVAL;
+    if (NULL == message) return EINVAL;
 
     Connection *conn = context_get_connection(context, connection);
-    if (NULL == conn) return -1;
+    if (NULL == conn) return EINVAL;
 
     return conn_send_message(conn, message);
 }
