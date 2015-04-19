@@ -6,6 +6,6 @@
 #include "goat.h"
 #include "message.h"
 
-int event_process(GoatContext *context, int connection, const GoatMessage *message);
+void event_process(GoatContext *context, int connection, const GoatMessage *message);
 
 #endif

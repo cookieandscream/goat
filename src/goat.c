@@ -321,27 +321,26 @@ int goat_tick(GoatContext *context, struct timeval *timeout) {
 int goat_dispatch_events(GoatContext *context) {
     assert(context != NULL);
 
-    if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
-        if (context->m_connections_count > 0) {
-            for (size_t i = 0; i < context->m_connections_size; i++) {
-                if (context->m_connections[i] != NULL) {
-                    Connection *const conn = context->m_connections[i];
+    if (NULL == context) return EINVAL;
 
-                    GoatMessage *message;
-                    while ((message = conn_recv_message(conn))) {
-                        event_process(context, i, message);
-                        goat_message_delete(message);
-                    }
+    int r = pthread_rwlock_rdlock(&context->m_rwlock);
+    if (r) return r;
+
+    if (context->m_connections_count > 0) {
+        for (size_t i = 0; i < context->m_connections_size; i++) {
+            if (context->m_connections[i] != NULL) {
+                Connection *const conn = context->m_connections[i];
+
+                GoatMessage *message;
+                while ((message = conn_recv_message(conn))) {
+                    event_process(context, i, message);
+                    goat_message_delete(message);
                 }
             }
         }
-
-        pthread_rwlock_unlock(&context->m_rwlock);
-    }
-    else {
-        return -1;
     }
 
+    pthread_rwlock_unlock(&context->m_rwlock);
     return 0;
 }
 

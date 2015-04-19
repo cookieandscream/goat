@@ -13,7 +13,7 @@ static const GoatCallback event_default_callbacks[GOAT_EVENT_LAST] = {
 
 static void _event_get_type(const GoatMessage *message, EventPair *events);
 
-int event_process(GoatContext *context, int connection, const GoatMessage *message) {
+void event_process(GoatContext *context, int connection, const GoatMessage *message) {
     assert(context != NULL);
     assert(message != NULL);
 
@@ -41,12 +41,10 @@ int event_process(GoatContext *context, int connection, const GoatMessage *messa
         callback = event_default_callbacks[GOAT_EVENT_GENERIC];
     }
     else {
-        return 0;
+        return;
     }
 
     callback(context, connection, message);
-
-    return 0;
 }
 
 void _event_get_type(const GoatMessage *message, EventPair *events) {
