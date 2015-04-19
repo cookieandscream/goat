@@ -159,20 +159,18 @@ int conn_connect(Connection *conn, const char *hostname, const char *servname, i
     assert(conn != NULL);
     assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
 
-    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
-        conn->m_network.hostname = strdup(hostname);
-        conn->m_network.servname = strdup(servname);
-        conn->m_use_ssl = ssl;
+    int r = pthread_mutex_lock(&conn->m_mutex);
+    if (r) return r;
 
-        conn->m_state.change_reason = strdup("connect requested by client");
-        _conn_set_state(conn, GOAT_CONN_RESOLVING);
+    conn->m_network.hostname = strdup(hostname);
+    conn->m_network.servname = strdup(servname);
+    conn->m_use_ssl = ssl;
 
-        pthread_mutex_unlock(&conn->m_mutex);
-        return 0;
-    }
-    else {
-        return -1;
-    }
+    conn->m_state.change_reason = strdup("connect requested by client");
+    _conn_set_state(conn, GOAT_CONN_RESOLVING);
+
+    pthread_mutex_unlock(&conn->m_mutex);
+    return 0;
 }
 
 int conn_disconnect(Connection *conn) {

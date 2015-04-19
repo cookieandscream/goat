@@ -213,11 +213,11 @@ done:
 int goat_connect(GoatContext *context, int connection,
     const char *hostname, const char *servname, int ssl
 ) {
-    if (NULL == context) return -1;
+    if (NULL == context) return EINVAL;
 
     Connection *conn = context_get_connection(context, connection);
 
-    if (NULL == conn) return -1;
+    if (NULL == conn) return EINVAL;
 
     return conn_connect(conn, hostname, servname, ssl);
 }
