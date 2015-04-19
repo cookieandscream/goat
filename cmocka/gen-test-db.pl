@@ -24,15 +24,15 @@ foreach my $file (@test_files) {
 
     my @test_funcs = map {
         funcname $_, "void";
-    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my %setup_funcs = map {
         ( demangle($_), funcname($_, "int") );
-    } qx{ grep -hE '^void setup_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^void setup_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my %teardown_funcs = map {
         ( demangle($_), funcname($_, "int") );
-    } qx{ grep -hE '^void teardown_[A-Za-z0-9_]* *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^void teardown_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my @tests = map {
         { name => demangle($_), func => $_ };
@@ -43,19 +43,19 @@ foreach my $file (@test_files) {
 
     my ($group_setup) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_group_setup *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_group_setup *\\( *void *\\*\\*state' $file };
 
     my ($group_teardown) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_group_teardown *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_group_teardown *\\( *void *\\*\\*state' $file };
 
     my ($test_setup) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_test_setup *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_test_setup *\\( *void *\\*\\*state' $file };
 
     my ($test_teardown) = map {
         funcname $_, "int";
-    } qx{ grep -hE '^int ${group_prefix}_test_teardown *\\( *void *\\*\\*state\\)' $file };
+    } qx{ grep -hE '^int ${group_prefix}_test_teardown *\\( *void *\\*\\*state' $file };
 
     push @groups, {
         name => $group_pretty,
@@ -133,10 +133,6 @@ foreach my $group (@groups) {
 }
 
 # the groups
-#const goat_test_group_t *test_groups[] = {
-#    &foo,
-#    NULL
-#};
 print 'const goat_test_group_t *test_groups[] = {', "\n";
 
 foreach my $group (@groups) {
@@ -177,4 +173,3 @@ sub funcname {
 
     return $str;
 }
-
