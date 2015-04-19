@@ -13,12 +13,12 @@
 #include "sm.h"
 #include "tresolver.h"
 
-static ssize_t _conn_recv_data(GoatConnection *);
-static ssize_t _conn_send_data(GoatConnection *);
+static ssize_t _conn_recv_data(Connection *);
+static ssize_t _conn_send_data(Connection *);
 static int _conn_enqueue_message(StrQueueHead *queue, const GoatMessage *message);
 static GoatMessage *_conn_dequeue_message(StrQueueHead *queue);
-static void _conn_set_state(GoatConnection *conn, ConnState new_state);
-static int _conn_start_connect(GoatConnection *conn, const struct addrinfo *ai);
+static void _conn_set_state(Connection *conn, ConnState new_state);
+static int _conn_start_connect(Connection *conn, const struct addrinfo *ai);
 
 static const char *const _conn_state_names[] = {
     [GOAT_CONN_DISCONNECTED]    = "disconnected",
@@ -30,9 +30,9 @@ static const char *const _conn_state_names[] = {
     [GOAT_CONN_ERROR]           = "error"
 };
 
-#define CONN_STATE_ENTER(name)   ST_ENTER(name, int, GoatConnection *conn)
-#define CONN_STATE_EXIT(name)    ST_EXIT(name, void, GoatConnection *conn)
-#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, ConnState, GoatConnection *conn)
+#define CONN_STATE_ENTER(name)   ST_ENTER(name, int, Connection *conn)
+#define CONN_STATE_EXIT(name)    ST_EXIT(name, void, Connection *conn)
+#define CONN_STATE_EXECUTE(name) ST_EXECUTE(name, ConnState, Connection *conn)
 
 #define CONN_STATE_DECL(name)       \
     static CONN_STATE_ENTER(name);  \
@@ -47,9 +47,9 @@ CONN_STATE_DECL(CONNECTED);
 CONN_STATE_DECL(DISCONNECTING);
 CONN_STATE_DECL(ERROR);
 
-typedef int (*StateEnterFunction)(GoatConnection *);
-typedef ConnState (*StateExecuteFunction)(GoatConnection *);
-typedef void (*StateExitFunction)(GoatConnection *);
+typedef int (*StateEnterFunction)(Connection *);
+typedef ConnState (*StateExecuteFunction)(Connection *);
+typedef void (*StateExitFunction)(Connection *);
 
 static const StateEnterFunction state_enter[] = {
     ST_ENTER_NAME(DISCONNECTED),
@@ -105,10 +105,10 @@ static const StateExitFunction state_exit[] = {
 // by calling tls_free(). When no more contexts are to be created, the
 // tls_config object should be freed by calling tls_config_free().
 
-int conn_init(GoatConnection *conn) {
+int conn_init(Connection *conn) {
     assert(conn != NULL);
 
-    memset(conn, 0, sizeof(GoatConnection));
+    memset(conn, 0, sizeof(Connection));
 
     conn->m_network.socket = -1;
 
@@ -118,7 +118,7 @@ int conn_init(GoatConnection *conn) {
     return pthread_mutex_init(&conn->m_mutex, NULL);
 }
 
-int conn_destroy(GoatConnection *conn) {
+int conn_destroy(Connection *conn) {
     assert(conn != NULL);
 
     int ret;
@@ -155,7 +155,7 @@ int conn_destroy(GoatConnection *conn) {
     return ret;
 }
 
-int conn_connect(GoatConnection *conn, const char *hostname, const char *servname, int ssl) {
+int conn_connect(Connection *conn, const char *hostname, const char *servname, int ssl) {
     assert(conn != NULL);
     assert(conn->m_state.state == GOAT_CONN_DISCONNECTED); // FIXME make this an error
 
@@ -175,7 +175,7 @@ int conn_connect(GoatConnection *conn, const char *hostname, const char *servnam
     }
 }
 
-int conn_disconnect(GoatConnection *conn) {
+int conn_disconnect(Connection *conn) {
     assert(conn != NULL);
     // FIXME check the current state?
 
@@ -191,7 +191,7 @@ int conn_disconnect(GoatConnection *conn) {
     }
 }
 
-int conn_wants_read(const GoatConnection *conn) {
+int conn_wants_read(const Connection *conn) {
     assert(conn != NULL);
 
     switch (conn->m_state.state) {
@@ -205,7 +205,7 @@ int conn_wants_read(const GoatConnection *conn) {
     }
 }
 
-int conn_wants_write(const GoatConnection *conn) {
+int conn_wants_write(const Connection *conn) {
     assert(conn != NULL);
     switch (conn->m_state.state) {
         case GOAT_CONN_CONNECTED:
@@ -220,7 +220,7 @@ int conn_wants_write(const GoatConnection *conn) {
     }
 }
 
-int conn_wants_timeout(const GoatConnection *conn) {
+int conn_wants_timeout(const Connection *conn) {
     assert(conn != NULL);
     switch (conn->m_state.state) {
         case GOAT_CONN_RESOLVING:
@@ -231,7 +231,7 @@ int conn_wants_timeout(const GoatConnection *conn) {
     }
 }
 
-int conn_tick(GoatConnection *conn, int socket_readable, int socket_writeable) {
+int conn_tick(Connection *conn, int socket_readable, int socket_writeable) {
     assert(conn != NULL);
 
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
@@ -266,7 +266,7 @@ int conn_tick(GoatConnection *conn, int socket_readable, int socket_writeable) {
     return !STAILQ_EMPTY(&conn->m_read_queue);  // cheap estimate of number of events
 }
 
-int conn_reset_error(GoatConnection *conn) {
+int conn_reset_error(Connection *conn) {
     assert(conn!= NULL);
 
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
@@ -284,7 +284,7 @@ int conn_reset_error(GoatConnection *conn) {
     }
 }
 
-int conn_send_message(GoatConnection *conn, const GoatMessage *message) {
+int conn_send_message(Connection *conn, const GoatMessage *message) {
     assert(conn != NULL);
     assert(message != NULL);
 
@@ -300,7 +300,7 @@ int conn_send_message(GoatConnection *conn, const GoatMessage *message) {
     }
 }
 
-GoatMessage *conn_recv_message(GoatConnection *conn) {
+GoatMessage *conn_recv_message(Connection *conn) {
     assert(conn != NULL);
 
     if (0 == pthread_mutex_lock(&conn->m_mutex)) {
@@ -314,7 +314,7 @@ GoatMessage *conn_recv_message(GoatConnection *conn) {
     }
 }
 
-void _conn_set_state(GoatConnection *conn, ConnState new_state) {
+void _conn_set_state(Connection *conn, ConnState new_state) {
     assert(conn != NULL);
 
     if (conn->m_state.state == new_state) return;
@@ -354,7 +354,7 @@ void _conn_set_state(GoatConnection *conn, ConnState new_state) {
     conn->m_state.change_reason = NULL;
 }
 
-ssize_t _conn_send_data(GoatConnection *conn) {
+ssize_t _conn_send_data(Connection *conn) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
     ssize_t total_bytes_sent = 0;
 
@@ -408,7 +408,7 @@ ssize_t _conn_send_data(GoatConnection *conn) {
     return total_bytes_sent;
 }
 
-ssize_t _conn_recv_data(GoatConnection *conn) {
+ssize_t _conn_recv_data(Connection *conn) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
 
     char buf[516] = {0};
@@ -520,7 +520,7 @@ GoatMessage *_conn_dequeue_message(StrQueueHead *queue) {
     return message;
 }
 
-int _conn_start_connect(GoatConnection *conn, const struct addrinfo *ai) {
+int _conn_start_connect(Connection *conn, const struct addrinfo *ai) {
     assert(conn != NULL);
     assert(ai != NULL);
 

@@ -65,24 +65,24 @@ typedef struct {
     int                 m_use_ssl;
     StrQueueHead        m_write_queue;
     StrQueueHead        m_read_queue;
-} GoatConnection;
+} Connection;
 
-int conn_init(GoatConnection *conn);
-int conn_destroy(GoatConnection *conn);
+int conn_init(Connection *conn);
+int conn_destroy(Connection *conn);
 
-int conn_connect(GoatConnection *conn, const char *hostname, const char *servname, int ssl);
-int conn_disconnect(GoatConnection *); // FIXME
+int conn_connect(Connection *conn, const char *hostname, const char *servname, int ssl);
+int conn_disconnect(Connection *); // FIXME
 
-int conn_wants_read(const GoatConnection *);
-int conn_wants_write(const GoatConnection *);
-int conn_wants_timeout(const GoatConnection *);
+int conn_wants_read(const Connection *);
+int conn_wants_write(const Connection *);
+int conn_wants_timeout(const Connection *);
 
-int conn_reset_error(GoatConnection *conn);
+int conn_reset_error(Connection *conn);
 
-int conn_send_message(GoatConnection *conn, const GoatMessage *message);
+int conn_send_message(Connection *conn, const GoatMessage *message);
 
-GoatMessage *conn_recv_message(GoatConnection *conn);
+GoatMessage *conn_recv_message(Connection *conn);
 
-int conn_tick(GoatConnection *conn, int socket_readable, int socket_writeable);
+int conn_tick(Connection *conn, int socket_readable, int socket_writeable);
 
 #endif

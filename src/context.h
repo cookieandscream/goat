@@ -12,7 +12,7 @@
 
 struct goat_context {
     pthread_rwlock_t    m_rwlock;
-    GoatConnection      **m_connections;
+    Connection          **m_connections;
     size_t              m_connections_size;
     size_t              m_connections_count;
     GoatCallback        *m_callbacks;
@@ -20,6 +20,6 @@ struct goat_context {
     struct tls_config   *m_tls_config;
 };
 
-GoatConnection *context_get_connection(GoatContext *context, int index);
+Connection *context_get_connection(GoatContext *context, int index);
 
 #endif
