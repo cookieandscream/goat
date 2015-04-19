@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -286,13 +287,13 @@ size_t goat_message_get_nparams(const GoatMessage *message) {
 }
 
 int goat_message_get_command(const GoatMessage *message, GoatCommand *command) {
-    if (NULL == message) return -1;
-    if (NULL == command) return -1;
+    if (NULL == message) return EINVAL;
+    if (NULL == command) return EINVAL;
 
     if (message->m_have_recognised_command) {
         *command = message->m_command;
         return 0;
     }
 
-    return -1;
+    return GOAT_E_UNREC;
 }
