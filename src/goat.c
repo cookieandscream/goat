@@ -30,17 +30,17 @@ static int _tls_init() {
     return ret;
 }
 
-goat_context_t *goat_context_new() {
+GoatContext *goat_context_new() {
     // make sure TLS library is initialised
     if (0 != _tls_init()) return NULL;
 
     // we don't need to lock in here, because no other thread has a pointer to this context yet
-    goat_context_t *context = calloc(1, sizeof(goat_context_t));
+    GoatContext *context = calloc(1, sizeof(GoatContext));
     if (!context)  return NULL;
 
     if (0 != pthread_rwlock_init(&context->m_rwlock, NULL))  goto cleanup;
 
-    if ((context->m_connections = calloc(CONN_ALLOC_INCR, sizeof(goat_connection_t *)))) {
+    if ((context->m_connections = calloc(CONN_ALLOC_INCR, sizeof(GoatConnection *)))) {
         context->m_connections_size = CONN_ALLOC_INCR;
         context->m_connections_count = 0;
     }
@@ -48,7 +48,7 @@ goat_context_t *goat_context_new() {
         goto cleanup;
     }
 
-    if (NULL == (context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(goat_callback_t)))) {
+    if (NULL == (context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(GoatCallback)))) {
         goto cleanup;
     }
 
@@ -62,7 +62,7 @@ cleanup:
     return NULL;
 }
 
-int goat_context_delete(goat_context_t *context) {
+int goat_context_delete(GoatContext *context) {
     assert(context != NULL);
 
     if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
@@ -72,12 +72,12 @@ int goat_context_delete(goat_context_t *context) {
 
         for (size_t i = 0; i < context->m_connections_size; i++) {
             if (context->m_connections[i] != NULL) {
-                goat_connection_t *conn = context->m_connections[i];
+                GoatConnection *conn = context->m_connections[i];
                 context->m_connections[i] = NULL;
                 -- context->m_connections_count;
 
                 conn_destroy(conn);
-                memset(conn, 0, sizeof(goat_connection_t));
+                memset(conn, 0, sizeof(GoatConnection));
                 free(conn);
             }
         }
@@ -99,7 +99,7 @@ int goat_context_delete(goat_context_t *context) {
     }
 }
 
-goat_error_t goat_error(goat_context_t *context, int connection) {
+GoatError goat_error(GoatContext *context, int connection) {
     assert(context != NULL);
 
     if (context == NULL)  return GOAT_E_ERRORINV;
@@ -110,14 +110,14 @@ goat_error_t goat_error(goat_context_t *context, int connection) {
     return context->m_connections[connection]->m_state.error;
 }
 
-const char *goat_strerror(goat_error_t error) {
+const char *goat_strerror(GoatError error) {
     assert(error >= GOAT_E_NONE);
     assert(error < GOAT_E_LAST);
     if (error >= GOAT_E_NONE && error < GOAT_E_LAST)  return error_strings[error];
     return NULL;
 }
 
-int goat_reset_error(goat_context_t *context, int connection) {
+int goat_reset_error(GoatContext *context, int connection) {
     assert(context != NULL);
 
     if (context == NULL)  return -1;
@@ -128,20 +128,20 @@ int goat_reset_error(goat_context_t *context, int connection) {
     return conn_reset_error(context->m_connections[connection]);
 }
 
-int goat_connection_new(goat_context_t *context) {
+int goat_connection_new(GoatContext *context) {
     assert(context != NULL);
-    goat_connection_t *conn;
+    GoatConnection *conn;
     int handle = -1;
 
     if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
         if (context->m_connections_count == context->m_connections_size) {
             size_t new_size = context->m_connections_size + CONN_ALLOC_INCR;
-            goat_connection_t **tmp;
-            if (NULL != (tmp = calloc(new_size, sizeof(goat_connection_t *)))) {
+            GoatConnection **tmp;
+            if (NULL != (tmp = calloc(new_size, sizeof(GoatConnection *)))) {
                 memcpy(
                     tmp,
                     context->m_connections,
-                    context->m_connections_size * sizeof(goat_connection_t *)
+                    context->m_connections_size * sizeof(GoatConnection *)
                 );
                 free(context->m_connections);
                 context->m_connections = tmp;
@@ -153,7 +153,7 @@ int goat_connection_new(goat_context_t *context) {
             }
         }
 
-        if (NULL != (conn = malloc(sizeof(goat_connection_t)))) {
+        if (NULL != (conn = malloc(sizeof(GoatConnection)))) {
             if (0 == conn_init(conn)) {
                 handle = context->m_connections_count ++;
                 context->m_connections[handle] = conn;
@@ -169,14 +169,14 @@ int goat_connection_new(goat_context_t *context) {
     return handle;
 }
 
-int goat_connection_delete(goat_context_t *context, int connection) {
+int goat_connection_delete(GoatContext *context, int connection) {
     assert(context != NULL);
     assert(connection >= 0);
     assert((size_t) connection < context->m_connections_size);
 
     if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
         if (context->m_connections[connection] != NULL) {
-            goat_connection_t *const conn = context->m_connections[connection];
+            GoatConnection *const conn = context->m_connections[connection];
 
             context->m_connections[connection] = NULL;
             -- context->m_connections_count;
@@ -197,22 +197,22 @@ int goat_connection_delete(goat_context_t *context, int connection) {
     }
 }
 
-int goat_connect(goat_context_t *context, int connection,
+int goat_connect(GoatContext *context, int connection,
     const char *hostname, const char *servname, int ssl
 ) {
     if (NULL == context) return -1;
 
-    goat_connection_t *conn = context_get_connection(context, connection);
+    GoatConnection *conn = context_get_connection(context, connection);
 
     if (NULL == conn) return -1;
 
     return conn_connect(conn, hostname, servname, ssl);
 }
 
-int goat_disconnect(goat_context_t *context, int connection) {
+int goat_disconnect(GoatContext *context, int connection) {
     if (NULL == context) return -1;
 
-    goat_connection_t *conn = context_get_connection(context, connection);
+    GoatConnection *conn = context_get_connection(context, connection);
 
     if (NULL == conn) return -1;
 
@@ -221,7 +221,7 @@ int goat_disconnect(goat_context_t *context, int connection) {
 
 // use this to get fdsets to select on from your app, if you have your own
 // fds to block on as well
-int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds) {
+int goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds) {
     assert(context != NULL);
     assert(readfds != NULL);
     assert(writefds != NULL);
@@ -230,7 +230,7 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
         if (context->m_connections_count > 0) {
             for (size_t i = 0; i < context->m_connections_size; i++) {
                 if (context->m_connections[i] != NULL) {
-                    goat_connection_t *const conn = context->m_connections[i];
+                    GoatConnection *const conn = context->m_connections[i];
                     if (conn_wants_read(conn)) {
                         FD_SET(conn->m_network.socket, readfds);
                     }
@@ -249,7 +249,7 @@ int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *r
     }
 }
 
-int goat_tick(goat_context_t *context, struct timeval *timeout) {
+int goat_tick(GoatContext *context, struct timeval *timeout) {
     fd_set readfds, writefds;
     int nfds = -1;
     int events = 0;
@@ -261,7 +261,7 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
         if (context->m_connections_count > 0) {
             for (size_t i = 0; i < context->m_connections_size; i++) {
                 if (context->m_connections[i] != NULL) {
-                    goat_connection_t *const conn = context->m_connections[i];
+                    GoatConnection *const conn = context->m_connections[i];
 
                     if (conn_wants_read(conn)) {
                         nfds = (conn->m_network.socket > nfds ? conn->m_network.socket : nfds);
@@ -287,7 +287,7 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
             if (context->m_connections_count > 0) {
                 for (size_t i = 0; i < context->m_connections_size; i++) {
                     if (context->m_connections[i] != NULL) {
-                        goat_connection_t *const conn = context->m_connections[i];
+                        GoatConnection *const conn = context->m_connections[i];
 
                         int read_ready = FD_ISSET(conn->m_network.socket, &readfds);
                         int write_ready = FD_ISSET(conn->m_network.socket, &writefds);
@@ -306,16 +306,16 @@ int goat_tick(goat_context_t *context, struct timeval *timeout) {
     return events;
 }
 
-int goat_dispatch_events(goat_context_t *context) {
+int goat_dispatch_events(GoatContext *context) {
     assert(context != NULL);
 
     if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
         if (context->m_connections_count > 0) {
             for (size_t i = 0; i < context->m_connections_size; i++) {
                 if (context->m_connections[i] != NULL) {
-                    goat_connection_t *const conn = context->m_connections[i];
+                    GoatConnection *const conn = context->m_connections[i];
 
-                    goat_message_t *message;
+                    GoatMessage *message;
                     while ((message = conn_recv_message(conn))) {
                         event_process(context, i, message);
                         goat_message_delete(message);
@@ -333,7 +333,7 @@ int goat_dispatch_events(goat_context_t *context) {
     return 0;
 }
 
-int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback) {
+int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
     assert(context != NULL);
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
@@ -349,7 +349,7 @@ int goat_install_callback(goat_context_t *context, goat_event_t event, goat_call
     }
 }
 
-int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback) {
+int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
     assert(context != NULL);
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
@@ -370,10 +370,10 @@ int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_ca
     }
 }
 
-int goat_send_message(goat_context_t *context, int connection, const goat_message_t *message) {
+int goat_send_message(GoatContext *context, int connection, const GoatMessage *message) {
     if (NULL == context) return -1;
 
-    goat_connection_t *conn = context_get_connection(context, connection);
+    GoatConnection *conn = context_get_connection(context, connection);
     if (NULL == conn) return -1;
 
     return conn_send_message(conn, message);

@@ -7,7 +7,7 @@
 #include "src/goat.h"
 #include "src/message.h"
 
-static void _set_tags(goat_message_t *message, const char *raw_tags);
+static void _set_tags(GoatMessage *message, const char *raw_tags);
 
 int message_tags_test_setup(void **state) {
     *state = goat_message_new(NULL, "PRIVMSG", NULL);
@@ -28,13 +28,13 @@ void test_goat__message__has__tags___without_message(void **state UNUSED) {
 }
 
 void test_goat__message__has__tags___without_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     assert_int_equal(goat_message_has_tags(msg), 0);
 }
 
 void test_goat__message__has__tags___with_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "somekey");
 
@@ -54,7 +54,7 @@ void test_goat__message__has__tags___with_tag(void **state) {
 }
 
 void test_goat__message__has__tags___with_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "key1=val1;key2;key3=val3;key4;key5;");
 
@@ -62,7 +62,7 @@ void test_goat__message__has__tags___with_tags(void **state) {
 }
 
 void test_goat__message__has__tags___with_special_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "plain=text;encoded=text\\:with\\:separators;one\\smore");
 
@@ -70,7 +70,7 @@ void test_goat__message__has__tags___with_special_value(void **state) {
 }
 
 void test_goat__message__has__tag___when_it_does_not(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "key1=val1;key2=val2;key3=val3");
 
@@ -78,7 +78,7 @@ void test_goat__message__has__tag___when_it_does_not(void **state) {
 }
 
 void test_goat__message__has__tag___when_it_does(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "key1=val1;key2=val2;key3;key4;key5=val5");
 
@@ -94,7 +94,7 @@ void test_goat__message__get__tag__value(void **state UNUSED) {
 }
 
 void test_goat__message__set__tag___when_no_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     if (msg->m_tags) free(msg->m_tags);
     msg->m_tags = NULL;
@@ -105,7 +105,7 @@ void test_goat__message__set__tag___when_no_tags(void **state) {
 }
 
 void test_goat__message__set__tag___when_tags_empty(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     assert_int_equal(goat_message_set_tag(msg, "key", "value"), 0);
 
@@ -113,7 +113,7 @@ void test_goat__message__set__tag___when_tags_empty(void **state) {
 }
 
 void test_goat__message__set__tag___when_already_a_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "b=bat");
 
@@ -129,7 +129,7 @@ void test_goat__message__set__tag___when_already_a_tag(void **state) {
 }
 
 void test_goat__message__set__tag___when_already_many_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;c=cat;e=egg");
 
@@ -141,7 +141,7 @@ void test_goat__message__set__tag___when_already_many_tags(void **state) {
 }
 
 void test_goat__message__set__tag___when_tag_already_exists(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b=bat;c=cat");
 
@@ -151,7 +151,7 @@ void test_goat__message__set__tag___when_tag_already_exists(void **state) {
 }
 
 void test_goat__message__set__tag___no_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;c=cat");
 
@@ -161,7 +161,7 @@ void test_goat__message__set__tag___no_value(void **state) {
 }
 
 void test_goat__message__set__tag___replace_with_no_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b=bat;c=cat");
 
@@ -171,7 +171,7 @@ void test_goat__message__set__tag___replace_with_no_value(void **state) {
 }
 
 void test_goat__message__set__tag___replace_no_value_with_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b;c=cat");
 
@@ -181,7 +181,7 @@ void test_goat__message__set__tag___replace_no_value_with_value(void **state) {
 }
 
 void test_goat__message__set__tag___escape_special_values(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     assert_int_equal(goat_message_set_tag(msg, "oh", ";| |\\|\r|\n"), 0);
 
@@ -189,7 +189,7 @@ void test_goat__message__set__tag___escape_special_values(void **state) {
 }
 
 void test_goat__message__unset__tag___no_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
     if (msg->m_tags) free(msg->m_tags);
     msg->m_tags = NULL;
 
@@ -199,7 +199,7 @@ void test_goat__message__unset__tag___no_tags(void **state) {
 }
 
 void test_goat__message__unset__tag___empty_tags(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, NULL);
 
@@ -209,7 +209,7 @@ void test_goat__message__unset__tag___empty_tags(void **state) {
 }
 
 void test_goat__message__unset__tag___only_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant");
 
@@ -219,7 +219,7 @@ void test_goat__message__unset__tag___only_tag(void **state) {
 }
 
 void test_goat__message__unset__tag___first_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b=bat");
 
@@ -229,7 +229,7 @@ void test_goat__message__unset__tag___first_tag(void **state) {
 }
 
 void test_goat__message__unset__tag___last_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b=bat");
 
@@ -239,7 +239,7 @@ void test_goat__message__unset__tag___last_tag(void **state) {
 }
 
 void test_goat__message__unset__tag___middle_tag(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b=bat;c=cat");
 
@@ -249,7 +249,7 @@ void test_goat__message__unset__tag___middle_tag(void **state) {
 }
 
 void test_goat__message__unset__tag___first_tag_no_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a;b=bat");
 
@@ -259,7 +259,7 @@ void test_goat__message__unset__tag___first_tag_no_value(void **state) {
 }
 
 void test_goat__message__unset__tag___last_tag_no_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b");
 
@@ -269,7 +269,7 @@ void test_goat__message__unset__tag___last_tag_no_value(void **state) {
 }
 
 void test_goat__message__unset__tag___middle_tag_no_value(void **state) {
-    goat_message_t *msg = * (goat_message_t **) state;
+    GoatMessage *msg = * (GoatMessage **) state;
 
     _set_tags(msg, "a=ant;b;c=cat");
 
@@ -278,7 +278,7 @@ void test_goat__message__unset__tag___middle_tag_no_value(void **state) {
     assert_string_equal(msg->m_tags->m_bytes, "a=ant;c=cat");
 }
 
-static void _set_tags(goat_message_t *message, const char *raw_tags) {
+static void _set_tags(GoatMessage *message, const char *raw_tags) {
     assert(NULL != message);
 
     if (NULL == message->m_tags) {

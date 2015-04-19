@@ -10,7 +10,7 @@
 #include "tags.h"
 #include "util.h"
 
-goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params) {
+GoatMessage *goat_message_new(const char *prefix, const char *command, const char **params) {
     assert(command != NULL);
     size_t len = 0, n_params = 0;
 
@@ -45,7 +45,7 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
     }
     if (len > GOAT_MESSAGE_MAX_LEN)  return NULL;
 
-    goat_message_t *message = calloc(1, sizeof(goat_message_t));
+    GoatMessage *message = calloc(1, sizeof(GoatMessage));
     if (message == NULL)  return NULL;
 
     char *position = message->m_bytes;
@@ -83,7 +83,7 @@ goat_message_t *goat_message_new(const char *prefix, const char *command, const 
     return message;
 }
 
-goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
+GoatMessage *goat_message_new_from_string(const char *str, size_t len) {
     assert(str != NULL);
     assert(len > 0);
     assert(len == strnlen(str, len + 5));
@@ -94,7 +94,7 @@ goat_message_t *goat_message_new_from_string(const char *str, size_t len) {
         if (str[len - 1] == '\x0d')  -- len;
     }
 
-    goat_message_t *message = calloc(1, sizeof(goat_message_t));
+    GoatMessage *message = calloc(1, sizeof(GoatMessage));
     if (message == NULL)  return NULL;
 
     // [ '@' tags SPACE ]
@@ -154,17 +154,17 @@ cleanup:
     return NULL;
 }
 
-goat_message_t *goat_message_clone(const goat_message_t *orig) {
+GoatMessage *goat_message_clone(const GoatMessage *orig) {
     assert(orig != NULL);
 
-    goat_message_t *clone = calloc(1, sizeof(goat_message_t));
+    GoatMessage *clone = calloc(1, sizeof(GoatMessage));
     if (NULL == clone) return NULL;
 
     if (NULL != orig->m_tags) {
-        clone->m_tags = calloc(1, sizeof(goat_message_tags_t));
+        clone->m_tags = calloc(1, sizeof(GoatMessageTags));
         if (NULL == clone->m_tags) goto cleanup;
 
-        memcpy(clone->m_tags, orig->m_tags, sizeof(goat_message_tags_t));
+        memcpy(clone->m_tags, orig->m_tags, sizeof(GoatMessageTags));
     }
 
     memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);
@@ -198,12 +198,12 @@ cleanup:
     return NULL;
 }
 
-void goat_message_delete(goat_message_t *message) {
+void goat_message_delete(GoatMessage *message) {
     if (message->m_tags) free(message->m_tags);
     free(message);
 }
 
-char *goat_message_strdup(const goat_message_t *message) {
+char *goat_message_strdup(const GoatMessage *message) {
     if (NULL == message) return NULL;
 
     size_t len = message->m_len + 1;
@@ -218,7 +218,7 @@ char *goat_message_strdup(const goat_message_t *message) {
     return NULL;
 }
 
-char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len) {
+char *goat_message_cstring(const GoatMessage *message, char *buf, size_t *len) {
     if (NULL == message) return NULL;
     if (NULL == buf) return NULL;
     if (NULL == len) return NULL;
@@ -255,26 +255,26 @@ char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *len
     return NULL;
 }
 
-const char *goat_message_get_prefix(const goat_message_t *message) {
+const char *goat_message_get_prefix(const GoatMessage *message) {
     if (NULL == message) return NULL;
 
     return message->m_prefix;
 }
 
-const char *goat_message_get_command_string(const goat_message_t *message) {
+const char *goat_message_get_command_string(const GoatMessage *message) {
     if (NULL == message) return NULL;
 
     return message->m_command_string;
 }
 
-const char *goat_message_get_param(const goat_message_t *message, size_t index) {
+const char *goat_message_get_param(const GoatMessage *message, size_t index) {
     if (NULL == message) return NULL;
     if (index >= 16) return NULL;
 
     return message->m_params[index];
 }
 
-size_t goat_message_get_nparams(const goat_message_t *message) {
+size_t goat_message_get_nparams(const GoatMessage *message) {
     if (NULL == message) return 0;
 
     size_t i;
@@ -285,7 +285,7 @@ size_t goat_message_get_nparams(const goat_message_t *message) {
     return i;
 }
 
-int goat_message_get_command(const goat_message_t *message, goat_command_t *command) {
+int goat_message_get_command(const GoatMessage *message, GoatCommand *command) {
     if (NULL == message) return -1;
     if (NULL == command) return -1;
 

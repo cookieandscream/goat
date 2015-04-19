@@ -2,10 +2,10 @@
 
 #include "context.h"
 
-goat_connection_t *context_get_connection(goat_context_t *context, int index) {
+GoatConnection *context_get_connection(GoatContext *context, int index) {
     assert(NULL != context);
 
-    goat_connection_t *conn = NULL;
+    GoatConnection *conn = NULL;
 
     if (0 == pthread_rwlock_rdlock(&context->m_rwlock)) {
         if (index >= 0

@@ -26,20 +26,20 @@ typedef enum {
 
     // keep error as last
     GOAT_CONN_ERROR
-} goat_conn_state_t;
+} ConnState;
 
-typedef struct s_str_queue_entry {
-    STAILQ_ENTRY(s_str_queue_entry) entries;
+typedef struct str_queue_entry {
+    STAILQ_ENTRY(str_queue_entry) entries;
     size_t  len;
     int     has_eol;
     char    str[0];
-} str_queue_entry_t;
+} StrQueueEntry;
 
-typedef STAILQ_HEAD(s_str_queue_head, s_str_queue_entry) str_queue_head_t;
+typedef STAILQ_HEAD(str_queue_head, str_queue_entry) StrQueueHead;
 
 typedef struct {
     struct addrinfo *ai;
-} connecting_state_data_t;
+} ConnectingStateData;
 
 typedef struct {
     pthread_mutex_t         m_mutex;
@@ -51,38 +51,38 @@ typedef struct {
         struct tls          *tls;
     } m_network;
     struct {
-        goat_conn_state_t   state;
+        ConnState           state;
         union {
-            void                    *raw;
-            connecting_state_data_t *connecting;
-            resolver_state_t        *resolving;
+            void                *raw;
+            ConnectingStateData *connecting;
+            ResolverState       *resolving;
         } data;
         int                 socket_is_readable;
         int                 socket_is_writeable;
-        goat_error_t        error;
+        GoatError           error;
         char                *change_reason;
     } m_state;
     int                 m_use_ssl;
-    str_queue_head_t    m_write_queue;
-    str_queue_head_t    m_read_queue;
-} goat_connection_t;
+    StrQueueHead        m_write_queue;
+    StrQueueHead        m_read_queue;
+} GoatConnection;
 
-int conn_init(goat_connection_t *conn);
-int conn_destroy(goat_connection_t *conn);
+int conn_init(GoatConnection *conn);
+int conn_destroy(GoatConnection *conn);
 
-int conn_connect(goat_connection_t *conn, const char *hostname, const char *servname, int ssl);
-int conn_disconnect(goat_connection_t *); // FIXME
+int conn_connect(GoatConnection *conn, const char *hostname, const char *servname, int ssl);
+int conn_disconnect(GoatConnection *); // FIXME
 
-int conn_wants_read(const goat_connection_t *);
-int conn_wants_write(const goat_connection_t *);
-int conn_wants_timeout(const goat_connection_t *);
+int conn_wants_read(const GoatConnection *);
+int conn_wants_write(const GoatConnection *);
+int conn_wants_timeout(const GoatConnection *);
 
-int conn_reset_error(goat_connection_t *conn);
+int conn_reset_error(GoatConnection *conn);
 
-int conn_send_message(goat_connection_t *conn, const goat_message_t *message);
+int conn_send_message(GoatConnection *conn, const GoatMessage *message);
 
-goat_message_t *conn_recv_message(goat_connection_t *conn);
+GoatMessage *conn_recv_message(GoatConnection *conn);
 
-int conn_tick(goat_connection_t *conn, int socket_readable, int socket_writeable);
+int conn_tick(GoatConnection *conn, int socket_readable, int socket_writeable);
 
 #endif

@@ -3,13 +3,13 @@
 
 #include <sys/time.h> /* struct timeval */
 
-typedef struct s_goat_context goat_context_t;
-typedef struct s_goat_message goat_message_t;
+typedef struct goat_context GoatContext;
+typedef struct goat_message GoatMessage;
 
-typedef void (*goat_callback_t)(
-    goat_context_t       *context,
+typedef void (*GoatCallback)(
+    GoatContext       *context,
     int                  connection,
-    const goat_message_t *message
+    const GoatMessage *message
 );
 
 typedef enum {
@@ -17,7 +17,7 @@ typedef enum {
     GOAT_EVENT_NUMERIC = 1,
 
     GOAT_EVENT_LAST /* don't use; keep last */
-} goat_event_t;
+} GoatEvent;
 
 typedef enum {
     GOAT_E_NONE = 0,        // everything is fine
@@ -27,7 +27,7 @@ typedef enum {
     GOAT_E_INVMSG = 4,      // message is malformed
 
     GOAT_E_LAST /* don't use; keep last */
-} goat_error_t;
+} GoatError;
 
 #define GOAT_IRC_FIRST (0) /* must match first */
 typedef enum {
@@ -249,58 +249,58 @@ typedef enum {
 #define GOAT_IRC_STR_LAST (GOAT_IRC_WHOWAS + 1)
 
     GOAT_IRC_LAST /* don't use; keep last */
-} goat_command_t;
+} GoatCommand;
 
-goat_context_t *goat_context_new();
-int goat_context_delete(goat_context_t *context);
+GoatContext *goat_context_new();
+int goat_context_delete(GoatContext *context);
 
-goat_error_t goat_error(goat_context_t *context, int connection);
-const char *goat_strerror(goat_error_t error);
-int goat_reset_error(goat_context_t *context, int connection);
+GoatError goat_error(GoatContext *context, int connection);
+const char *goat_strerror(GoatError error);
+int goat_reset_error(GoatContext *context, int connection);
 
-const char *goat_command_string(goat_command_t command);
-int goat_command(const char *command_string, goat_command_t *command);
+const char *goat_command_string(GoatCommand command);
+int goat_command(const char *command_string, GoatCommand *command);
 
-int goat_connection_new(goat_context_t *context);
-int goat_connection_delete(goat_context_t *context, int connection);
+int goat_connection_new(GoatContext *context);
+int goat_connection_delete(GoatContext *context, int connection);
 
-int goat_connect(goat_context_t *context, int connection,
+int goat_connect(GoatContext *context, int connection,
     const char *hostname, const char *servname, int ssl);
-int goat_disconnect(goat_context_t *context, int connection);
-int goat_is_connected(goat_context_t *connect, int connection);
-int goat_get_hostname(goat_context_t *connect, int connection, char **hostname);
+int goat_disconnect(GoatContext *context, int connection);
+int goat_is_connected(GoatContext *connect, int connection);
+int goat_get_hostname(GoatContext *connect, int connection, char **hostname);
 
-int goat_send_message(goat_context_t *context, int connection, const goat_message_t *message);
+int goat_send_message(GoatContext *context, int connection, const GoatMessage *message);
 
-int goat_install_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
-int goat_uninstall_callback(goat_context_t *context, goat_event_t event, goat_callback_t callback);
+int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
+int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
 
-int goat_select_fds(goat_context_t *context, fd_set *restrict readfds, fd_set *restrict writefds);
-int goat_tick(goat_context_t *context, struct timeval *timeout);
-int goat_dispatch_events(goat_context_t *context);
+int goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds);
+int goat_tick(GoatContext *context, struct timeval *timeout);
+int goat_dispatch_events(GoatContext *context);
 
 #define GOAT_MESSAGE_BUF_SZ (1025)
 
-goat_message_t *goat_message_new(const char *prefix, const char *command, const char **params);
-goat_message_t *goat_message_new_from_string(const char *str, size_t len);
-goat_message_t *goat_message_clone(const goat_message_t *orig);
+GoatMessage *goat_message_new(const char *prefix, const char *command, const char **params);
+GoatMessage *goat_message_new_from_string(const char *str, size_t len);
+GoatMessage *goat_message_clone(const GoatMessage *orig);
 
-void goat_message_delete(goat_message_t *message);
+void goat_message_delete(GoatMessage *message);
 
-char *goat_message_strdup(const goat_message_t *message);
-char *goat_message_cstring(const goat_message_t *message, char *buf, size_t *size);
+char *goat_message_strdup(const GoatMessage *message);
+char *goat_message_cstring(const GoatMessage *message, char *buf, size_t *size);
 
-const char *goat_message_get_prefix(const goat_message_t *message);
-const char *goat_message_get_command_string(const goat_message_t *message);
-const char *goat_message_get_param(const goat_message_t *message, size_t index);
-size_t goat_message_get_nparams(const goat_message_t *message);
+const char *goat_message_get_prefix(const GoatMessage *message);
+const char *goat_message_get_command_string(const GoatMessage *message);
+const char *goat_message_get_param(const GoatMessage *message, size_t index);
+size_t goat_message_get_nparams(const GoatMessage *message);
 
-int goat_message_get_command(const goat_message_t *message, goat_command_t *command);
+int goat_message_get_command(const GoatMessage *message, GoatCommand *command);
 
-size_t goat_message_has_tags(const goat_message_t *message);
-int goat_message_has_tag(const goat_message_t *message, const char *key);
-int goat_message_get_tag_value(const goat_message_t *message, const char *key, char *value, size_t *size);
-int goat_message_set_tag(goat_message_t *message, const char *key, const char *value);
-int goat_message_unset_tag(goat_message_t *message, const char *key);
+size_t goat_message_has_tags(const GoatMessage *message);
+int goat_message_has_tag(const GoatMessage *message, const char *key);
+int goat_message_get_tag_value(const GoatMessage *message, const char *key, char *value, size_t *size);
+int goat_message_set_tag(GoatMessage *message, const char *key, const char *value);
+int goat_message_unset_tag(GoatMessage *message, const char *key);
 
 #endif

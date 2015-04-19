@@ -14,7 +14,7 @@ enum e_resolver_status {
     RESOLVER_CANCELLED,
 };
 
-struct s_resolver_state {
+struct resolver_state {
     pthread_t thread;
     pthread_mutex_t mutex;
     struct addrinfo *res;
@@ -29,11 +29,11 @@ static void *_resolver_thread(void *);
 // returns:
 //  0 - ok: if res is set, finished, otherwise still busy
 //  nonzero - error
-int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
+int resolver_getaddrinfo(struct resolver_state **statep, const char *hostname,
     const char *servname, struct addrinfo **resp)
 {
     if (! *statep) {
-        struct s_resolver_state *state = calloc(1, sizeof(struct s_resolver_state));
+        struct resolver_state *state = calloc(1, sizeof(struct resolver_state));
         if (!state)  return -1;
 
         state->hostname = strdup(hostname);
@@ -60,7 +60,7 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
         return -1;
     }
     else {
-        struct s_resolver_state *state = *statep;
+        struct resolver_state *state = *statep;
 
         if (0 == pthread_mutex_lock(&state->mutex)) {
             enum e_resolver_status status = state->status;
@@ -104,8 +104,8 @@ int resolver_getaddrinfo(struct s_resolver_state **statep, const char *hostname,
     }
 }
 
-int resolver_cancel(struct s_resolver_state **statep) {
-    struct s_resolver_state *state = *statep;
+int resolver_cancel(struct resolver_state **statep) {
+    struct resolver_state *state = *statep;
 
     if (0 == pthread_mutex_lock(&state->mutex)) {
         *statep = NULL;
@@ -122,7 +122,7 @@ int resolver_cancel(struct s_resolver_state **statep) {
 void *_resolver_thread(void *arg) {
     assert(arg != NULL);
 
-    struct s_resolver_state *state = (struct s_resolver_state *) arg;
+    struct resolver_state *state = (struct resolver_state *) arg;
     struct addrinfo *res;
 
     int r = getaddrinfo(state->hostname, state->servname, NULL, &res);

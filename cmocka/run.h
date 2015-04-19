@@ -18,6 +18,6 @@ typedef struct {
     CMFixtureFunction teardown;
     size_t n_tests;
     const struct CMUnitTest tests[];
-} goat_test_group_t;
+} TestGroup;
 
 #endif

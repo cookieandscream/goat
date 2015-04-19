@@ -94,7 +94,7 @@ foreach my $group (@groups) {
 foreach my $group (@groups) {
     next if not scalar @{$group->{tests}};
 
-    print "const goat_test_group_t $group->{prefix}_group = {\n";
+    print "const TestGroup $group->{prefix}_group = {\n";
     print qq{\t"$group->{name}",\n};
     print $group->{group_setup} ? qq{\t$group->{group_setup},\n} : qq{\tNULL,\n};
     print $group->{group_teardown} ? qq{\t$group->{group_teardown},\n} : qq{\tNULL,\n};
@@ -133,7 +133,7 @@ foreach my $group (@groups) {
 }
 
 # the groups
-print 'const goat_test_group_t *test_groups[] = {', "\n";
+print 'const TestGroup *test_groups[] = {', "\n";
 
 foreach my $group (@groups) {
     next if not scalar @{$group->{tests}};

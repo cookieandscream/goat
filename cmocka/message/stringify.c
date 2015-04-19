@@ -17,7 +17,7 @@ void test_goat__message__cstring___without_buf(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
 
-    goat_message_t *message = goat_message_new(prefix, command, params);
+    GoatMessage *message = goat_message_new(prefix, command, params);
     assert_non_null(message);
 
     char *str = goat_message_cstring(message, NULL, NULL);
@@ -31,7 +31,7 @@ void test_goat__message__cstring___without_size(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
 
-    goat_message_t *message = goat_message_new(prefix, command, params);
+    GoatMessage *message = goat_message_new(prefix, command, params);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -44,7 +44,7 @@ void test_goat__message__cstring___without_size(void **state UNUSED) {
 void test_goat__message__cstring___without_prefix(void **state UNUSED) {
     const char *command = "command";
 
-    goat_message_t *message = goat_message_new(NULL, command, NULL);
+    GoatMessage *message = goat_message_new(NULL, command, NULL);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -63,7 +63,7 @@ void test_goat__message__cstring___with_prefix(void **state UNUSED) {
     const char *prefix = "prefix";
     const char *command = "command";
 
-    goat_message_t *message = goat_message_new(prefix, command, NULL);
+    GoatMessage *message = goat_message_new(prefix, command, NULL);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -81,7 +81,7 @@ void test_goat__message__cstring___with_prefix(void **state UNUSED) {
 void test_goat__message__cstring___without_params(void **state UNUSED) {
     const char *command = "command";
 
-    goat_message_t *message = goat_message_new(NULL, command, NULL);
+    GoatMessage *message = goat_message_new(NULL, command, NULL);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -100,7 +100,7 @@ void test_goat__message__cstring___with_params(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
 
-    goat_message_t *message = goat_message_new(NULL, command, params);
+    GoatMessage *message = goat_message_new(NULL, command, params);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -119,7 +119,7 @@ void test_goat__message__cstring___with_space_param(void **state UNUSED) {
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param 3 with spaces", NULL };
 
-    goat_message_t *message = goat_message_new(NULL, command, params);
+    GoatMessage *message = goat_message_new(NULL, command, params);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -143,7 +143,7 @@ void test_goat__message__cstring___with_the_works(void **state UNUSED) {
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
 
-    goat_message_t *message = goat_message_new(prefix, command, params);
+    GoatMessage *message = goat_message_new(prefix, command, params);
     assert_non_null(message);
 
     char buf[GOAT_MESSAGE_BUF_SZ];
@@ -169,7 +169,7 @@ void test_goat__message__strdup___with_the_works(void **state UNUSED) {
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
 
-    goat_message_t *message = goat_message_new(prefix, command, params);
+    GoatMessage *message = goat_message_new(prefix, command, params);
     assert_non_null(message);
 
     char *str = goat_message_strdup(message);

@@ -217,7 +217,7 @@ const char *const irc_strings[GOAT_IRC_LAST] = {
     [GOAT_IRC_WHOWAS]   = "WHOWAS",
 };
 
-const goat_event_pair_t irc_events[GOAT_IRC_LAST] = {
+const EventPair irc_events[GOAT_IRC_LAST] = {
     [GOAT_IRC_RPL_WELCOME]              = { GOAT_EVENT_GENERIC, GOAT_EVENT_GENERIC },
     [GOAT_IRC_RPL_YOURHOST]             = { GOAT_EVENT_GENERIC, GOAT_EVENT_GENERIC },
     [GOAT_IRC_RPL_CREATED]              = { GOAT_EVENT_GENERIC, GOAT_EVENT_GENERIC },
@@ -431,7 +431,7 @@ static int _irc_strings_cmp(const void *key, const void *iter) {
     return strcmp((const char *) key, *(const char **) iter);
 }
 
-const char *goat_command_string(goat_command_t command) {
+const char *goat_command_string(GoatCommand command) {
     assert(command >= GOAT_IRC_FIRST);
     assert(command < GOAT_IRC_LAST);
 
@@ -440,7 +440,7 @@ const char *goat_command_string(goat_command_t command) {
     return NULL;
 }
 
-int goat_command(const char *command_string, goat_command_t *command) {
+int goat_command(const char *command_string, GoatCommand *command) {
     assert(command_string != NULL);
     assert(command != NULL);
 
@@ -453,7 +453,7 @@ int goat_command(const char *command_string, goat_command_t *command) {
 
     ptrdiff_t elem = ptr - irc_strings;
 
-    if (NULL != command) *command = (goat_command_t) elem;
+    if (NULL != command) *command = (GoatCommand) elem;
 
     return 0;
 }

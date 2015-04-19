@@ -3,11 +3,11 @@
 
 #include <netdb.h>
 
-typedef struct s_resolver_state resolver_state_t;
+typedef struct resolver_state ResolverState;
 
-int resolver_getaddrinfo(resolver_state_t **statep, const char *hostname,
+int resolver_getaddrinfo(ResolverState **statep, const char *hostname,
     const char *servname, struct addrinfo **resp);
 
-int resolver_cancel(resolver_state_t **statep);
+int resolver_cancel(ResolverState **statep);
 
 #endif

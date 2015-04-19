@@ -6,10 +6,10 @@
 #include "src/message.h"
 
 struct objs {
-    goat_message_t *msg;
-    goat_message_t *msg_w_prefix;
-    goat_message_t *msg_w_params;
-    goat_message_t *msg_w_prefix_params;
+    GoatMessage *msg;
+    GoatMessage *msg_w_prefix;
+    GoatMessage *msg_w_params;
+    GoatMessage *msg_w_prefix_params;
 };
 
 int message_accessor_group_setup(void **state) {
@@ -93,7 +93,7 @@ void test_goat__message__get__command__string___with_unrecognised_command(void *
 void test_goat__message__get__command__string___with_recognised_command(void **state UNUSED) {
     const char *command = "PRIVMSG";
 
-    goat_message_t *message = goat_message_new(NULL, command, NULL);
+    GoatMessage *message = goat_message_new(NULL, command, NULL);
     assert_non_null(message);
 
     const char *str = goat_message_get_command_string(message);
@@ -171,7 +171,7 @@ void test_goat__message__get__command___without_command(void **state) {
 
 void test_goat__message__get__command___with_unrecognised_command(void **state) {
     struct objs *objs = * (struct objs **) state;
-    goat_command_t cmd = GOAT_IRC_LAST;
+    GoatCommand cmd = GOAT_IRC_LAST;
 
     int r = goat_message_get_command(objs->msg, &cmd);
 
@@ -180,10 +180,10 @@ void test_goat__message__get__command___with_unrecognised_command(void **state) 
 }
 
 void test_goat__message__get__command___with_recognised_command(void **state UNUSED) {
-    goat_message_t *message = goat_message_new(NULL, "PRIVMSG", NULL);
+    GoatMessage *message = goat_message_new(NULL, "PRIVMSG", NULL);
     assert_non_null(message);
 
-    goat_command_t cmd = GOAT_IRC_LAST;
+    GoatCommand cmd = GOAT_IRC_LAST;
     int r = goat_message_get_command(message, &cmd);
 
     assert_int_equal(r, 0);

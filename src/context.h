@@ -10,16 +10,16 @@
 
 #include "connection.h"
 
-struct s_goat_context {
+struct goat_context {
     pthread_rwlock_t    m_rwlock;
-    goat_connection_t   **m_connections;
+    GoatConnection      **m_connections;
     size_t              m_connections_size;
     size_t              m_connections_count;
-    goat_callback_t     *m_callbacks;
-    goat_error_t        m_error;
+    GoatCallback        *m_callbacks;
+    GoatError           m_error;
     struct tls_config   *m_tls_config;
 };
 
-goat_connection_t *context_get_connection(goat_context_t *context, int index);
+GoatConnection *context_get_connection(GoatContext *context, int index);
 
 #endif
