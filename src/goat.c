@@ -367,20 +367,22 @@ int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback 
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
 
-    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        int status = 0;
+    if (NULL == context) return EINVAL;
+    if (event < GOAT_EVENT_GENERIC) return EINVAL;
+    if (event >= GOAT_EVENT_LAST) return EINVAL;
 
-        if (context->m_callbacks[event] == callback) {
-            context->m_callbacks[event] = NULL;
-            status = 1;
-        }
+    int r = pthread_rwlock_wrlock(&context->m_rwlock);
+    if (r) return r;
 
-        pthread_rwlock_unlock(&context->m_rwlock);
-        return status;
+    if (context->m_callbacks[event] == callback) {
+        context->m_callbacks[event] = NULL;
     }
     else {
-        return -1;
+        r = ECANCELED;
     }
+
+    pthread_rwlock_unlock(&context->m_rwlock);
+    return r;
 }
 
 int goat_send_message(GoatContext *context, int connection, const GoatMessage *message) {
