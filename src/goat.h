@@ -20,11 +20,12 @@ typedef enum {
 } GoatEvent;
 
 typedef enum {
-    GOAT_E_NONE = 0,        // everything is fine
-    GOAT_E_ERRORINV = 1,    // invalid argument passed to goat_error
-    GOAT_E_STATE = 2,       // invalid connection state
-    GOAT_E_NOMEM = 3,       // couldn't allocate memory
-    GOAT_E_INVMSG = 4,      // message is malformed
+    GOAT_E_NONE = 0,    // everything is fine
+    GOAT_E_INVCONTEXT,  // invalid context argument
+    GOAT_E_INVCONN,     // invalid connection argument
+    GOAT_E_STATE,       // invalid connection state
+    GOAT_E_NOMEM,       // couldn't allocate memory
+    GOAT_E_INVMSG,      // message is malformed
 
     GOAT_E_LAST /* don't use; keep last */
 } GoatError;
@@ -254,7 +255,7 @@ typedef enum {
 GoatContext *goat_context_new();
 int goat_context_delete(GoatContext *context);
 
-GoatError goat_error(GoatContext *context, int connection);
+GoatError goat_error(const GoatContext *context, int connection);
 const char *goat_strerror(GoatError error);
 int goat_reset_error(GoatContext *context, int connection);
 

@@ -16,7 +16,6 @@ struct goat_context {
     size_t              m_connections_size;
     size_t              m_connections_count;
     GoatCallback        *m_callbacks;
-    GoatError           m_error;
     struct tls_config   *m_tls_config;
 };
 

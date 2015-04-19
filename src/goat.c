@@ -99,13 +99,12 @@ int goat_context_delete(GoatContext *context) {
     }
 }
 
-GoatError goat_error(GoatContext *context, int connection) {
+GoatError goat_error(const GoatContext *context, int connection) {
     assert(context != NULL);
 
-    if (context == NULL)  return GOAT_E_ERRORINV;
-    if (connection < 0)   return context->m_error;
-    if ((size_t) connection >= context->m_connections_size)  return GOAT_E_ERRORINV;
-    if (context->m_connections[connection] == NULL)  return GOAT_E_ERRORINV;
+    if (context == NULL) return GOAT_E_INVCONTEXT;
+    if (connection < 0 || (size_t) connection > context->m_connections_count) return GOAT_E_INVCONN;
+    if (context->m_connections[connection] == NULL) return GOAT_E_INVCONN;
 
     return context->m_connections[connection]->m_state.error;
 }
@@ -121,7 +120,7 @@ int goat_reset_error(GoatContext *context, int connection) {
     assert(context != NULL);
 
     if (context == NULL)  return -1;
-    if (connection < 0)  context->m_error = GOAT_E_NONE;
+    if (connection < 0)  return -1;
     if ((size_t) connection >= context->m_connections_size)  return -1;
     if (context->m_connections[connection] == NULL)  return -1;
 
