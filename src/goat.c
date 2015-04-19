@@ -349,15 +349,17 @@ int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback ca
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
 
-    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        context->m_callbacks[event] = callback;
+    if (NULL == context) return EINVAL;
+    if (event < GOAT_EVENT_GENERIC) return EINVAL;
+    if (event >= GOAT_EVENT_LAST) return EINVAL;
 
-        pthread_rwlock_unlock(&context->m_rwlock);
-        return 0;
-    }
-    else {
-        return -1;
-    }
+    int r = pthread_rwlock_wrlock(&context->m_rwlock);
+    if (r) return r;
+
+    context->m_callbacks[event] = callback;
+
+    pthread_rwlock_unlock(&context->m_rwlock);
+    return 0;
 }
 
 int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
