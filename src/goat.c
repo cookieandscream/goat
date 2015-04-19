@@ -175,32 +175,39 @@ done:
     return r;
 }
 
-int goat_connection_delete(GoatContext *context, int connection) {
+int goat_connection_delete(GoatContext *context, GoatConnection *connection) {
     assert(context != NULL);
+    assert(connection != NULL);
     assert(connection >= 0);
-    assert((size_t) connection < context->m_connections_size);
+    assert((size_t) *connection < context->m_connections_size);
 
-    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        if (context->m_connections[connection] != NULL) {
-            Connection *const conn = context->m_connections[connection];
+    if (NULL == context) return EINVAL;
+    if (NULL == connection) return EINVAL;
+    if (*connection < 0) return EINVAL;
+    if ((size_t) *connection >= context->m_connections_size) return EINVAL;
 
-            context->m_connections[connection] = NULL;
-            -- context->m_connections_count;
+    int r = 0;
 
-            pthread_rwlock_unlock(&context->m_rwlock);
+    r = pthread_rwlock_wrlock(&context->m_rwlock);
+    if (r) return r;
 
-            conn_destroy(conn);
-            free(conn);
-            return 0;
-        }
-        else {
-            pthread_rwlock_unlock(&context->m_rwlock);
-            return -1;
-        }
+    if (NULL == context->m_connections[*connection]) {
+        r = EINVAL;
+        goto done;
     }
-    else {
-        return -1;
-    }
+
+    Connection *const tmp = context->m_connections[*connection];
+
+    context->m_connections[*connection] = NULL;
+    -- context->m_connections_count;
+    *connection = -1;
+
+    conn_destroy(tmp);
+    free(tmp);
+
+done:
+    pthread_rwlock_unlock(&context->m_rwlock);
+    return r;
 }
 
 int goat_connect(GoatContext *context, int connection,

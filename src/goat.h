@@ -264,7 +264,7 @@ const char *goat_command_string(GoatCommand command);
 int goat_command(const char *command_string, GoatCommand *command);
 
 int goat_connection_new(GoatContext *context, GoatConnection *connection);
-int goat_connection_delete(GoatContext *context, int connection);
+int goat_connection_delete(GoatContext *context, GoatConnection *connection);
 
 int goat_connect(GoatContext *context, int connection,
     const char *hostname, const char *servname, int ssl);
