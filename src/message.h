@@ -4,10 +4,10 @@
 typedef struct goat_message_tags {
     size_t m_len;
     char m_bytes[512];
-} GoatMessageTags;
+} MessageTags;
 
 struct goat_message {
-    GoatMessageTags *m_tags;
+    MessageTags *m_tags;
     GoatCommand m_command;
     int m_have_recognised_command;
     const char *m_prefix;

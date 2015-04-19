@@ -161,10 +161,10 @@ GoatMessage *goat_message_clone(const GoatMessage *orig) {
     if (NULL == clone) return NULL;
 
     if (NULL != orig->m_tags) {
-        clone->m_tags = calloc(1, sizeof(GoatMessageTags));
+        clone->m_tags = calloc(1, sizeof(MessageTags));
         if (NULL == clone->m_tags) goto cleanup;
 
-        memcpy(clone->m_tags, orig->m_tags, sizeof(GoatMessageTags));
+        memcpy(clone->m_tags, orig->m_tags, sizeof(MessageTags));
     }
 
     memcpy(clone->m_bytes, orig->m_bytes, orig->m_len);

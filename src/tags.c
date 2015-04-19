@@ -15,7 +15,7 @@ static const char *_find_value(const char *str);
 static const char *_escape_value(const char *value, char *buf, size_t *size);
 static const char *_unescape_value(const char *value, char *buf, size_t *size);
 
-int tags_init(GoatMessageTags **tagsp, const char *key, const char *value) {
+int tags_init(MessageTags **tagsp, const char *key, const char *value) {
     char escaped_value[GOAT_MESSAGE_MAX_TAGS];
     size_t escaped_value_len = sizeof(escaped_value);
 
@@ -25,7 +25,7 @@ int tags_init(GoatMessageTags **tagsp, const char *key, const char *value) {
         len += 1 + escaped_value_len;  // = and value
     }
 
-    GoatMessageTags *tags = calloc(1, sizeof(*tags));
+    MessageTags *tags = calloc(1, sizeof(*tags));
     if (NULL == tags) return -1;
 
     if (len > GOAT_MESSAGE_MAX_TAGS) return -1;
@@ -44,7 +44,7 @@ int tags_init(GoatMessageTags **tagsp, const char *key, const char *value) {
 size_t goat_message_has_tags(const GoatMessage *message) {
     assert(message != NULL);
 
-    const GoatMessageTags *tags = message->m_tags;
+    const MessageTags *tags = message->m_tags;
 
     if (NULL == tags) return 0;
     if (tags->m_bytes[0] == '\0') return 0;
@@ -62,7 +62,7 @@ size_t goat_message_has_tags(const GoatMessage *message) {
 int goat_message_has_tag(const GoatMessage *message, const char *key) {
     assert(message != NULL);
 
-    const GoatMessageTags *tags = message->m_tags;
+    const MessageTags *tags = message->m_tags;
 
     if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
 
@@ -79,7 +79,7 @@ int goat_message_get_tag_value(
 
     // FIXME make sure buffer is big enough...
 
-    const GoatMessageTags *tags = message->m_tags;
+    const MessageTags *tags = message->m_tags;
 
     if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
 
@@ -159,7 +159,7 @@ int goat_message_unset_tag(GoatMessage *message, const char *key) {
     assert(message != NULL);
     assert(key != NULL);
 
-    GoatMessageTags *tags = message->m_tags;
+    MessageTags *tags = message->m_tags;
 
     if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
 
@@ -192,7 +192,7 @@ int goat_message_unset_tag(GoatMessage *message, const char *key) {
     return 0;
 }
 
-size_t tags_parse(const char *str, GoatMessageTags **tagsp) {
+size_t tags_parse(const char *str, MessageTags **tagsp) {
     if (NULL == tagsp) return 0;
     if (str[0] != '@') return 0;
 
@@ -204,7 +204,7 @@ size_t tags_parse(const char *str, GoatMessageTags **tagsp) {
     if (strn_has_sp(&str[1], len)) return 0;
 
     if (len > 0 && len <= GOAT_MESSAGE_MAX_TAGS) {
-        GoatMessageTags *tags = calloc(1, sizeof(GoatMessageTags));
+        MessageTags *tags = calloc(1, sizeof(MessageTags));
         if (NULL == tags) return 0;
 
         tags->m_len = len;
