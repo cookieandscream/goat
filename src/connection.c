@@ -177,16 +177,14 @@ int conn_disconnect(Connection *conn) {
     assert(conn != NULL);
     // FIXME check the current state?
 
-    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
-        conn->m_state.change_reason = strdup("disconnect requested by client");
-        _conn_set_state(conn, GOAT_CONN_DISCONNECTING);
+    int r = pthread_mutex_lock(&conn->m_mutex);
+    if (r) return r;
 
-        pthread_mutex_unlock(&conn->m_mutex);
-        return 0;
-    }
-    else {
-        return -1;
-    }
+    conn->m_state.change_reason = strdup("disconnect requested by client");
+    _conn_set_state(conn, GOAT_CONN_DISCONNECTING);
+
+    pthread_mutex_unlock(&conn->m_mutex);
+    return 0;
 }
 
 int conn_wants_read(const Connection *conn) {

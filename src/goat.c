@@ -223,11 +223,11 @@ int goat_connect(GoatContext *context, int connection,
 }
 
 int goat_disconnect(GoatContext *context, int connection) {
-    if (NULL == context) return -1;
+    if (NULL == context) return EINVAL;
 
     Connection *conn = context_get_connection(context, connection);
 
-    if (NULL == conn) return -1;
+    if (NULL == conn) return EINVAL;
 
     return conn_disconnect(conn);
 }
