@@ -25,11 +25,9 @@ typedef enum {
 enum {
     GOAT_E_NONE = 0,
 
-    GOAT_E_INVCONTEXT = GOAT_E_FIRST,  // invalid context argument
-    GOAT_E_INVCONN,     // invalid connection argument
-    GOAT_E_STATE,       // invalid connection state
-    GOAT_E_NOMEM,       // couldn't allocate memory
-    GOAT_E_INVMSG,      // message is malformed
+    GOAT_E_STATE = GOAT_E_FIRST,    // invalid connection state
+    GOAT_E_UNREC,                   // unrecognised command string
+    GOAT_E_INVMSG,                  // message is malformed
 
     GOAT_E_LAST /* don't use; keep last */
 };
