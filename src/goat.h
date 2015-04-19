@@ -27,7 +27,7 @@ enum {
 
     GOAT_E_STATE = GOAT_E_FIRST,    // invalid connection state
     GOAT_E_UNREC,                   // unrecognised command string
-    GOAT_E_INVMSG,                  // message is malformed
+    GOAT_E_MSGLEN,                  // message is or would be too long
 
     GOAT_E_LAST /* don't use; keep last */
 };
@@ -262,25 +262,25 @@ const char *goat_strerror(int error);
 int goat_reset_error(GoatContext *context, int connection);
 
 const char *goat_command_string(GoatCommand command);
-int goat_command(const char *command_string, GoatCommand *command);
+GoatError goat_command(const char *command_string, GoatCommand *command);
 
-int goat_connection_new(GoatContext *context, GoatConnection *connection);
-int goat_connection_delete(GoatContext *context, GoatConnection *connection);
+GoatError goat_connection_new(GoatContext *context, GoatConnection *connection);
+GoatError goat_connection_delete(GoatContext *context, GoatConnection *connection);
 
-int goat_connect(GoatContext *context, GoatConnection connection,
+GoatError goat_connect(GoatContext *context, GoatConnection connection,
     const char *hostname, const char *servname, int ssl);
-int goat_disconnect(GoatContext *context, int connection);
+GoatError goat_disconnect(GoatContext *context, int connection);
 int goat_is_connected(GoatContext *connect, int connection);
 int goat_get_hostname(GoatContext *connect, int connection, char **hostname);
 
-int goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message);
+GoatError goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message);
 
-int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
-int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
+GoatError goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
+GoatError goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback);
 
-int goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds);
+GoatError goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds);
 int goat_tick(GoatContext *context, struct timeval *timeout);
-int goat_dispatch_events(GoatContext *context);
+GoatError goat_dispatch_events(GoatContext *context);
 
 #define GOAT_MESSAGE_BUF_SZ (1025)
 
@@ -298,12 +298,12 @@ const char *goat_message_get_command_string(const GoatMessage *message);
 const char *goat_message_get_param(const GoatMessage *message, size_t index);
 size_t goat_message_get_nparams(const GoatMessage *message);
 
-int goat_message_get_command(const GoatMessage *message, GoatCommand *command);
+GoatError goat_message_get_command(const GoatMessage *message, GoatCommand *command);
 
 size_t goat_message_has_tags(const GoatMessage *message);
 int goat_message_has_tag(const GoatMessage *message, const char *key);
 int goat_message_get_tag_value(const GoatMessage *message, const char *key, char *value, size_t *size);
-int goat_message_set_tag(GoatMessage *message, const char *key, const char *value);
-int goat_message_unset_tag(GoatMessage *message, const char *key);
+GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char *value);
+GoatError goat_message_unset_tag(GoatMessage *message, const char *key);
 
 #endif

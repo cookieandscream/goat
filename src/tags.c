@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +16,7 @@ static const char *_find_value(const char *str);
 static const char *_escape_value(const char *value, char *buf, size_t *size);
 static const char *_unescape_value(const char *value, char *buf, size_t *size);
 
-int tags_init(MessageTags **tagsp, const char *key, const char *value) {
+GoatError tags_init(MessageTags **tagsp, const char *key, const char *value) {
     char escaped_value[GOAT_MESSAGE_MAX_TAGS];
     size_t escaped_value_len = sizeof(escaped_value);
 
@@ -26,9 +27,9 @@ int tags_init(MessageTags **tagsp, const char *key, const char *value) {
     }
 
     MessageTags *tags = calloc(1, sizeof(*tags));
-    if (NULL == tags) return -1;
+    if (NULL == tags) return errno;
 
-    if (len > GOAT_MESSAGE_MAX_TAGS) return -1;
+    if (len > GOAT_MESSAGE_MAX_TAGS) return GOAT_E_MSGLEN;
 
     if (value) {
         snprintf(tags->m_bytes, len + 1, "%s=%s", key, escaped_value);
@@ -110,7 +111,7 @@ int goat_message_get_tag_value(
     return 1;
 }
 
-int goat_message_set_tag(GoatMessage *message, const char *key, const char *value) {
+GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char *value) {
     assert(message != NULL);
     assert(key != NULL);
 
@@ -126,7 +127,9 @@ int goat_message_set_tag(GoatMessage *message, const char *key, const char *valu
     char buf[GOAT_MESSAGE_MAX_TAGS] = {0};
     char *p = buf;
 
-    if (message->m_tags->m_len + strlen(key) + 1 > GOAT_MESSAGE_MAX_TAGS) return -1;
+    if (message->m_tags->m_len + strlen(key) + 1 > GOAT_MESSAGE_MAX_TAGS) {
+        return GOAT_E_MSGLEN;
+    }
 
     if (message->m_tags->m_len > 0) {
         // separator if there's already tag data
@@ -142,7 +145,7 @@ int goat_message_set_tag(GoatMessage *message, const char *key, const char *valu
         _escape_value(value, escaped_value, &escaped_value_len);
 
         if (message->m_tags->m_len + strlen(buf) + escaped_value_len + 1 > GOAT_MESSAGE_MAX_TAGS) {
-            return -1;
+            return GOAT_E_MSGLEN;
         }
 
         *p++ = '=';
@@ -155,7 +158,7 @@ int goat_message_set_tag(GoatMessage *message, const char *key, const char *valu
     return 0;
 }
 
-int goat_message_unset_tag(GoatMessage *message, const char *key) {
+GoatError goat_message_unset_tag(GoatMessage *message, const char *key) {
     assert(message != NULL);
     assert(key != NULL);
 

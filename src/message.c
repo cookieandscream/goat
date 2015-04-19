@@ -286,7 +286,7 @@ size_t goat_message_get_nparams(const GoatMessage *message) {
     return i;
 }
 
-int goat_message_get_command(const GoatMessage *message, GoatCommand *command) {
+GoatError goat_message_get_command(const GoatMessage *message, GoatCommand *command) {
     if (NULL == message) return EINVAL;
     if (NULL == command) return EINVAL;
 

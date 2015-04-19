@@ -128,7 +128,7 @@ int goat_reset_error(GoatContext *context, int connection) {
     return conn_reset_error(context->m_connections[connection]);
 }
 
-int goat_connection_new(GoatContext *context, GoatConnection *connection) {
+GoatError goat_connection_new(GoatContext *context, GoatConnection *connection) {
     assert(context != NULL);
     if (context == NULL) return EINVAL;
 
@@ -175,7 +175,7 @@ done:
     return r;
 }
 
-int goat_connection_delete(GoatContext *context, GoatConnection *connection) {
+GoatError goat_connection_delete(GoatContext *context, GoatConnection *connection) {
     assert(context != NULL);
     assert(connection != NULL);
     assert(connection >= 0);
@@ -210,7 +210,7 @@ done:
     return r;
 }
 
-int goat_connect(GoatContext *context, int connection,
+GoatError goat_connect(GoatContext *context, int connection,
     const char *hostname, const char *servname, int ssl
 ) {
     if (NULL == context) return EINVAL;
@@ -222,7 +222,7 @@ int goat_connect(GoatContext *context, int connection,
     return conn_connect(conn, hostname, servname, ssl);
 }
 
-int goat_disconnect(GoatContext *context, int connection) {
+GoatError goat_disconnect(GoatContext *context, int connection) {
     if (NULL == context) return EINVAL;
 
     Connection *conn = context_get_connection(context, connection);
@@ -234,7 +234,9 @@ int goat_disconnect(GoatContext *context, int connection) {
 
 // use this to get fdsets to select on from your app, if you have your own
 // fds to block on as well
-int goat_select_fds(GoatContext *context, fd_set *restrict readfds, fd_set *restrict writefds) {
+GoatError goat_select_fds(GoatContext *context,
+    fd_set *restrict readfds, fd_set *restrict writefds
+) {
     assert(context != NULL);
 
     if (NULL == context) return EINVAL;
@@ -318,7 +320,7 @@ int goat_tick(GoatContext *context, struct timeval *timeout) {
     return events;
 }
 
-int goat_dispatch_events(GoatContext *context) {
+GoatError goat_dispatch_events(GoatContext *context) {
     assert(context != NULL);
 
     if (NULL == context) return EINVAL;
@@ -344,7 +346,7 @@ int goat_dispatch_events(GoatContext *context) {
     return 0;
 }
 
-int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
+GoatError goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
     assert(context != NULL);
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
@@ -362,7 +364,7 @@ int goat_install_callback(GoatContext *context, GoatEvent event, GoatCallback ca
     return 0;
 }
 
-int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
+GoatError goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback callback) {
     assert(context != NULL);
     assert(event >= GOAT_EVENT_GENERIC);
     assert(event < GOAT_EVENT_LAST);
@@ -385,7 +387,7 @@ int goat_uninstall_callback(GoatContext *context, GoatEvent event, GoatCallback 
     return r;
 }
 
-int goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message) {
+GoatError goat_send_message(GoatContext *context, GoatConnection connection, const GoatMessage *message) {
     if (NULL == context) return EINVAL;
     if (NULL == message) return EINVAL;
 

@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 
 #include "cmocka/run.h"
@@ -157,25 +158,25 @@ void test_goat__message__get__nparams___with_params(void **state) {
 }
 
 void test_goat__message__get__command___without_message(void **state UNUSED) {
-    int r = goat_message_get_command(NULL, NULL);
+    GoatError r = goat_message_get_command(NULL, NULL);
 
-    assert_int_equal(r, -1);
+    assert_int_equal(r, EINVAL);
 }
 
 void test_goat__message__get__command___without_command(void **state) {
     struct objs *objs = * (struct objs **) state;
-    int r = goat_message_get_command(objs->msg, NULL);
+    GoatError r = goat_message_get_command(objs->msg, NULL);
 
-    assert_int_equal(r, -1);
+    assert_int_equal(r, EINVAL);
 }
 
 void test_goat__message__get__command___with_unrecognised_command(void **state) {
     struct objs *objs = * (struct objs **) state;
     GoatCommand cmd = GOAT_IRC_LAST;
 
-    int r = goat_message_get_command(objs->msg, &cmd);
+    GoatError r = goat_message_get_command(objs->msg, &cmd);
 
-    assert_int_equal(r, -1);
+    assert_int_equal(r, GOAT_E_UNREC);
     assert_int_equal(cmd, GOAT_IRC_LAST);
 }
 
@@ -184,9 +185,9 @@ void test_goat__message__get__command___with_recognised_command(void **state UNU
     assert_non_null(message);
 
     GoatCommand cmd = GOAT_IRC_LAST;
-    int r = goat_message_get_command(message, &cmd);
+    GoatError r = goat_message_get_command(message, &cmd);
 
-    assert_int_equal(r, 0);
+    assert_int_equal(r, GOAT_E_NONE);
     assert_int_equal(cmd, GOAT_IRC_PRIVMSG);
 
     goat_message_delete(message);

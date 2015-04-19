@@ -440,7 +440,7 @@ const char *goat_command_string(GoatCommand command) {
     return NULL;
 }
 
-int goat_command(const char *command_string, GoatCommand *command) {
+GoatError goat_command(const char *command_string, GoatCommand *command) {
     assert(command_string != NULL);
     assert(command != NULL);
 
@@ -449,7 +449,7 @@ int goat_command(const char *command_string, GoatCommand *command) {
 
     const char **ptr = bsearch(command_string, irc_strings, nel, width, _irc_strings_cmp);
 
-    if (NULL == ptr) return -1;
+    if (NULL == ptr) return GOAT_E_UNREC;
 
     ptrdiff_t elem = ptr - irc_strings;
 
