@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -127,45 +128,51 @@ int goat_reset_error(GoatContext *context, int connection) {
     return conn_reset_error(context->m_connections[connection]);
 }
 
-int goat_connection_new(GoatContext *context) {
+int goat_connection_new(GoatContext *context, GoatConnection *connection) {
     assert(context != NULL);
-    Connection *conn;
+    if (context == NULL) return EINVAL;
+
     int handle = -1;
+    int r;
 
-    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        if (context->m_connections_count == context->m_connections_size) {
-            size_t new_size = context->m_connections_size + CONN_ALLOC_INCR;
-            Connection **tmp;
-            if (NULL != (tmp = calloc(new_size, sizeof(Connection *)))) {
-                memcpy(
-                    tmp,
-                    context->m_connections,
-                    context->m_connections_size * sizeof(Connection *)
-                );
-                free(context->m_connections);
-                context->m_connections = tmp;
-                context->m_connections_size = new_size;
-            }
-            else {
-                pthread_rwlock_unlock(&context->m_rwlock);
-                return -1;
-            }
+    r = pthread_rwlock_wrlock(&context->m_rwlock);
+    if (r) return r;
+
+    if (context->m_connections_count == context->m_connections_size) {
+        size_t new_size = context->m_connections_size + CONN_ALLOC_INCR;
+
+        Connection **tmp = calloc(new_size, sizeof(Connection *));
+        if (NULL == tmp) {
+            r = errno;
+            goto done;
         }
 
-        if (NULL != (conn = malloc(sizeof(Connection)))) {
-            if (0 == conn_init(conn)) {
-                handle = context->m_connections_count ++;
-                context->m_connections[handle] = conn;
-            }
-            else {
-                free(conn);
-            }
-        }
-
-        pthread_rwlock_unlock(&context->m_rwlock);
+        memcpy(tmp, context->m_connections, context->m_connections_size * sizeof(Connection *));
+        free(context->m_connections);
+        context->m_connections = tmp;
+        context->m_connections_size = new_size;
     }
 
-    return handle;
+    Connection *conn = malloc(sizeof(Connection));
+    if (NULL == conn) {
+        r = errno;
+        goto done;
+    }
+
+    r = conn_init(conn);
+    if (r) {
+        free(conn);
+        goto done;
+    }
+
+    handle = context->m_connections_count ++;
+    context->m_connections[handle] = conn;
+
+done:
+    pthread_rwlock_unlock(&context->m_rwlock);
+
+    if (r == 0 && handle >= 0) *connection = handle;
+    return r;
 }
 
 int goat_connection_delete(GoatContext *context, int connection) {

@@ -5,6 +5,7 @@
 
 typedef struct goat_context GoatContext;
 typedef struct goat_message GoatMessage;
+typedef int GoatConnection;
 
 typedef void (*GoatCallback)(
     GoatContext       *context,
@@ -262,7 +263,7 @@ int goat_reset_error(GoatContext *context, int connection);
 const char *goat_command_string(GoatCommand command);
 int goat_command(const char *command_string, GoatCommand *command);
 
-int goat_connection_new(GoatContext *context);
+int goat_connection_new(GoatContext *context, GoatConnection *connection);
 int goat_connection_delete(GoatContext *context, int connection);
 
 int goat_connect(GoatContext *context, int connection,
