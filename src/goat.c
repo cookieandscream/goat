@@ -66,38 +66,36 @@ cleanup:
 int goat_context_delete(GoatContext *context) {
     assert(context != NULL);
 
-    if (0 == pthread_rwlock_wrlock(&context->m_rwlock)) {
-        assert(context->m_callbacks != NULL);
-        free(context->m_callbacks);
-        context->m_callbacks = NULL;
+    int r = pthread_rwlock_wrlock(&context->m_rwlock);
+    if (r) return r;
 
-        for (size_t i = 0; i < context->m_connections_size; i++) {
-            if (context->m_connections[i] != NULL) {
-                Connection *conn = context->m_connections[i];
-                context->m_connections[i] = NULL;
-                -- context->m_connections_count;
+    assert(context->m_callbacks != NULL);
+    free(context->m_callbacks);
+    context->m_callbacks = NULL;
 
-                conn_destroy(conn);
-                memset(conn, 0, sizeof(Connection));
-                free(conn);
-            }
+    for (size_t i = 0; i < context->m_connections_size; i++) {
+        if (context->m_connections[i] != NULL) {
+            Connection *conn = context->m_connections[i];
+            context->m_connections[i] = NULL;
+            -- context->m_connections_count;
+
+            conn_destroy(conn);
+            memset(conn, 0, sizeof(Connection));
+            free(conn);
         }
-        free(context->m_connections);
-        context->m_connections = NULL;
-        context->m_connections_size = 0;
-        assert(context->m_connections_count == 0);
-
-        if (context->m_tls_config) tls_config_free(context->m_tls_config);
-
-        pthread_rwlock_unlock(&context->m_rwlock);
-        pthread_rwlock_destroy(&context->m_rwlock);
-        free(context);
-
-        return 0;
     }
-    else {
-        return -1;
-    }
+    free(context->m_connections);
+    context->m_connections = NULL;
+    context->m_connections_size = 0;
+    assert(context->m_connections_count == 0);
+
+    if (context->m_tls_config) tls_config_free(context->m_tls_config);
+
+    pthread_rwlock_unlock(&context->m_rwlock);
+    pthread_rwlock_destroy(&context->m_rwlock);
+    free(context);
+
+    return 0;
 }
 
 GoatError goat_error(const GoatContext *context, GoatConnection connection) {
