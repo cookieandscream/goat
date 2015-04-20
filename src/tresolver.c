@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,9 @@ struct resolver_state {
     char *servname;
 };
 
+static int _resolver_init(struct resolver_state **statep, const char *hostname,
+    const char *servname, struct addrinfo **resp);
+static int _resolver_status(struct resolver_state **statep, struct addrinfo **resp);
 static void *_resolver_thread(void *);
 
 // returns:
@@ -33,74 +37,10 @@ int resolver_getaddrinfo(struct resolver_state **statep, const char *hostname,
     const char *servname, struct addrinfo **resp)
 {
     if (! *statep) {
-        struct resolver_state *state = calloc(1, sizeof(struct resolver_state));
-        if (!state)  return -1;
-
-        state->hostname = strdup(hostname);
-        state->servname = strdup(servname);
-        if (!hostname || !servname)  return -1;
-
-        state->status = RESOLVER_BUSY;
-
-        if (0 == pthread_mutex_init(&state->mutex, NULL)) {
-            if (0 == pthread_create(&state->thread, NULL, _resolver_thread, state)) {
-                *statep = state;
-                *resp = NULL;
-                return 0;
-            }
-
-            pthread_mutex_destroy(&state->mutex);
-        }
-
-        free(state->servname);
-        free(state->hostname);
-        free(state);
-        *statep = NULL;
-        *resp = NULL;
-        return -1;
+        return _resolver_init(statep, hostname, servname, resp);
     }
     else {
-        struct resolver_state *state = *statep;
-
-        if (0 == pthread_mutex_lock(&state->mutex)) {
-            enum e_resolver_status status = state->status;
-            int error = state->error;
-            struct addrinfo *res = state->res;
-
-            pthread_mutex_unlock(&state->mutex);
-
-            switch(status) {
-                case RESOLVER_BUSY:
-                    *resp = NULL;
-                    return 0;
-
-                case RESOLVER_DONE:
-                    *resp = res;
-                    *statep = NULL;
-                    pthread_join(state->thread, NULL);
-                    pthread_mutex_destroy(&state->mutex);
-                    free(state->servname);
-                    free(state->hostname);
-                    free(state);
-                    return 0;
-
-                case RESOLVER_ERROR:
-                case RESOLVER_CANCELLED:
-                default:
-                    *resp = NULL;
-                    *statep = NULL;
-                    pthread_join(state->thread, NULL);
-                    pthread_mutex_destroy(&state->mutex);
-                    free(state->servname);
-                    free(state->hostname);
-                    free(state);
-                    return error;
-            }
-        }
-
-        // lock failed, maybe temporary?  return error but don't throw everything away
-        *resp = NULL;
-        return -1;
+        return _resolver_status(statep, resp);
     }
 }
 
@@ -117,6 +57,90 @@ int resolver_cancel(struct resolver_state **statep) {
     }
 
     return -1;
+}
+
+static int _resolver_init(struct resolver_state **statep, const char *hostname,
+    const char *servname, struct addrinfo **resp)
+{
+    if (NULL == statep) return EINVAL;
+    if (NULL == hostname) return EINVAL;
+    if (NULL == servname) return EINVAL;
+    if (NULL == resp) return EINVAL;
+
+    struct resolver_state *state = calloc(1, sizeof(struct resolver_state));
+    if (!state)  return errno;
+
+    state->hostname = strdup(hostname);
+    if (NULL == state->hostname) return errno;
+
+    state->servname = strdup(servname);
+    if (NULL == state->servname) return errno;
+
+    state->status = RESOLVER_BUSY;
+
+    int r = pthread_mutex_init(&state->mutex, NULL);
+    if (r) goto cleanup;
+
+    r = pthread_create(&state->thread, NULL, _resolver_thread, state);
+    if (r) goto cleanup;
+
+    *statep = state;
+    *resp = NULL;
+    return 0;
+
+cleanup:
+    pthread_mutex_destroy(&state->mutex);
+    free(state->servname);
+    free(state->hostname);
+    free(state);
+    *statep = NULL;
+    *resp = NULL;
+    return r;
+}
+
+static int _resolver_status(struct resolver_state **statep, struct addrinfo **resp) {
+    struct resolver_state *state = *statep;
+
+    int r = pthread_mutex_lock(&state->mutex);
+    if (r) {
+        // lock failed, maybe temporary?  return error but don't throw everything away
+        *resp = NULL;
+        return r;
+    }
+
+    enum e_resolver_status status = state->status;
+    int error = state->error;
+    struct addrinfo *res = state->res;
+
+    pthread_mutex_unlock(&state->mutex);
+
+    switch(status) {
+        case RESOLVER_BUSY:
+            *resp = NULL;
+            return 0;
+
+        case RESOLVER_DONE:
+            *resp = res;
+            *statep = NULL;
+            pthread_join(state->thread, NULL);
+            pthread_mutex_destroy(&state->mutex);
+            free(state->servname);
+            free(state->hostname);
+            free(state);
+            return 0;
+
+        case RESOLVER_ERROR:
+        case RESOLVER_CANCELLED:
+        default:
+            *resp = NULL;
+            *statep = NULL;
+            pthread_join(state->thread, NULL);
+            pthread_mutex_destroy(&state->mutex);
+            free(state->servname);
+            free(state->hostname);
+            free(state);
+            return error;
+    }
 }
 
 void *_resolver_thread(void *arg) {
