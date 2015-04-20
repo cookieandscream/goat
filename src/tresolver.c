@@ -47,16 +47,15 @@ int resolver_getaddrinfo(struct resolver_state **statep, const char *hostname,
 int resolver_cancel(struct resolver_state **statep) {
     struct resolver_state *state = *statep;
 
-    if (0 == pthread_mutex_lock(&state->mutex)) {
-        *statep = NULL;
-        state->status = RESOLVER_CANCELLED;
-        pthread_detach(state->thread);
-        pthread_mutex_unlock(&state->mutex);
+    int r = pthread_mutex_lock(&state->mutex);
+    if (r) return r;
 
-        return 0;
-    }
+    *statep = NULL;
+    state->status = RESOLVER_CANCELLED;
+    pthread_detach(state->thread);
+    pthread_mutex_unlock(&state->mutex);
 
-    return -1;
+    return 0;
 }
 
 static int _resolver_init(struct resolver_state **statep, const char *hostname,
