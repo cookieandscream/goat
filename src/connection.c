@@ -265,19 +265,17 @@ int conn_tick(Connection *conn, int socket_readable, int socket_writeable) {
 int conn_reset_error(Connection *conn) {
     assert(conn!= NULL);
 
-    if (0 == pthread_mutex_lock(&conn->m_mutex)) {
-        conn->m_state.error = GOAT_E_NONE;
+    int r = pthread_mutex_lock(&conn->m_mutex);
+    if (r) return r;
 
-        if (conn->m_state.state == GOAT_CONN_ERROR) {
-            _conn_set_state(conn, GOAT_CONN_DISCONNECTED);
-        }
+    conn->m_state.error = GOAT_E_NONE;
 
-        pthread_mutex_unlock(&conn->m_mutex);
-        return 0;
+    if (conn->m_state.state == GOAT_CONN_ERROR) {
+        _conn_set_state(conn, GOAT_CONN_DISCONNECTED);
     }
-    else {
-        return -1;
-    }
+
+    pthread_mutex_unlock(&conn->m_mutex);
+    return 0;
 }
 
 int conn_send_message(Connection *conn, const GoatMessage *message) {

@@ -120,10 +120,10 @@ const char *goat_strerror(int error) {
 int goat_reset_error(GoatContext *context, int connection) {
     assert(context != NULL);
 
-    if (context == NULL)  return -1;
-    if (connection < 0)  return -1;
-    if ((size_t) connection >= context->m_connections_size)  return -1;
-    if (context->m_connections[connection] == NULL)  return -1;
+    if (context == NULL)  return EINVAL;
+    if (connection < 0)  return EINVAL;
+    if ((size_t) connection >= context->m_connections_size)  return EINVAL;
+    if (context->m_connections[connection] == NULL)  return EINVAL;
 
     return conn_reset_error(context->m_connections[connection]);
 }
