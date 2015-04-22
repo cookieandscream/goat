@@ -33,16 +33,18 @@ if HAVE_CMOCKA
         cmocka/message/accessor.c       \
         cmocka/message/constructor.c    \
         cmocka/message/stringify.c      \
-        cmocka/message/tags.c
+        cmocka/message/tags.c           \
+        cmocka/tresolver/general.c
 
     cmocka_run_SOURCES =        \
+        $(libgoat_la_SOURCES)   \
         cmocka/run.c            \
         cmocka/test-db.c        \
         $(CMOCKA_TESTFILES)
 
-    cmocka_run_CPPFLAGS = ${AM_CPPFLAGS} ${CMOCKA_CPPFLAGS}
-    cmocka_run_LDFLAGS = ${AM_LDFLAGS} ${CMOCKA_LDFLAGS}
-    cmocka_run_LDADD = -lgoat -lcmocka
+    cmocka_run_CPPFLAGS = $(libgoat_la_CPPFLAGS) $(CMOCKA_CPPFLAGS)
+    cmocka_run_LDFLAGS = $(libgoat_la_LDFLAGS) $(CMOCKA_LDFLAGS) -Wl,-alias,_getaddrinfo,__wrap_getaddrinfo
+    cmocka_run_LDADD = $(libgoat_la_LDADD) -ltls -lcmocka
 endif
 
 cmocka/test-db.c: cmocka/gen-test-db.pl $(CMOCKA_TESTFILES)
