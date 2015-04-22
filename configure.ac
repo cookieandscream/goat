@@ -37,16 +37,16 @@ AS_IF(
 AC_SUBST([TLS_CPPFLAGS], [${TLS_CPPFLAGS}])
 AC_SUBST([TLS_LDFLAGS], [${TLS_LDFLAGS}])
 
-SAVED_LIBS=${LIBS}
+SAVED_LIBS=$LIBS
 SAVED_CPPFLAGS=${CPPFLAGS}
 SAVED_LDFLAGS=${LDFLAGS}
 LIBS=
-CPPFLAGS=${TLS_CPPFLAGS} ${CPPFLAGS}
-LDFLAGS=${TLS_LDFLAGS} ${LDFLAGS}
+CPPFLAGS="${TLS_CPPFLAGS} ${CPPFLAGS}"
+LDFLAGS="${TLS_LDFLAGS} ${LDFLAGS}"
 
 AC_SEARCH_LIBS([tls_init], [tls], [], AC_MSG_ERROR([libtls is required: libressl.org]))
 
-LIBS=${SAVED_LIBS}
+LIBS="${SAVED_LIBS} ${LIBS}"
 CPPFLAGS=${SAVED_CPPFLAGS}
 LDFLAGS=${SAVED_LDFLAGS}
 
@@ -64,16 +64,18 @@ AS_IF(
 AC_SUBST([CMOCKA_CPPFLAGS], [${CMOCKA_CPPFLAGS}])
 AC_SUBST([CMOCKA_LDFLAGS], [${CMOCKA_LDFLAGS}])
 
-SAVED_LIBS=${LIBS}
+SAVED_LIBS=$LIBS
 SAVED_CPPFLAGS=${CPPFLAGS}
 SAVED_LDFLAGS=${LDFLAGS}
 LIBS=
-CPPFLAGS=${CMOCKA_CPPFLAGS} ${CPPFLAGS}
-LDFLAGS=${CMOCKA_LDFLAGS} ${LDFLAGS}
+CPPFLAGS="${CMOCKA_CPPFLAGS} ${CPPFLAGS}"
+LDFLAGS="${CMOCKA_LDFLAGS} ${LDFLAGS}"
 
 AC_SEARCH_LIBS([_cmocka_run_group_tests], [cmocka], [have_cmocka=yes], AC_MSG_NOTICE([libcmocka not found: disabling unit tests]))
 AM_CONDITIONAL([HAVE_CMOCKA], [test "x$have_cmocka" = xyes -a "x$with_cmocka" != xno])
+AC_SUBST([CMOCKA_LIBS], [${LIBS}])
 
+## restore original libs, don't include cmocka
 LIBS=${SAVED_LIBS}
 CPPFLAGS=${SAVED_CPPFLAGS}
 LDFLAGS=${SAVED_LDFLAGS}
@@ -91,7 +93,7 @@ AC_FUNC_MALLOC
 AC_FUNC_STRNLEN
 AC_CHECK_FUNCS([memmove memset select socket stpcpy strchr strdup strerror])
 
-AM_INIT_AUTOMAKE([foreign serial-tests silent-rules subdir-objects -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign serial-tests silent-rules subdir-objects -Wall -Werror -Wno-portability])
 LT_INIT
 
 AC_CONFIG_HEADERS([config.h])

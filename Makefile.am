@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -Wall -Wextra
+AM_CPPFLAGS =
+AM_LDFLAGS =
 
 lib_LTLIBRARIES = libgoat.la
 
@@ -26,27 +28,28 @@ TESTS =
 check_PROGRAMS =
 
 if HAVE_CMOCKA
-    TESTS += cmocka/run
-    check_PROGRAMS += cmocka/run
+    AM_CPPFLAGS += $(CMOCKA_CPPFLAGS)
+    AM_LDFLAGS += $(CMOCKA_LDFLAGS)
 
-    CMOCKA_TESTFILES =                  \
-        cmocka/message/accessor.c       \
-        cmocka/message/constructor.c    \
-        cmocka/message/stringify.c      \
-        cmocka/message/tags.c           \
-        cmocka/tresolver/general.c
+    check_PROGRAMS +=               \
+        tests/msg-accessor          \
+        tests/msg-constructor       \
+        tests/msg-stringify         \
+        tests/msg-tags              \
+        tests/tresolver
 
-    cmocka_run_SOURCES =        \
-        $(libgoat_la_SOURCES)   \
-        cmocka/run.c            \
-        cmocka/test-db.c        \
-        $(CMOCKA_TESTFILES)
+    TESTS += $(check_PROGRAMS)
 
-    cmocka_run_CPPFLAGS = $(libgoat_la_CPPFLAGS) $(CMOCKA_CPPFLAGS)
-    # FIXME detect and use --wrap on gcc platforms
-    cmocka_run_LDFLAGS = $(libgoat_la_LDFLAGS) $(CMOCKA_LDFLAGS) -Wl,-alias,___wrap_getaddrinfo,_getaddrinfo
-    cmocka_run_LDADD = $(libgoat_la_LDADD) -ltls -lcmocka
+    tests_msg_accessor_LDADD = $(CMOCKA_LIBS) -lgoat
+    tests_msg_constructor_LDADD = $(CMOCKA_LIBS) -lgoat
+    tests_msg_stringify_LDADD = $(CMOCKA_LIBS) -lgoat
+    tests_msg_tags_LDADD = $(CMOCKA_LIBS) -lgoat
+
+    tests_tresolver_SOURCES = $(libgoat_la_SOURCES) tests/tresolver.c
+    tests_tresolver_CPPFLAGS = $(libgoat_la_CPPFLAGS)
+    tests_tresolver_LDFLAGS = $(libgoat_la_LDFLAGS) $(CMOCKA_LDFLAGS) -Wl,-alias,___wrap_getaddrinfo,_getaddrinfo
+    tests_tresolver_LDADD = $(CMOCKA_LIBS)
 endif
 
-cmocka/test-db.c: cmocka/gen-test-db.pl $(CMOCKA_TESTFILES)
-	perl cmocka/gen-test-db.pl $(CMOCKA_TESTFILES) > $@
+%.c : %.cmocka cmocka/wrap-test.pl
+	cmocka/wrap-test.pl $< > $@
