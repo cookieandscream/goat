@@ -43,7 +43,8 @@ if HAVE_CMOCKA
         $(CMOCKA_TESTFILES)
 
     cmocka_run_CPPFLAGS = $(libgoat_la_CPPFLAGS) $(CMOCKA_CPPFLAGS)
-    cmocka_run_LDFLAGS = $(libgoat_la_LDFLAGS) $(CMOCKA_LDFLAGS) -Wl,-alias,_getaddrinfo,__wrap_getaddrinfo
+    # FIXME detect and use --wrap on gcc platforms
+    cmocka_run_LDFLAGS = $(libgoat_la_LDFLAGS) $(CMOCKA_LDFLAGS) -Wl,-alias,___wrap_getaddrinfo,_getaddrinfo
     cmocka_run_LDADD = $(libgoat_la_LDADD) -ltls -lcmocka
 endif
 
