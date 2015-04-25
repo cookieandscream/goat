@@ -27,12 +27,14 @@ foreach my $file (@test_files) {
     } qx{ grep -hE '^void test_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my %setup_funcs = map {
-        ( demangle($_), funcname($_, "int") );
-    } qx{ grep -hE '^void setup_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
+        my $fn = funcname($_, "int");
+        ( demangle($fn), $fn );
+    } qx{ grep -hE '^int setup_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my %teardown_funcs = map {
-        ( demangle($_), funcname($_, "int") );
-    } qx{ grep -hE '^void teardown_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
+        my $fn = funcname($_, "int");
+        ( demangle($fn), $fn );
+    } qx{ grep -hE '^int teardown_[A-Za-z0-9_]* *\\( *void *\\*\\*state' $file };
 
     my @tests = map {
         { name => demangle($_), func => $_ };
@@ -106,8 +108,8 @@ foreach my $group (@groups) {
         print qq{"$test->{name}", };
         print qq{$test->{func}, };
 
-        if ($group->{setup_funcs}->{$group->{name}}) {
-            print qq{$group->{setup_funcs}->{$group->{name}}, };
+        if ($group->{setup_funcs}->{$test->{name}}) {
+            print qq{$group->{setup_funcs}->{$test->{name}}, };
         }
         elsif ($group->{test_setup}) {
             print qq{$group->{test_setup}, };
@@ -116,8 +118,8 @@ foreach my $group (@groups) {
             print q{NULL, };
         }
 
-        if ($group->{teardown_funcs}->{$group->{name}}) {
-            print qq{$group->{teardown_funcs}->{$group->{name}}, };
+        if ($group->{teardown_funcs}->{$test->{name}}) {
+            print qq{$group->{teardown_funcs}->{$test->{name}}, };
         }
         elsif ($group->{test_teardown}) {
             print qq{$group->{test_teardown}, };
@@ -150,7 +152,7 @@ sub demangle {
     my ($str) = @_;
 
     # throw away 'test_' prefix
-    $str =~ s/^test_//;
+    $str =~ s/^(?:test|setup|teardown)_//;
 
     # replace single underscores with spaces
     $str =~ s/(?<!_)_(?!_)/ /g;
