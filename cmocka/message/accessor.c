@@ -5,6 +5,7 @@
 
 #include "src/goat.h"
 #include "src/message.h"
+#include "src/util.h"
 
 struct objs {
     GoatMessage *msg;
@@ -56,7 +57,8 @@ int message_accessor_group_teardown(void **state) {
     return 0;
 }
 
-void test_goat__message__get__prefix___without_message(void **state UNUSED) {
+void test_goat__message__get__prefix___without_message(void **state) {
+    ARG_UNUSED(state);
     const char *str = goat_message_get_prefix(NULL);
 
     assert_null(str);
@@ -77,7 +79,8 @@ void test_goat__message__get__prefix___with_prefix(void **state) {
     assert_string_equal(str, "prefix");
 }
 
-void test_goat__message__get__command__string___without_message(void **state UNUSED) {
+void test_goat__message__get__command__string___without_message(void **state) {
+    ARG_UNUSED(state);
     const char *str = goat_message_get_command_string(NULL);
 
     assert_null(str);
@@ -91,7 +94,8 @@ void test_goat__message__get__command__string___with_unrecognised_command(void *
     assert_string_equal(str, "command");
 }
 
-void test_goat__message__get__command__string___with_recognised_command(void **state UNUSED) {
+void test_goat__message__get__command__string___with_recognised_command(void **state) {
+    ARG_UNUSED(state);
     const char *command = "PRIVMSG";
 
     GoatMessage *message = goat_message_new(NULL, command, NULL);
@@ -106,7 +110,8 @@ void test_goat__message__get__command__string___with_recognised_command(void **s
     goat_message_delete(message);
 }
 
-void test_goat__message__get__param___without_message(void **state UNUSED) {
+void test_goat__message__get__param___without_message(void **state) {
+    ARG_UNUSED(state);
     const char *str = goat_message_get_param(NULL, 0);
 
     assert_null(str);
@@ -144,7 +149,8 @@ void test_goat__message__get__param___with_params(void **state) {
     }
 }
 
-void test_goat__message__get__nparams___without_message(void **state UNUSED) {
+void test_goat__message__get__nparams___without_message(void **state) {
+    ARG_UNUSED(state);
     size_t n = goat_message_get_nparams(NULL);
 
     assert_int_equal(n, 0);
@@ -157,7 +163,8 @@ void test_goat__message__get__nparams___with_params(void **state) {
     assert_int_equal(n, 3);
 }
 
-void test_goat__message__get__command___without_message(void **state UNUSED) {
+void test_goat__message__get__command___without_message(void **state) {
+    ARG_UNUSED(state);
     GoatError r = goat_message_get_command(NULL, NULL);
 
     assert_int_equal(r, EINVAL);
@@ -180,7 +187,8 @@ void test_goat__message__get__command___with_unrecognised_command(void **state) 
     assert_int_equal(cmd, GOAT_IRC_LAST);
 }
 
-void test_goat__message__get__command___with_recognised_command(void **state UNUSED) {
+void test_goat__message__get__command___with_recognised_command(void **state) {
+    ARG_UNUSED(state);
     GoatMessage *message = goat_message_new(NULL, "PRIVMSG", NULL);
     assert_non_null(message);
 

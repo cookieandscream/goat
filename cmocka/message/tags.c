@@ -6,6 +6,7 @@
 
 #include "src/goat.h"
 #include "src/message.h"
+#include "src/util.h"
 
 static void _set_tags(GoatMessage *message, const char *raw_tags);
 
@@ -23,7 +24,8 @@ int message_tags_test_teardown(void **state) {
     return 0;
 }
 
-void test_goat__message__has__tags___without_message(void **state UNUSED) {
+void test_goat__message__has__tags___without_message(void **state) {
+    ARG_UNUSED(state);
     skip(); // FIXME not implemented yet
 }
 
@@ -89,7 +91,8 @@ void test_goat__message__has__tag___when_it_does(void **state) {
     assert_true(goat_message_has_tag(msg, "key5"));
 }
 
-void test_goat__message__get__tag__value(void **state UNUSED) {
+void test_goat__message__get__tag__value(void **state) {
+    ARG_UNUSED(state);
     skip(); // FIXME not implemented yet
 }
 

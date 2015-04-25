@@ -5,14 +5,17 @@
 
 #include "src/goat.h"
 #include "src/message.h"
+#include "src/util.h"
 
-void test_goat__message__cstring___without_message(void **state UNUSED) {
+void test_goat__message__cstring___without_message(void **state) {
+    ARG_UNUSED(state);
     char *str = goat_message_cstring(NULL, NULL, NULL);
 
     assert_null(str);
 }
 
-void test_goat__message__cstring___without_buf(void **state UNUSED) {
+void test_goat__message__cstring___without_buf(void **state) {
+    ARG_UNUSED(state);
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
@@ -26,7 +29,8 @@ void test_goat__message__cstring___without_buf(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_size(void **state UNUSED) {
+void test_goat__message__cstring___without_size(void **state) {
+    ARG_UNUSED(state);
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "p1", "p2", "p3", NULL };
@@ -41,7 +45,8 @@ void test_goat__message__cstring___without_size(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_prefix(void **state UNUSED) {
+void test_goat__message__cstring___without_prefix(void **state) {
+    ARG_UNUSED(state);
     const char *command = "command";
 
     GoatMessage *message = goat_message_new(NULL, command, NULL);
@@ -59,7 +64,8 @@ void test_goat__message__cstring___without_prefix(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_prefix(void **state UNUSED) {
+void test_goat__message__cstring___with_prefix(void **state) {
+    ARG_UNUSED(state);
     const char *prefix = "prefix";
     const char *command = "command";
 
@@ -78,7 +84,8 @@ void test_goat__message__cstring___with_prefix(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___without_params(void **state UNUSED) {
+void test_goat__message__cstring___without_params(void **state) {
+    ARG_UNUSED(state);
     const char *command = "command";
 
     GoatMessage *message = goat_message_new(NULL, command, NULL);
@@ -96,7 +103,8 @@ void test_goat__message__cstring___without_params(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_params(void **state UNUSED) {
+void test_goat__message__cstring___with_params(void **state) {
+    ARG_UNUSED(state);
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
 
@@ -115,7 +123,8 @@ void test_goat__message__cstring___with_params(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_space_param(void **state UNUSED) {
+void test_goat__message__cstring___with_space_param(void **state) {
+    ARG_UNUSED(state);
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param 3 with spaces", NULL };
 
@@ -134,11 +143,13 @@ void test_goat__message__cstring___with_space_param(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__cstring___with_tags(void **state UNUSED) {
+void test_goat__message__cstring___with_tags(void **state) {
+    ARG_UNUSED(state);
     skip(); // FIXME not implemented yet
 }
 
-void test_goat__message__cstring___with_the_works(void **state UNUSED) {
+void test_goat__message__cstring___with_the_works(void **state) {
+    ARG_UNUSED(state);
     const char *prefix = "anne";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
@@ -158,13 +169,15 @@ void test_goat__message__cstring___with_the_works(void **state UNUSED) {
     goat_message_delete(message);
 }
 
-void test_goat__message__strdup___without_message(void **state UNUSED) {
+void test_goat__message__strdup___without_message(void **state) {
+    ARG_UNUSED(state);
     char *str = goat_message_strdup(NULL);
 
     assert_null(str);
 }
 
-void test_goat__message__strdup___with_the_works(void **state UNUSED) {
+void test_goat__message__strdup___with_the_works(void **state) {
+    ARG_UNUSED(state);
     const char *prefix = "anne";
     const char *command = "PRIVMSG";
     const char *params[] = { "#goat", "hello there", NULL };
