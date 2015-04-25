@@ -12,6 +12,7 @@
 #include "message.h"
 #include "sm.h"
 #include "tresolver.h"
+#include "util.h"
 
 static ssize_t _conn_recv_data(Connection *);
 static ssize_t _conn_send_data(Connection *);
@@ -527,7 +528,7 @@ int _conn_start_connect(Connection *conn, const struct addrinfo *ai) {
 }
 
 
-CONN_STATE_ENTER(DISCONNECTED) { ST_UNUSED(conn); return 0; }
+CONN_STATE_ENTER(DISCONNECTED) { ARG_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(DISCONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTED);
@@ -535,7 +536,7 @@ CONN_STATE_EXECUTE(DISCONNECTED) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(DISCONNECTED) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(DISCONNECTED) { ARG_UNUSED(conn); }
 
 CONN_STATE_ENTER(RESOLVING) {
     assert(conn != NULL);
@@ -703,9 +704,9 @@ CONN_STATE_EXECUTE(SSLHANDSHAKE) {
     return GOAT_CONN_ERROR;
 }
 
-CONN_STATE_EXIT(SSLHANDSHAKE) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(SSLHANDSHAKE) { ARG_UNUSED(conn); }
 
-CONN_STATE_ENTER(CONNECTED) { ST_UNUSED(conn); return 0; }
+CONN_STATE_ENTER(CONNECTED) { ARG_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(CONNECTED) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_CONNECTED);
@@ -724,7 +725,7 @@ CONN_STATE_EXECUTE(CONNECTED) {
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(CONNECTED) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(CONNECTED) { ARG_UNUSED(conn); }
 
 CONN_STATE_ENTER(DISCONNECTING) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_DISCONNECTING);
@@ -784,9 +785,9 @@ queue_wait:
     return conn->m_state.state;
 }
 
-CONN_STATE_EXIT(DISCONNECTING) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(DISCONNECTING) { ARG_UNUSED(conn); }
 
-CONN_STATE_ENTER(ERROR) { ST_UNUSED(conn); return 0; }
+CONN_STATE_ENTER(ERROR) { ARG_UNUSED(conn); return 0; }
 
 CONN_STATE_EXECUTE(ERROR) {
     assert(conn != NULL && conn->m_state.state == GOAT_CONN_ERROR);
@@ -795,4 +796,4 @@ CONN_STATE_EXECUTE(ERROR) {
     return GOAT_CONN_ERROR;
 }
 
-CONN_STATE_EXIT(ERROR) { ST_UNUSED(conn); }
+CONN_STATE_EXIT(ERROR) { ARG_UNUSED(conn); }

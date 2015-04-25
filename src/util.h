@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+#define ARG_UNUSED(expr)         do { (void)(expr); } while (0)
+
 inline int str_has_crlf(const char *str) {
     return strcspn(str, "\x0d\x0a") < strlen(str);
 }
