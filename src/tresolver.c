@@ -146,7 +146,7 @@ void *_resolver_thread(void *arg) {
     assert(arg != NULL);
 
     ResolverState *state = (ResolverState *) arg;
-    struct addrinfo *res;
+    struct addrinfo *res = NULL;
 
     int r = getaddrinfo(state->hostname, state->servname, NULL, &res);
 
