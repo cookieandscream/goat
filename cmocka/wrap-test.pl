@@ -10,11 +10,17 @@ sub pretty;
 sub add_test;
 sub add_test_fixture;
 
+sub check_db;
 sub dump_db;
 
 my %test_db;
 
+my $found_main_c = 0;
 while (<>) {
+    if ($found_main_c && m/./) {
+        print STDERR "warning: found additional non-empty lines after #include \"cmocka/main.c\"\n";
+    }
+
     if (m/^void\s+(test_[A-Za-z0-9_]+)\s*\(\s*void\s+\*\*\s*state\s*\)/) {
         add_test(\%test_db, $1);
     }
@@ -37,7 +43,9 @@ while (<>) {
         add_test_fixture(\%test_db, $1);
     }
     elsif (m/^\s*#include\s*"cmocka\/main\.c"/) {
+        check_db(\%test_db);
         dump_db(\%test_db);
+        $found_main_c = 1;
     }
 
     print;
@@ -83,6 +91,50 @@ sub add_test_fixture {
     }
     else {
         print STDERR "add_text_fixture: didn't expect get here: $funcname\n";
+    }
+}
+
+sub check_db {
+    my ($db) = @_;
+
+    my $errors = 0;
+
+    # expect group_setup to have matching group_teardown and v/v
+    if ($db->{fixtures}->{group_setup} and not $db->{fixtures}->{group_teardown}) {
+        print STDERR "error: test suite contains group_setup but no group_teardown\n";
+        $errors ++;
+    }
+    elsif ($db->{fixtures}->{group_teardown} and not $db->{fixtures}->{group_setup}) {
+        print STDERR "error: test suite contains group_teardown but no group_setup\n";
+        $errors ++;
+    }
+
+    # expect test_setup to have matching test_teardown and v/v
+    if ($db->{fixtures}->{test_setup} and not $db->{fixtures}->{test_teardown}) {
+        print STDERR "error: test suite contains test_setup but no test_teardown\n";
+        $errors ++;
+    }
+    elsif ($db->{fixtures}->{test_teardown} and not $db->{fixtures}->{test_setup}) {
+        print STDERR "error: test suite contains test_teardown but no test_setup\n";
+        $errors ++;
+    }
+
+    # expect specific test setups to have matching teardowns and v/v
+    foreach my $fixture (values %{$db->{fixtures}}) {
+        next if not ref $fixture;
+
+        if ($fixture->{setup} and not $fixture->{teardown}) {
+            print STDERR "error: test suite contains $fixture->{setup} but no matching teardown\n";
+            $errors ++;
+        }
+        elsif ($fixture->{teardown} and not $fixture->{setup}) {
+            print STDERR "error: test suite contains $fixture->{teardown} but no matching setup\n";
+            $errors ++;
+        }
+    }
+
+    if ($errors) {
+        exit $errors;
     }
 }
 
