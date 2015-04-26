@@ -52,4 +52,4 @@ if HAVE_CMOCKA
 endif
 
 %.c : %.cmocka cmocka/main.c cmocka/wrap-test.pl
-	cmocka/wrap-test.pl $< > $@
+	cmocka/wrap-test.pl $< > $@.tmp && mv $@.tmp $@
