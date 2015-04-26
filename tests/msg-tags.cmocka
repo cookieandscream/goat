@@ -2,22 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cmocka/run.h"
+#include "cmocka/main.h"
 
 #include "src/goat.h"
 #include "src/message.h"
 #include "src/util.h"
 
+#define group_name "message tags tests"
+
 static void _set_tags(GoatMessage *message, const char *raw_tags);
 
-int message_tags_test_setup(void **state) {
+int test_setup(void **state) {
     *state = goat_message_new(NULL, "PRIVMSG", NULL);
     if (NULL == *state) return -1;
 
     return 0;
 }
 
-int message_tags_test_teardown(void **state) {
+int test_teardown(void **state) {
     if (*state) goat_message_delete(*state);
     *state = NULL;
 
@@ -297,3 +299,4 @@ static void _set_tags(GoatMessage *message, const char *raw_tags) {
     }
 }
 
+#include "cmocka/main.c" // keep at end - includes main function

@@ -1,11 +1,13 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "cmocka/run.h"
+#include "cmocka/main.h"
 
 #include "src/goat.h"
 #include "src/message.h"
 #include "src/util.h"
+
+#define group_name "message accessor tests"
 
 struct objs {
     GoatMessage *msg;
@@ -14,7 +16,7 @@ struct objs {
     GoatMessage *msg_w_prefix_params;
 };
 
-int message_accessor_group_setup(void **state) {
+int group_setup(void **state) {
     const char *prefix = "prefix";
     const char *command = "command";
     const char *params[] = { "param1", "param2", "param3", NULL };
@@ -46,7 +48,7 @@ cleanup:
     return -1;
 }
 
-int message_accessor_group_teardown(void **state) {
+int group_teardown(void **state) {
     struct objs *objs = * (struct objs **) state;
     *state = NULL;
     goat_message_delete(objs->msg);
@@ -200,3 +202,5 @@ void test_goat__message__get__command___with_recognised_command(void **state) {
 
     goat_message_delete(message);
 }
+
+#include "cmocka/main.c" // keep at end - includes main function

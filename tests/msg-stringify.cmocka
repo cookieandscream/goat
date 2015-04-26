@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cmocka/run.h"
+#include "cmocka/main.h"
 
 #include "src/goat.h"
 #include "src/message.h"
 #include "src/util.h"
+
+#define group_name "message stringification tests"
 
 void test_goat__message__cstring___without_message(void **state) {
     ARG_UNUSED(state);
@@ -192,3 +194,5 @@ void test_goat__message__strdup___with_the_works(void **state) {
 
     free(str);
 }
+
+#include "cmocka/main.c" // keep at end - includes main function

@@ -1,11 +1,13 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "cmocka/run.h"
+#include "cmocka/main.h"
 
 #include "src/goat.h"
 #include "src/message.h"
 #include "src/util.h"
+
+#define group_name "message constructor tests"
 
 static void _ptr_in_range(const void *ptr, const void *start, size_t len) {
     assert_non_null(ptr);
@@ -548,3 +550,5 @@ void test_goat__message__clone___with_the_works(void **state) {
     goat_message_delete(msg2);
     goat_message_delete(msg1);
 }
+
+#include "cmocka/main.c" // keep at end - includes main function

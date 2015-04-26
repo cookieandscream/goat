@@ -4,10 +4,12 @@
 #include <pthread.h>
 #include <time.h>
 
-#include "cmocka/run.h"
+#include "cmocka/main.h"
 
 #include "src/tresolver.h"
 #include "src/util.h"
+
+#define group_name "tresolver tests"
 
 #define HALF_SECOND (500000000)
 
@@ -254,3 +256,7 @@ int teardown_resolver__getaddrinfo___with_slow_lookup(void **state) {
 
     return mock_destroy(1);
 }
+
+/* ====================================================================== */
+
+#include "cmocka/main.c" // keep at end - includes main function
