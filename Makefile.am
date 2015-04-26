@@ -51,5 +51,5 @@ if HAVE_CMOCKA
     tests_tresolver_LDADD = $(CMOCKA_LIBS)
 endif
 
-%.c : %.cmocka cmocka/wrap-test.pl
+%.c : %.cmocka cmocka/main.c cmocka/wrap-test.pl
 	cmocka/wrap-test.pl $< > $@
