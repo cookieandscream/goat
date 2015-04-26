@@ -1,10 +1,6 @@
 #ifndef GOAT_CMOCKA_MAIN_C
 #define GOAT_CMOCKA_MAIN_C
 
-#ifndef group_name
-#define group_name "unnamed test group"
-#endif
-
 int main (int argc __attribute__((unused)), char **argv __attribute__((unused))) {
     cmocka_set_message_output(CM_OUTPUT_TAP);
 
