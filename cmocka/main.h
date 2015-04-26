@@ -1,7 +1,8 @@
-#ifndef GOAT_CMOCKA_RUN_H
-#define GOAT_CMOCKA_RUN_H
+#ifndef GOAT_CMOCKA_MAIN_H
+#define GOAT_CMOCKA_MAIN_H
 
-// cmocka needs these pre-included for some reason
+// cmocka.h needs these pre-included for some reason
+#include <stdio.h>
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -15,5 +16,7 @@ typedef struct {
     size_t n_tests;
     const struct CMUnitTest tests[];
 } TestGroup;
+
+extern const TestGroup test_group;
 
 #endif
