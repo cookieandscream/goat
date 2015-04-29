@@ -133,10 +133,11 @@ GoatError goat_error(const GoatContext *context, GoatConnection connection) {
     return context->m_connections[connection]->m_state.error;
 }
 
-const char *goat_strerror(int error) {
-    if (error >= GOAT_E_FIRST && error < GOAT_E_LAST)  return error_strings[error];
-    if (error < ELAST) return strerror(error);
-    return NULL;
+const char *goat_strerror(GoatError error) {
+    if (0 == error) return NULL;
+    if (error >= GOAT_E_FIRST && error < GOAT_E_LAST) return error_strings[error];
+    if (error > 0 && error < ELAST) return strerror(error);
+    return "unknown error";
 }
 
 int goat_reset_error(GoatContext *context, int connection) {

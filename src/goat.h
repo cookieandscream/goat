@@ -258,7 +258,7 @@ GoatContext *goat_context_new(GoatError *errp);
 int goat_context_delete(GoatContext *context);
 
 GoatError goat_error(const GoatContext *context, int connection);
-const char *goat_strerror(int error);
+const char *goat_strerror(GoatError error);
 int goat_reset_error(GoatContext *context, int connection);
 
 const char *goat_command_string(GoatCommand command);
