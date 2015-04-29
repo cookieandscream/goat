@@ -151,15 +151,19 @@ int goat_reset_error(GoatContext *context, int connection) {
     return conn_reset_error(context->m_connections[connection]);
 }
 
-GoatError goat_connection_new(GoatContext *context, GoatConnection *connection) {
+GoatConnection goat_connection_new(GoatContext *context, GoatError *errp) {
     assert(context != NULL);
-    if (context == NULL) return EINVAL;
 
-    int handle = -1;
-    int r;
+    GoatConnection handle = -1;
+    GoatError r;
+
+    if (NULL == context) {
+        r = EINVAL;
+        goto err;
+    }
 
     r = pthread_rwlock_wrlock(&context->m_rwlock);
-    if (r) return r;
+    if (r) goto err;
 
     if (context->m_connections_count == context->m_connections_size) {
         size_t new_size = context->m_connections_size + CONN_ALLOC_INCR;
@@ -194,8 +198,9 @@ GoatError goat_connection_new(GoatContext *context, GoatConnection *connection) 
 done:
     pthread_rwlock_unlock(&context->m_rwlock);
 
-    if (r == 0 && handle >= 0) *connection = handle;
-    return r;
+err:
+    if (errp) *errp = r;
+    return handle;
 }
 
 GoatError goat_connection_delete(GoatContext *context, GoatConnection *connection) {
