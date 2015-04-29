@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -22,9 +23,15 @@ const size_t CONN_ALLOC_INCR = 16;
 static GoatError _goat_init() {
     static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     static int tls_initialised = 0;
+    static int syslog_initialised = 0;
 
     GoatError r = pthread_mutex_lock(&mutex);
     if (r) return r;
+
+    if (0 == syslog_initialised) {
+        openlog("goat", LOG_PID, LOG_USER);
+        syslog_initialised = 1;
+    }
 
     if (0 == tls_initialised) {
         r = tls_init();
