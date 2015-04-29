@@ -19,21 +19,27 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
-static GoatError _tls_init() {
-    static pthread_mutex_t _tls_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static GoatError _goat_init() {
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    static int tls_initialised = 0;
 
-    GoatError r = pthread_mutex_lock(&_tls_init_mutex);
+    GoatError r = pthread_mutex_lock(&mutex);
     if (r) return r;
 
-    r = tls_init();
-    pthread_mutex_unlock(&_tls_init_mutex);
+    if (0 == tls_initialised) {
+        r = tls_init();
+        if (r) goto err;
+        tls_initialised = 1;
+    }
 
+err:
+    pthread_mutex_unlock(&mutex);
     return r;
 }
 
 GoatContext *goat_context_new(GoatError *errp) {
-    // make sure TLS library is initialised
-    GoatError r = _tls_init();
+    // initialise global state if neccesary
+    GoatError r = _goat_init();
     if (r) goto err;
 
     // we don't need to lock in here, because no other thread has a pointer to this context yet
