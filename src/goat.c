@@ -19,39 +19,47 @@
 
 const size_t CONN_ALLOC_INCR = 16;
 
-static int _tls_init() {
+static GoatError _tls_init() {
     static pthread_mutex_t _tls_init_mutex = PTHREAD_MUTEX_INITIALIZER;
-    int ret;
 
-    if (0 == (ret = pthread_mutex_lock(&_tls_init_mutex))) {
-        ret = tls_init();
-        pthread_mutex_unlock(&_tls_init_mutex);
-    }
+    GoatError r = pthread_mutex_lock(&_tls_init_mutex);
+    if (r) return r;
 
-    return ret;
+    r = tls_init();
+    pthread_mutex_unlock(&_tls_init_mutex);
+
+    return r;
 }
 
-GoatContext *goat_context_new() {
+GoatContext *goat_context_new(GoatError *errp) {
     // make sure TLS library is initialised
-    if (0 != _tls_init()) return NULL;
+    GoatError r = _tls_init();
+    if (r) goto err;
 
     // we don't need to lock in here, because no other thread has a pointer to this context yet
     GoatContext *context = calloc(1, sizeof(GoatContext));
-    if (!context)  return NULL;
-
-    if (0 != pthread_rwlock_init(&context->m_rwlock, NULL))  goto cleanup;
-
-    if ((context->m_connections = calloc(CONN_ALLOC_INCR, sizeof(Connection *)))) {
-        context->m_connections_size = CONN_ALLOC_INCR;
-        context->m_connections_count = 0;
+    if (NULL == context) {
+        r = errno;
+        goto err;
     }
-    else {
+
+    r = pthread_rwlock_init(&context->m_rwlock, NULL);
+    if (r) goto cleanup;
+
+    context->m_connections = calloc(CONN_ALLOC_INCR, sizeof(Connection *));
+    if (NULL == context->m_connections) {
+        r = errno;
         goto cleanup;
     }
 
-    if (NULL == (context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(GoatCallback)))) {
+    context->m_callbacks = calloc(GOAT_EVENT_LAST, sizeof(GoatCallback));
+    if (NULL == context->m_callbacks) {
+        r = errno;
         goto cleanup;
     }
+
+    context->m_connections_size = CONN_ALLOC_INCR;
+    context->m_connections_count = 0;
 
     return context;
 
@@ -60,6 +68,9 @@ cleanup:
     if (context->m_connections)  free(context->m_connections);
     pthread_rwlock_destroy(&context->m_rwlock);
     free(context);
+
+err:
+    if (NULL != errp) *errp = r;
     return NULL;
 }
 

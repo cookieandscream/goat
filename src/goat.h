@@ -254,7 +254,7 @@ typedef enum {
     GOAT_IRC_LAST /* don't use; keep last */
 } GoatCommand;
 
-GoatContext *goat_context_new();
+GoatContext *goat_context_new(GoatError *errp);
 int goat_context_delete(GoatContext *context);
 
 GoatError goat_error(const GoatContext *context, int connection);
