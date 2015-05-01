@@ -43,7 +43,7 @@ GoatError tags_init(MessageTags **tagsp, const char *key, const char *value) {
 }
 
 size_t goat_message_has_tags(const GoatMessage *message) {
-    assert(message != NULL);
+    if (NULL == message) return 0;
 
     const MessageTags *tags = message->m_tags;
 
@@ -61,7 +61,8 @@ size_t goat_message_has_tags(const GoatMessage *message) {
 }
 
 int goat_message_has_tag(const GoatMessage *message, const char *key) {
-    assert(message != NULL);
+    if (NULL == message) return 0;
+    if (NULL == key) return 0;
 
     const MessageTags *tags = message->m_tags;
 
@@ -112,8 +113,8 @@ int goat_message_get_tag_value(
 }
 
 GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char *value) {
-    assert(message != NULL);
-    assert(key != NULL);
+    if (NULL == message) return EINVAL;
+    if (NULL == key) return EINVAL;
 
     if (NULL == message->m_tags) {
         return tags_init(&message->m_tags, key, value);
@@ -159,8 +160,8 @@ GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char
 }
 
 GoatError goat_message_unset_tag(GoatMessage *message, const char *key) {
-    assert(message != NULL);
-    assert(key != NULL);
+    if (NULL == message) return EINVAL;
+    if (NULL == key) return EINVAL;
 
     MessageTags *tags = message->m_tags;
 
