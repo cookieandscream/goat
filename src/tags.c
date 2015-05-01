@@ -270,7 +270,6 @@ const char *_find_value(const char *str) {
     return NULL;
 }
 
-// FIXME value can contain nulls, so we need a length argument for it
 const char *_escape_value(const char *value, char *buf, size_t *size) {
     assert(value != NULL);
     assert(buf != NULL);
@@ -278,14 +277,7 @@ const char *_escape_value(const char *value, char *buf, size_t *size) {
 
     char *dest = buf;
 
-    for (size_t i = 0; i < *size; i++) {
-        // FIXME spec says nulls are to be escaped
-        // but that's a nuisance, so worry about it only if it becomes a problem
-        if ('\0' == value[i]) {
-            dest[0] = '\0';
-            break;
-        }
-
+    for (size_t i = 0; i < *size && value[i] != '\0'; i++) {
         switch(value[i]) {
             case ';':
                 dest[0] = '\\';
@@ -299,15 +291,7 @@ const char *_escape_value(const char *value, char *buf, size_t *size) {
                 dest += 2;
                 break;
 
-            case '\0':
-                dest[0] = '\\';
-                dest[1] = '0';
-                dest += 2;
-                break;
-
             case '\\':
-                // FIXME spec says just single '\', is that a typo?
-                // https://github.com/ircv3/ircv3-specifications/blob/master/specification/message-tags-3.2.md
                 dest[0] = '\\';
                 dest[1] = '\\';
                 dest += 2;
@@ -353,7 +337,6 @@ const char *_unescape_value(const char *value, char *buf, size_t *size) {
             switch (c) {
                 case ':':  c = ';';          break;
                 case 's':  c = ' ';          break;
-                case '0':  c = '\0';         break;
                 case '\\': c = '\\';         break;
                 case 'r':  c = '\r';         break;
                 case 'n':  c = '\n';         break;
