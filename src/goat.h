@@ -28,6 +28,8 @@ enum {
     GOAT_E_STATE = GOAT_E_FIRST,    // invalid connection state
     GOAT_E_UNREC,                   // unrecognised command string
     GOAT_E_MSGLEN,                  // message is or would be too long
+    GOAT_E_NOTAG,                   // tag does not exist
+    GOAT_E_NOTAGVAL,                // tag does not have a value
 
     GOAT_E_LAST /* don't use; keep last */
 };
@@ -302,7 +304,7 @@ GoatError goat_message_get_command(const GoatMessage *message, GoatCommand *comm
 
 size_t goat_message_has_tags(const GoatMessage *message);
 int goat_message_has_tag(const GoatMessage *message, const char *key);
-int goat_message_get_tag_value(const GoatMessage *message, const char *key, char *value, size_t *size);
+GoatError goat_message_get_tag_value(const GoatMessage *message, const char *key, char *value, size_t *size);
 GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char *value);
 GoatError goat_message_unset_tag(GoatMessage *message, const char *key);
 

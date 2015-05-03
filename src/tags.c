@@ -71,45 +71,40 @@ int goat_message_has_tag(const GoatMessage *message, const char *key) {
     return _find_tag(tags->m_bytes, key) ? 1 : 0;
 }
 
-int goat_message_get_tag_value(
+GoatError goat_message_get_tag_value(
     const GoatMessage *message, const char *key, char *value, size_t *size
 ) {
-    assert(message != NULL);
-    assert(key != NULL);
-    assert(value != NULL);
-    assert(size != NULL);
-
-    // FIXME make sure buffer is big enough...
+    if (NULL == message) return EINVAL;
+    if (NULL == key) return EINVAL;
+    if (NULL == value) return EINVAL;
+    if (NULL == size) return EINVAL;
 
     const MessageTags *tags = message->m_tags;
 
-    if (NULL == tags || 0 == strlen(tags->m_bytes)) return 0;
+    if (NULL == tags || 0 == strlen(tags->m_bytes)) return GOAT_E_NOTAG;
 
     const char *p, *v, *end;
 
-    if (NULL == (p = _find_tag(tags->m_bytes, key))) {
-        *size = 0;
-        return 0;
-    }
+    p = _find_tag(tags->m_bytes, key);
+    if (NULL == p) return GOAT_E_NOTAG;
 
-    if (NULL == (v = _find_value(p))) {
-        *size = 0;
-        return 0;
-    }
+    v = _find_value(p);
+    if (NULL == v) return GOAT_E_NOTAGVAL;
 
     end = _next_tag(v);
-    if (*end) end--;
-    *size = end - v;
+    if ('\0' != *end) end--; // account for separator
 
     char unescaped[GOAT_MESSAGE_MAX_TAGS];
     size_t unescaped_len = sizeof(unescaped);
     _unescape_value(v, unescaped, &unescaped_len);
-    assert(*size >= unescaped_len); // FIXME
+
+    if (*size <= unescaped_len) return EOVERFLOW;
+
     memset(value, 0, *size);
     strncpy(value, unescaped, unescaped_len);
     *size = unescaped_len;
 
-    return 1;
+    return 0;
 }
 
 GoatError goat_message_set_tag(GoatMessage *message, const char *key, const char *value) {
@@ -330,7 +325,7 @@ const char *_unescape_value(const char *value, char *buf, size_t *size) {
     char *dest = buf;
 
     size_t value_len = strlen(value);
-    assert(value_len > *size);
+    assert(value_len < *size);
 
     for (size_t i = 0; i < value_len; i++) {
         if (value[i] == '\\') {
