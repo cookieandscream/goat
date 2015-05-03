@@ -112,6 +112,107 @@ void test_goat__message__get__tag__value(void **state) {
     skip(); // FIXME not implemented yet
 }
 
+void test_goat__message__get__tag__value___without_message(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    ARG_UNUSED(state);
+
+    assert_int_equal(goat_message_get_tag_value(NULL, "key", buf, &sz), EINVAL);
+}
+
+void test_goat__message__get__tag__value___without_key(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+
+    assert_int_equal(goat_message_get_tag_value(msg, NULL, buf, &sz), EINVAL);
+}
+
+void test_goat__message__get__tag__value___without_value(void **state) {
+    size_t sz;
+
+    GoatMessage *msg = * (GoatMessage **) state;
+
+    assert_int_equal(goat_message_get_tag_value(msg, "key", NULL, &sz), EINVAL);
+}
+
+void test_goat__message__get__tag__value___without_size(void **state) {
+    char buf[5];
+
+    GoatMessage *msg = * (GoatMessage **) state;
+
+    assert_int_equal(goat_message_get_tag_value(msg, "key", buf, NULL), EINVAL);
+}
+
+void test_goat__message__get__tag__value___when_no_tags(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+
+    if (msg->m_tags) free(msg->m_tags);
+    msg->m_tags = NULL;
+
+    assert_int_equal(goat_message_get_tag_value(msg, "key", buf, &sz), GOAT_E_NOTAG);
+}
+
+void test_goat__message__get__tag__value___when_tags_empty(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+
+    assert_int_equal(goat_message_get_tag_value(msg, "key", buf, &sz), GOAT_E_NOTAG);
+}
+
+void test_goat__message__get__tag__value___when_no_value(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+    _set_tags(msg, "foo");
+
+    assert_int_equal(goat_message_get_tag_value(msg, "foo", buf, &sz), GOAT_E_NOTAGVAL);
+}
+
+void test_goat__message__get__tag__value___when_buf_too_small(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+    _set_tags(msg, "foo=lions");
+
+    assert_int_equal(goat_message_get_tag_value(msg, "foo", buf, &sz), EOVERFLOW);
+}
+
+void test_goat__message__get__tag__value___when_buf_barely_fits(void **state) {
+    char buf[5];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+    _set_tags(msg, "foo=dogs");
+
+    assert_int_equal(goat_message_get_tag_value(msg, "foo", buf, &sz), 0);
+
+    assert_int_equal(sz, strlen("dogs"));
+    assert_string_equal(buf, "dogs");
+}
+
+void test_goat__message__get__tag__value___with_escaped_data(void **state) {
+    char buf[10];
+    size_t sz = sizeof(buf);
+
+    GoatMessage *msg = * (GoatMessage **) state;
+    _set_tags(msg, "foo=\\:\\s\\\\\\r\\n");
+
+    assert_int_equal(goat_message_get_tag_value(msg, "foo", buf, &sz), 0);
+
+    assert_int_equal(sz, strlen("; \\\r\n"));
+    assert_string_equal(buf, "; \\\r\n");
+}
+
 void test_goat__message__set__tag___without_message(void **state) {
     ARG_UNUSED(state);
 
